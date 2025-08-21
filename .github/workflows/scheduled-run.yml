@@ -1,0 +1,61 @@
+name: Scheduled Content Fetch
+
+on:
+  schedule:
+    # Backup schedule in case Vercel cron fails
+    # Runs daily at 1 AM UTC
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+    inputs:
+      category:
+        description: 'Category to fetch'
+        type: choice
+        required: false
+        default: 'all'
+        options:
+          - all
+          - projects
+          - funding
+          - resources
+          - metrics
+
+jobs:
+  fetch-content:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Trigger content fetch
+        run: |
+          CATEGORY="${{ github.event.inputs.category || 'all' }}"
+          URL="${{ secrets.DEPLOYMENT_URL }}/api/run"
+          
+          if [ "$CATEGORY" != "all" ]; then
+            URL="${URL}?category=${CATEGORY}"
+          fi
+          
+          response=$(curl -X POST "$URL" \
+            -H "Authorization: Bearer ${{ secrets.API_SECRET }}" \
+            -H "Content-Type: application/json" \
+            --fail-with-body \
+            -w "\n%{http_code}")
+          
+          http_code=$(echo "$response" | tail -n 1)
+          body=$(echo "$response" | head -n -1)
+          
+          echo "Response: $body"
+          echo "HTTP Code: $http_code"
+          
+          if [ "$http_code" != "200" ]; then
+            echo "Failed to trigger content fetch"
+            exit 1
+          fi
+      
+      - name: Check fetch status
+        run: |
+          sleep 60  # Wait for fetch to complete
+          
+          response=$(curl -X GET "${{ secrets.DEPLOYMENT_URL }}/api/status" \
+            --fail-with-body)
+          
+          echo "Status: $response"

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Content Queue Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white">
+  <div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-8">Content Automation Admin</h1>
+    
+    <!-- Stats -->
+    <div class="grid grid-cols-3 gap-4 mb-8">
+      <div class="bg-gray-800 p-4 rounded">
+        <div class="text-2xl font-bold" id="total-count">0</div>
+        <div class="text-gray-400">Total Pending</div>
+      </div>
+      <div class="bg-gray-800 p-4 rounded">
+        <div class="text-2xl font-bold" id="approved-today">0</div>
+        <div class="text-gray-400">Approved Today</div>
+      </div>
+      <div class="bg-gray-800 p-4 rounded">
+        <div class="text-2xl font-bold" id="rejected-today">0</div>
+        <div class="text-gray-400">Rejected Today</div>
+      </div>
+    </div>
+    
+    <!-- Filters -->
+    <div class="flex gap-4 mb-6">
+      <select id="content-type-filter" class="bg-gray-800 px-4 py-2 rounded">
+        <option value="">All Types</option>
+        <option value="resource">Resources</option>
+        <option value="project">Projects</option>
+        <option value="funding">Funding</option>
+      </select>
+      <button onclick="refreshQueue()" class="bg-blue-600 px-4 py-2 rounded hover:bg-blue-700">
+        Refresh
+      </button>
+      <button onclick="triggerFetch()" class="bg-green-600 px-4 py-2 rounded hover:bg-green-700">
+        Trigger Fetch
+      </button>
+    </div>
+    
+    <!-- Queue Items -->
+    <div id="queue-items" class="space-y-4">
+      <div class="text-center py-8 text-gray-500">Loading...</div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = window.location.hostname === 'localhost' 
+      ? 'http://localhost:3000/api' 
+      : '/api';
+    
+    let currentItems = [];
+    
+    async function loadQueue() {
+      try {
+        const type = document.getElementById('content-type-filter').value;
+        const url = `${API_BASE}/admin/queue${type ? `?content_type=${type}` : ''}`;
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.success) {
+          currentItems = data.data || [];
+          document.getElementById('total-count').textContent = currentItems.length;
+          renderQueue(currentItems);
+        }
+      } catch (error) {
+        console.error('Error loading queue:', error);
+      }
+    }
+    
+    function renderQueue(items) {
+      const container = document.getElementById('queue-items');
+      
+      if (!items || items.length === 0) {
+        container.innerHTML = '<div class="text-center py-8 text-gray-500">No items in queue</div>';
+        return;
+      }
+      
+      container.innerHTML = items.map(item => `
+        <div class="bg-gray-800 p-6 rounded-lg" id="item-${item.id}">
+          <div class="flex justify-between items-start mb-4">
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="px-2 py-1 bg-${getTypeColor(item.content_type)}-600 rounded text-sm">
+                  ${item.content_type}
+                </span>
+                <span class="text-gray-400 text-sm">${item.source || 'unknown'}</span>
+              </div>
+              <h3 class="text-xl font-semibold mb-2">${item.title}</h3>
+              <p class="text-gray-300 mb-4">${item.description || 'No description'}</p>
+              <a href="${item.url}" target="_blank" class="text-blue-400 hover:underline text-sm">
+                ${item.url}
+              </a>
+            </div>
+            <div class="ml-6 text-right">
+              <div class="text-2xl font-bold mb-2">
+                ${item.relevance_score || '-'}/10
+              </div>
+              <div class="text-xs text-gray-400">
+                Q: ${item.quality_score || '-'} / U: ${item.urgency_score || '-'}
+              </div>
+            </div>
+          </div>
+          
+          ${item.ai_summary ? `
+            <div class="bg-gray-700 p-3 rounded mb-4">
+              <div class="text-sm font-semibold mb-1">AI Summary:</div>
+              <div class="text-sm text-gray-300">${item.ai_summary}</div>
+            </div>
+          ` : ''}
+          
+          <div class="flex gap-2">
+            <button onclick="approveItem('${item.id}')" 
+              class="bg-green-600 px-4 py-2 rounded hover:bg-green-700">
+              Approve
+            </button>
+            <button onclick="rejectItem('${item.id}')" 
+              class="bg-red-600 px-4 py-2 rounded hover:bg-red-700">
+              Reject
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    function getTypeColor(type) {
+      switch(type) {
+        case 'resource': return 'blue';
+        case 'project': return 'purple';
+        case 'funding': return 'green';
+        default: return 'gray';
+      }
+    }
+    
+    async function approveItem(itemId) {
+      try {
+        const response = await fetch(`${API_BASE}/admin/approve`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ itemId })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+          document.getElementById(`item-${itemId}`).style.opacity = '0.5';
+          setTimeout(() => {
+            document.getElementById(`item-${itemId}`).remove();
+          }, 500);
+        }
+      } catch (error) {
+        console.error('Error approving item:', error);
+      }
+    }
+    
+    async function rejectItem(itemId) {
+      const reason = prompt('Rejection reason (optional):');
+      
+      try {
+        const response = await fetch(`${API_BASE}/admin/reject`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ itemId, reason })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+          document.getElementById(`item-${itemId}`).style.opacity = '0.5';
+          setTimeout(() => {
+            document.getElementById(`item-${itemId}`).remove();
+          }, 500);
+        }
+      } catch (error) {
+        console.error('Error rejecting item:', error);
+      }
+    }
+    
+    async function triggerFetch() {
+      if (!confirm('Trigger content fetch now?')) return;
+      
+      try {
+        const response = await fetch(`${API_BASE}/cron/fetch-content`, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer dev-trigger' }
+        });
+        
+        const data = await response.json();
+        alert(`Fetch complete! Fetched ${data.fetched} items, ${data.unique} unique.`);
+        loadQueue();
+      } catch (error) {
+        console.error('Error triggering fetch:', error);
+        alert('Failed to trigger fetch');
+      }
+    }
+    
+    function refreshQueue() {
+      loadQueue();
+    }
+    
+    // Load on page load
+    loadQueue();
+    
+    // Auto-refresh every 30 seconds
+    setInterval(loadQueue, 30000);
+  </script>
+</body>
+</html>
