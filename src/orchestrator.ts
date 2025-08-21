@@ -2,6 +2,7 @@ import { BaseFetcher, ContentItem } from './lib/base-fetcher';
 import { AccelerateDBPipeline } from './lib/accelerate-db-pipeline';
 import { AccelerateScorer } from './lib/accelerate-scorer';
 import { testConnection, getDatabaseStats } from './lib/supabase-client';
+import { DuplicateDetector } from './lib/duplicate-detector';
 
 // Import enrichment services
 import { SocialEnrichmentService } from './services/social-enrichment';
@@ -34,11 +35,13 @@ export class AccelerateOrchestrator {
   private fetchers: BaseFetcher<any>[] = [];
   private socialEnrichment: SocialEnrichmentService;
   private teamVerification: TeamVerificationService;
+  private duplicateDetector: DuplicateDetector;
   private isInitialized = false;
 
   constructor() {
     this.socialEnrichment = new SocialEnrichmentService();
     this.teamVerification = new TeamVerificationService();
+    this.duplicateDetector = new DuplicateDetector();
     this.initializeFetchers();
   }
 
@@ -220,9 +223,22 @@ export class AccelerateOrchestrator {
 
       console.log(`[Orchestrator] Total raw content fetched: ${allContent.length} items`);
 
+      // DUPLICATE DETECTION - NEW!
+      console.log('[Orchestrator] Checking for duplicates against existing database...');
+      const { unique, duplicates } = await this.duplicateDetector.checkDuplicates(allContent);
+      
+      console.log(`[Orchestrator] Found ${duplicates.length} duplicates, ${unique.length} unique items`);
+      
+      // Merge duplicate information into existing records
+      for (const dup of duplicates) {
+        if (dup.similarity > 95) {
+          await this.duplicateDetector.mergeDuplicates(dup.item, dup.existingId);
+        }
+      }
+
       // ENRICHMENT PIPELINE - NEW!
       console.log('[Orchestrator] Starting enrichment pipeline...');
-      const enrichedContent = await this.enrichContent(allContent);
+      const enrichedContent = await this.enrichContent(unique); // Only enrich unique items
 
       // Score and rank all content
       console.log('[Orchestrator] Scoring content for Accelerate relevance...');
@@ -232,6 +248,7 @@ export class AccelerateOrchestrator {
         qualified: metrics.qualified,
         averageScore: metrics.averageScore.toFixed(1),
         byType: metrics.byType,
+        duplicatesFound: duplicates.length,
       });
 
       // Filter by credibility

@@ -556,13 +556,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           
           <div class="items-grid">
             ${projects.length > 0 ? projects.map(project => `
-              <div class="item-card">
+              <div class="item-card" id="card-${project.id}">
                 <div class="item-header">
                   <a href="${project.website_url || project.github_url || '#'}" target="_blank" class="item-title">
                     ${project.name || 'Unnamed Project'}
                   </a>
                   <span class="score-badge">Score: ${project.score || 0}</span>
                 </div>
+                
+                ${project.duplicate_count ? `
+                  <div style="background: #fff3cd; color: #856404; padding: 8px; border-radius: 4px; margin-bottom: 10px;">
+                    ⚠️ Seen ${project.duplicate_count} times from ${project.sources?.length || 1} sources
+                  </div>
+                ` : ''}
                 
                 <p class="item-description">
                   ${project.description || 'No description available'}
@@ -576,7 +582,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                   <span class="meta-item">💰 ${project.amount_funded ? '$' + project.amount_funded.toLocaleString() : 'Not disclosed'}</span>
                   <span class="meta-item">👥 ${project.team_size || 'Unknown'} team members</span>
                   <span class="meta-item">📅 ${project.launched_date ? new Date(project.launched_date).toLocaleDateString() : 'Recent'}</span>
+                  ${project.last_enriched ? `<span class="meta-item">🔄 Enriched: ${new Date(project.last_enriched).toLocaleDateString()}</span>` : ''}
                 </div>
+                
+                <!-- Enrichment Data if Available -->
+                ${project.social_score || project.github_stars ? `
+                  <div style="background: #f0f9ff; padding: 10px; border-radius: 6px; margin: 10px 0;">
+                    ${project.social_score ? `<span style="margin-right: 15px;">📱 Social Score: ${project.social_score}</span>` : ''}
+                    ${project.github_stars ? `<span style="margin-right: 15px;">⭐ GitHub: ${project.github_stars}</span>` : ''}
+                    ${project.twitter_followers ? `<span style="margin-right: 15px;">🐦 Twitter: ${project.twitter_followers}</span>` : ''}
+                  </div>
+                ` : ''}
                 
                 <div class="item-actions">
                   <button class="action-button approve-button" onclick="approveItem('project', '${project.id}')">
@@ -585,8 +601,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                   <button class="action-button reject-button" onclick="rejectItem('project', '${project.id}')">
                     ❌ Reject
                   </button>
+                  <button class="action-button" style="background: #8b5cf6;" onclick="enrichItem('project', '${project.id}')">
+                    🔮 Enrich
+                  </button>
                   <a href="${project.website_url || project.github_url || '#'}" target="_blank" class="action-button view-button" style="text-decoration: none;">
-                    🔗 View Source
+                    🔗 View
                   </a>
                 </div>
               </div>
@@ -826,6 +845,78 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               }
             } catch (error) {
               alert('Error rejecting item: ' + error.message);
+            }
+          }
+        }
+        
+        async function enrichItem(type, id) {
+          const enrichmentType = prompt(
+            'Select enrichment type:\\n' +
+            '1. Social (Twitter, Discord, etc.)\\n' +
+            '2. Team (LinkedIn, GitHub profiles)\\n' +
+            '3. Financial (Funding data)\\n' +
+            '4. Technical (GitHub metrics)\\n' +
+            '5. Comprehensive (All data)\\n\\n' +
+            'Enter number (1-5):'
+          );
+          
+          const typeMap = {
+            '1': 'social',
+            '2': 'team',
+            '3': 'financial',
+            '4': 'technical',
+            '5': 'comprehensive'
+          };
+          
+          const selectedType = typeMap[enrichmentType];
+          
+          if (selectedType) {
+            const card = document.getElementById('card-' + id);
+            const originalContent = card.innerHTML;
+            
+            // Show loading state
+            card.style.opacity = '0.6';
+            card.innerHTML += '<div style="text-align: center; padding: 20px;"><div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite;"></div><p>Enriching with ' + selectedType + ' data...</p></div>';
+            
+            // Add spinning animation
+            const style = document.createElement('style');
+            style.innerHTML = '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }';
+            document.head.appendChild(style);
+            
+            try {
+              const response = await fetch('/api/enrich', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  type: type,
+                  id: id,
+                  enrichmentType: selectedType
+                })
+              });
+              
+              const result = await response.json();
+              
+              if (result.success) {
+                // Update card with enriched data
+                card.style.opacity = '1';
+                card.style.background = '#f0fff4';
+                card.style.border = '2px solid #48bb78';
+                
+                // Reload the page to show updated data
+                setTimeout(() => {
+                  location.reload();
+                }, 1000);
+              } else {
+                card.innerHTML = originalContent;
+                card.style.opacity = '1';
+                alert('Failed to enrich: ' + (result.error || 'Unknown error'));
+              }
+            } catch (error) {
+              card.innerHTML = originalContent;
+              card.style.opacity = '1';
+              alert('Error enriching item: ' + error.message);
             }
           }
         }
