@@ -569,7 +569,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 </p>
                 
                 <div class="tags">
-                  ${project.categories ? project.categories.map(cat => `<span class="tag">${cat}</span>`).join('') : ''}
+                  ${project.categories ? project.categories.map((cat: string) => `<span class="tag">${cat}</span>`).join('') : ''}
                 </div>
                 
                 <div class="item-meta">
@@ -665,7 +665,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 </p>
                 
                 <div class="tags">
-                  ${resource.tags ? resource.tags.map(tag => `<span class="tag">${tag}</span>`).join('') : ''}
+                  ${resource.tags ? resource.tags.map((tag: string) => `<span class="tag">${tag}</span>`).join('') : ''}
                 </div>
                 
                 <div class="item-meta">
