@@ -724,6 +724,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                   <button class="action-button" style="background: #8b5cf6;" onclick="enrichItem('project', '${project.id}')">
                     🔮 Enrich
                   </button>
+                  <button class="action-button" style="background: #10b981;" onclick="aiAssess('project', '${project.id}')">
+                    🤖 AI Check
+                  </button>
                   <a href="${project.website_url || project.github_url || '#'}" target="_blank" class="action-button view-button" style="text-decoration: none;">
                     🔗 View
                   </a>
@@ -769,6 +772,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                   </button>
                   <button class="action-button reject-button" onclick="rejectItem('funding', '${fund.id}')">
                     ❌ Reject
+                  </button>
+                  <button class="action-button" style="background: #10b981;" onclick="aiAssess('funding', '${fund.id}')">
+                    🤖 AI Check
                   </button>
                   <a href="${fund.application_url || fund.website_url || '#'}" target="_blank" class="action-button view-button" style="text-decoration: none;">
                     📝 Apply Now
@@ -819,6 +825,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                   </button>
                   <button class="action-button reject-button" onclick="rejectItem('resource', '${resource.id}')">
                     ❌ Reject
+                  </button>
+                  <button class="action-button" style="background: #10b981;" onclick="aiAssess('resource', '${resource.id}')">
+                    🤖 AI Check
                   </button>
                   <a href="${resource.url || '#'}" target="_blank" class="action-button view-button" style="text-decoration: none;">
                     📖 Read
@@ -1160,6 +1169,140 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           }
         }
         
+        async function aiAssess(type, id) {
+          const button = event.target;
+          button.disabled = true;
+          button.textContent = '⏳ Analyzing...';
+          
+          try {
+            const response = await fetch('/api/ai-assess', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                action: 'assess',
+                itemId: id,
+                type: type
+              })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+              const assessment = result.assessment;
+              
+              // Create a detailed popup with AI assessment
+              const assessmentHTML = \`
+                <div style="padding: 20px; max-width: 600px;">
+                  <h2 style="color: #333; margin-bottom: 20px;">🤖 AI Quality Assessment</h2>
+                  
+                  <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <h3 style="margin: 0 0 10px 0;">Overall Score: \${assessment.score}/100</h3>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px;">
+                      <div>
+                        <strong>Legitimacy:</strong> \${assessment.legitimacy}%
+                      </div>
+                      <div>
+                        <strong>Relevance:</strong> \${assessment.relevance}%
+                      </div>
+                      <div>
+                        <strong>Quality:</strong> \${assessment.quality}%
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div style="background: #f0fdf4; border: 2px solid #10b981; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <h4 style="color: #065f46; margin-bottom: 10px;">✅ Green Flags:</h4>
+                    <ul style="margin: 0; padding-left: 20px;">
+                      \${assessment.greenFlags.map(flag => \`<li style="color: #047857;">\${flag}</li>\`).join('')}
+                    </ul>
+                  </div>
+                  
+                  \${assessment.redFlags.length > 0 ? \`
+                    <div style="background: #fef2f2; border: 2px solid #ef4444; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                      <h4 style="color: #991b1b; margin-bottom: 10px;">🚩 Red Flags:</h4>
+                      <ul style="margin: 0; padding-left: 20px;">
+                        \${assessment.redFlags.map(flag => \`<li style="color: #dc2626;">\${flag}</li>\`).join('')}
+                      </ul>
+                    </div>
+                  \` : ''}
+                  
+                  <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <h4 style="color: #374151; margin-bottom: 10px;">💭 AI Reasoning:</h4>
+                    <p style="color: #4b5563; margin: 0;">\${assessment.reasoning}</p>
+                  </div>
+                  
+                  \${assessment.improvements.length > 0 ? \`
+                    <div style="background: #fffbeb; border: 2px solid #f59e0b; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                      <h4 style="color: #92400e; margin-bottom: 10px;">💡 Suggested Improvements:</h4>
+                      <ul style="margin: 0; padding-left: 20px;">
+                        \${assessment.improvements.map(imp => \`<li style="color: #78350f;">\${imp}</li>\`).join('')}
+                      </ul>
+                    </div>
+                  \` : ''}
+                  
+                  <div style="background: \${
+                    assessment.recommendation === 'approve' ? '#dcfce7' : 
+                    assessment.recommendation === 'reject' ? '#fee2e2' : 
+                    '#fef3c7'
+                  }; padding: 20px; border-radius: 8px; text-align: center;">
+                    <h3 style="margin: 0; color: \${
+                      assessment.recommendation === 'approve' ? '#166534' : 
+                      assessment.recommendation === 'reject' ? '#991b1b' : 
+                      '#92400e'
+                    };">
+                      Recommendation: \${assessment.recommendation.toUpperCase()}
+                    </h3>
+                  </div>
+                  
+                  <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
+                    <button onclick="this.parentElement.parentElement.parentElement.remove()" style="padding: 10px 20px; background: #6b7280; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                      Close
+                    </button>
+                    \${assessment.recommendation === 'approve' ? \`
+                      <button onclick="approveItem('\${type}', '\${id}'); this.parentElement.parentElement.parentElement.remove()" style="padding: 10px 20px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                        ✅ Auto-Approve
+                      </button>
+                    \` : ''}
+                    \${assessment.recommendation === 'reject' ? \`
+                      <button onclick="rejectItem('\${type}', '\${id}'); this.parentElement.parentElement.parentElement.remove()" style="padding: 10px 20px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                        ❌ Auto-Reject
+                      </button>
+                    \` : ''}
+                  </div>
+                </div>
+              \`;
+              
+              // Create and show modal
+              const modal = document.createElement('div');
+              modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 10000;';
+              modal.innerHTML = \`
+                <div style="background: white; border-radius: 12px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);">
+                  \${assessmentHTML}
+                </div>
+              \`;
+              modal.onclick = (e) => {
+                if (e.target === modal) modal.remove();
+              };
+              document.body.appendChild(modal);
+              
+              // Update the button to show score
+              button.style.background = assessment.score >= 70 ? '#10b981' : assessment.score >= 50 ? '#f59e0b' : '#ef4444';
+              button.textContent = \`🤖 AI: \${assessment.score}\`;
+            } else {
+              alert('AI assessment failed: ' + (result.error || 'Unknown error'));
+              button.textContent = '🤖 AI Check';
+            }
+          } catch (error) {
+            console.error('AI assessment error:', error);
+            alert('Failed to get AI assessment. Check if OpenAI API key is configured.');
+            button.textContent = '🤖 AI Check';
+          } finally {
+            button.disabled = false;
+          }
+        }
+
         async function enrichItem(type, id) {
           const enrichmentType = prompt(
             'Select enrichment type:\\n' +

@@ -478,6 +478,97 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           </div>
         </div>
         
+        <!-- Schedule Control Section - CEO PRIORITY -->
+        <div class="control-section" style="border: 3px solid #667eea;">
+          <h2 class="section-title">⏰ Schedule Control - CEO Dashboard</h2>
+          
+          <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+              <div>
+                <h3 style="color: #1a365d; margin-bottom: 5px;">Current Schedule Mode</h3>
+                <p id="schedule-status" style="font-size: 24px; color: #2c5282; font-weight: bold;">Loading...</p>
+              </div>
+              <div style="text-align: right;">
+                <p style="color: #718096; margin-bottom: 5px;">Next Run</p>
+                <p id="next-run" style="font-size: 20px; color: #4a5568; font-weight: 600;">Loading...</p>
+              </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+              <div style="background: white; padding: 15px; border-radius: 8px;">
+                <h4 style="color: #667eea; margin-bottom: 15px;">Schedule Mode</h4>
+                <label style="display: flex; align-items: center; margin-bottom: 10px; cursor: pointer;">
+                  <input type="radio" name="schedule-mode" value="manual" id="manual-only" onchange="updateScheduleMode()" style="margin-right: 10px;">
+                  <div>
+                    <strong>Manual Only</strong>
+                    <p style="color: #666; font-size: 12px;">You control when updates run</p>
+                  </div>
+                </label>
+                <label style="display: flex; align-items: center; cursor: pointer;">
+                  <input type="radio" name="schedule-mode" value="auto" id="auto-mode" onchange="updateScheduleMode()" style="margin-right: 10px;">
+                  <div>
+                    <strong>Automatic</strong>
+                    <p style="color: #666; font-size: 12px;">Runs on schedule + manual</p>
+                  </div>
+                </label>
+              </div>
+              
+              <div style="background: white; padding: 15px; border-radius: 8px;">
+                <h4 style="color: #667eea; margin-bottom: 15px;">Interval (if automatic)</h4>
+                <select id="interval-select" onchange="updateInterval()" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 4px;">
+                  <option value="1">Every Hour</option>
+                  <option value="6">Every 6 Hours</option>
+                  <option value="12">Every 12 Hours</option>
+                  <option value="24" selected>Every 24 Hours (Default)</option>
+                  <option value="48">Every 2 Days</option>
+                  <option value="72">Every 3 Days</option>
+                  <option value="168">Weekly</option>
+                </select>
+              </div>
+            </div>
+            
+            <div style="margin-top: 20px; padding: 15px; background: white; border-radius: 8px;">
+              <h4 style="color: #667eea; margin-bottom: 15px;">Manual Control</h4>
+              <div class="button-group">
+                <button class="button button-success" onclick="runNow()" style="font-size: 18px; padding: 15px 30px;">
+                  ▶️ Run Now
+                </button>
+                <button class="button button-primary" onclick="runNowWithOptions()">
+                  ⚙️ Run with Options
+                </button>
+                <button class="button button-secondary" onclick="viewScheduleHistory()">
+                  📜 View History
+                </button>
+              </div>
+            </div>
+            
+            <div style="margin-top: 20px;">
+              <h4 style="color: #667eea; margin-bottom: 10px;">Automatic Processing Options</h4>
+              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                <label style="display: flex; align-items: center;">
+                  <input type="checkbox" id="auto-quality" checked style="margin-right: 8px;">
+                  <span>Run Quality Checks</span>
+                </label>
+                <label style="display: flex; align-items: center;">
+                  <input type="checkbox" id="auto-ai" checked style="margin-right: 8px;">
+                  <span>Run AI Assessment</span>
+                </label>
+                <label style="display: flex; align-items: center;">
+                  <input type="checkbox" id="notify-complete" checked style="margin-right: 8px;">
+                  <span>Send Notifications</span>
+                </label>
+              </div>
+            </div>
+          </div>
+          
+          <div id="schedule-history" style="display: none; background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 20px;">
+            <h4 style="margin-bottom: 15px;">Recent Schedule Runs</h4>
+            <div id="history-list">
+              <!-- History will be loaded here -->
+            </div>
+          </div>
+        </div>
+        
         <!-- System Settings -->
         <div class="control-section">
           <h2 class="section-title">⚙️ System Settings</h2>
@@ -489,16 +580,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 <p style="color: #666; font-size: 14px;">Automatically approve items scoring 90+</p>
               </div>
               <div class="toggle" onclick="toggleSetting(this)">
-                <div class="toggle-handle"></div>
-              </div>
-            </div>
-            
-            <div class="setting-item">
-              <div>
-                <strong>Daily Fetching</strong>
-                <p style="color: #666; font-size: 14px;">Run fetchers every 24 hours</p>
-              </div>
-              <div class="toggle active" onclick="toggleSetting(this)">
                 <div class="toggle-handle"></div>
               </div>
             </div>
@@ -517,6 +598,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               <div>
                 <strong>Duplicate Detection</strong>
                 <p style="color: #666; font-size: 14px;">AI-powered deduplication</p>
+              </div>
+              <div class="toggle active" onclick="toggleSetting(this)">
+                <div class="toggle-handle"></div>
+              </div>
+            </div>
+            
+            <div class="setting-item">
+              <div>
+                <strong>AI Quality Assessment</strong>
+                <p style="color: #666; font-size: 14px;">GPT-5 powered analysis</p>
               </div>
               <div class="toggle active" onclick="toggleSetting(this)">
                 <div class="toggle-handle"></div>
@@ -658,6 +749,172 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (window.location.search.includes('password=${ADMIN_PASSWORD}')) {
           document.getElementById('authModal').style.display = 'none';
         }
+        
+        // Schedule Control Functions
+        let scheduleConfig = null;
+        
+        async function loadScheduleStatus() {
+          try {
+            const response = await fetch('/api/schedule');
+            const data = await response.json();
+            scheduleConfig = data.config;
+            
+            // Update UI
+            document.getElementById('schedule-status').textContent = data.humanReadable.mode;
+            document.getElementById('next-run').textContent = data.humanReadable.nextRun;
+            
+            // Set radio buttons
+            if (data.config.manualOnly) {
+              document.getElementById('manual-only').checked = true;
+            } else {
+              document.getElementById('auto-mode').checked = true;
+            }
+            
+            // Set interval
+            document.getElementById('interval-select').value = data.config.intervalHours;
+            
+            // Set checkboxes
+            document.getElementById('auto-quality').checked = data.config.autoQualityChecks;
+            document.getElementById('auto-ai').checked = data.config.autoAIAssessment;
+            document.getElementById('notify-complete').checked = data.config.notifyOnComplete;
+            
+          } catch (error) {
+            console.error('Failed to load schedule status:', error);
+          }
+        }
+        
+        async function updateScheduleMode() {
+          const manualOnly = document.getElementById('manual-only').checked;
+          
+          const response = await fetch('/api/schedule', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ manualOnly })
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            document.getElementById('schedule-status').textContent = data.humanReadable.mode;
+            document.getElementById('next-run').textContent = data.humanReadable.nextRun;
+            addLog(manualOnly ? 'Switched to MANUAL-ONLY mode' : 'Switched to AUTOMATIC mode');
+          }
+        }
+        
+        async function updateInterval() {
+          const intervalHours = parseInt(document.getElementById('interval-select').value);
+          
+          const response = await fetch('/api/schedule', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ intervalHours })
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            document.getElementById('next-run').textContent = data.humanReadable.nextRun;
+            addLog(\`Schedule interval updated to \${intervalHours} hours\`);
+          }
+        }
+        
+        async function runNow() {
+          if (!confirm('Run content update now? This will fetch from all sources and process items.')) {
+            return;
+          }
+          
+          addLog('Manual run triggered by CEO...');
+          document.querySelector('[onclick="runNow()"]').disabled = true;
+          document.querySelector('[onclick="runNow()"]').textContent = '⏳ Running...';
+          
+          const response = await fetch('/api/schedule', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'run_now',
+              options: {
+                skipFetch: false,
+                skipQualityChecks: !document.getElementById('auto-quality').checked,
+                skipAI: !document.getElementById('auto-ai').checked
+              }
+            })
+          });
+          
+          if (response.ok) {
+            const result = await response.json();
+            addLog(\`Update complete! Processed \${result.results.processed} items in \${result.duration}s\`);
+            alert(\`✅ Update Complete!\\n\\nProcessed: \${result.results.processed} items\\nApproved: \${result.results.approved}\\nRejected: \${result.results.rejected}\\nDuration: \${result.duration} seconds\`);
+          } else {
+            alert('Update failed. Check logs for details.');
+          }
+          
+          document.querySelector('[onclick="runNow()"]').disabled = false;
+          document.querySelector('[onclick="runNow()"]').textContent = '▶️ Run Now';
+        }
+        
+        async function runNowWithOptions() {
+          const skipFetch = !confirm('Fetch new data from sources?');
+          const skipQualityChecks = !confirm('Run quality checks?');
+          const skipAI = !confirm('Run AI assessments?');
+          
+          const sourcesStr = prompt('Enter specific sources (comma-separated) or leave empty for all:');
+          const sources = sourcesStr ? sourcesStr.split(',').map(s => s.trim()) : undefined;
+          
+          addLog('Custom run triggered with options...');
+          
+          const response = await fetch('/api/schedule', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'run_now',
+              options: {
+                skipFetch,
+                skipQualityChecks,
+                skipAI,
+                sources
+              }
+            })
+          });
+          
+          if (response.ok) {
+            const result = await response.json();
+            addLog(\`Custom run complete! \${result.message}\`);
+            alert(result.message);
+          }
+        }
+        
+        async function viewScheduleHistory() {
+          const historyDiv = document.getElementById('schedule-history');
+          const historyList = document.getElementById('history-list');
+          
+          if (historyDiv.style.display === 'none') {
+            // Load history
+            const response = await fetch('/api/schedule');
+            const data = await response.json();
+            
+            if (data.recentRuns && data.recentRuns.length > 0) {
+              historyList.innerHTML = data.recentRuns.map(run => \`
+                <div style="padding: 10px; background: white; margin-bottom: 10px; border-radius: 4px;">
+                  <strong>\${run.run_type === 'manual' ? '👤 Manual' : '🤖 Automatic'}</strong>
+                  <span style="float: right; color: #666;">\${new Date(run.created_at).toLocaleString()}</span>
+                  <div style="margin-top: 5px; font-size: 14px; color: #666;">
+                    Fetched: \${run.items_fetched} | Processed: \${run.items_processed} | 
+                    Approved: \${run.items_approved} | Rejected: \${run.items_rejected} | 
+                    Duration: \${run.duration_seconds}s
+                  </div>
+                </div>
+              \`).join('');
+            } else {
+              historyList.innerHTML = '<p style="color: #666;">No recent runs</p>';
+            }
+            
+            historyDiv.style.display = 'block';
+          } else {
+            historyDiv.style.display = 'none';
+          }
+        }
+        
+        // Load schedule status on page load
+        loadScheduleStatus();
+        setInterval(loadScheduleStatus, 60000); // Refresh every minute
         
         // Scoring formula management
         let scoringFormula = null;

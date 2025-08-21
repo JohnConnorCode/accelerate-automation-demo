@@ -8,6 +8,9 @@ import { DuplicateDetector } from './lib/duplicate-detector';
 import { SocialEnrichmentService } from './services/social-enrichment';
 import { TeamVerificationService } from './services/team-verification';
 
+// Import intelligent cache for lightning-fast responses
+import { intelligentCache } from './services/intelligent-cache-service';
+
 // Import all fetchers - ACCELERATE SPECIFIC
 import { DevToBuilderResourcesFetcher, GitHubBuilderToolsFetcher } from './fetchers/accelerate-specific/builder-resources';
 import { EarlyStageProjectsFetcher, ProductHuntEarlyStageFetcher } from './fetchers/accelerate-specific/early-stage-projects';
@@ -202,13 +205,26 @@ export class AccelerateOrchestrator {
         const batchPromises = batch.map(async (fetcher) => {
           try {
             const fetcherName = fetcher.constructor.name;
-            console.log(`[${fetcherName}] Starting fetch...`);
             
-            const rawData = await fetcher.fetch();
-            const content = await fetcher.transform(rawData);
+            // Try to get from cache first
+            const cacheKey = `fetcher:${fetcherName}:data`;
+            const cachedContent = await intelligentCache.get<ContentItem[]>(
+              cacheKey,
+              async () => {
+                console.log(`[${fetcherName}] Cache miss - fetching fresh data...`);
+                const rawData = await fetcher.fetch();
+                const content = await fetcher.transform(rawData);
+                console.log(`[${fetcherName}] Fetched ${content.length} items`);
+                return content;
+              },
+              {
+                ttl: fetcherName.includes('Resource') ? 86400000 : 3600000, // Resources: 24h, Others: 1h
+                tags: ['fetcher', fetcherName.toLowerCase()],
+                priority: 'medium'
+              }
+            );
             
-            console.log(`[${fetcherName}] Fetched ${content.length} items`);
-            return content;
+            return cachedContent || [];
           } catch (error) {
             const errorMsg = `[${fetcher.constructor.name}] Failed: ${error}`;
             console.error(errorMsg);
@@ -223,11 +239,24 @@ export class AccelerateOrchestrator {
 
       console.log(`[Orchestrator] Total raw content fetched: ${allContent.length} items`);
 
-      // DUPLICATE DETECTION - NEW!
+      // DUPLICATE DETECTION with caching
       console.log('[Orchestrator] Checking for duplicates against existing database...');
-      const { unique, duplicates } = await this.duplicateDetector.checkDuplicates(allContent);
+      const duplicateCacheKey = `duplicates:check:${allContent.length}`;
+      const duplicateResult = await intelligentCache.get(
+        duplicateCacheKey,
+        async () => {
+          const result = await this.duplicateDetector.checkDuplicates(allContent);
+          console.log(`[Orchestrator] Found ${result.duplicates.length} duplicates, ${result.unique.length} unique items`);
+          return result;
+        },
+        {
+          ttl: 300000, // 5 minutes - duplicates change frequently
+          tags: ['duplicates'],
+          priority: 'low'
+        }
+      );
       
-      console.log(`[Orchestrator] Found ${duplicates.length} duplicates, ${unique.length} unique items`);
+      const { unique, duplicates } = duplicateResult || { unique: allContent, duplicates: [] };
       
       // Merge duplicate information into existing records
       for (const dup of duplicates) {
@@ -236,9 +265,20 @@ export class AccelerateOrchestrator {
         }
       }
 
-      // ENRICHMENT PIPELINE - NEW!
+      // ENRICHMENT PIPELINE with intelligent caching
       console.log('[Orchestrator] Starting enrichment pipeline...');
-      const enrichedContent = await this.enrichContent(unique); // Only enrich unique items
+      const enrichmentCacheKey = `enrichment:batch:${unique.length}`;
+      const enrichedContent = await intelligentCache.get(
+        enrichmentCacheKey,
+        async () => {
+          return await this.enrichContent(unique);
+        },
+        {
+          ttl: 1800000, // 30 minutes - enriched data is expensive to compute
+          tags: ['enrichment'],
+          priority: 'high'
+        }
+      ) || [];
 
       // Score and rank all content
       console.log('[Orchestrator] Scoring content for Accelerate relevance...');
