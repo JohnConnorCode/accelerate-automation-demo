@@ -4,7 +4,38 @@ import { supabase } from '../src/lib/supabase-client';
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Handle POST requests for approve/reject actions
   if (req.method === 'POST') {
-    const { action, type, id } = req.body;
+    const { action, type, id, ids, reason } = req.body;
+    
+    // Handle bulk operations
+    if (action === 'bulk_approve' && ids && ids.length > 0) {
+      const table = type === 'project' ? 'projects' : type === 'funding' ? 'funding_programs' : 'resources';
+      const { error } = await supabase
+        .from(table)
+        .update({ status: 'approved', approved_at: new Date().toISOString() })
+        .in('id', ids);
+      
+      if (error) {
+        return res.status(500).json({ error: 'Failed to bulk approve' });
+      }
+      return res.status(200).json({ success: true, message: `${ids.length} items approved` });
+    }
+    
+    if (action === 'bulk_reject' && ids && ids.length > 0) {
+      const table = type === 'project' ? 'projects' : type === 'funding' ? 'funding_programs' : 'resources';
+      const { error } = await supabase
+        .from(table)
+        .update({ 
+          status: 'rejected', 
+          rejected_at: new Date().toISOString(),
+          rejection_reason: reason || 'Bulk rejection'
+        })
+        .in('id', ids);
+      
+      if (error) {
+        return res.status(500).json({ error: 'Failed to bulk reject' });
+      }
+      return res.status(200).json({ success: true, message: `${ids.length} items rejected` });
+    }
     
     if (action === 'approve') {
       // Update item as approved in database
@@ -296,6 +327,52 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           font-weight: 600;
           font-size: 14px;
         }
+        .bulk-controls {
+          background: white;
+          padding: 15px 20px;
+          border-radius: 8px;
+          margin-bottom: 20px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .bulk-select {
+          display: flex;
+          gap: 10px;
+          align-items: center;
+        }
+        .bulk-actions {
+          display: flex;
+          gap: 10px;
+        }
+        .checkbox-wrapper {
+          display: inline-block;
+          margin-right: 10px;
+        }
+        input[type="checkbox"] {
+          width: 18px;
+          height: 18px;
+          cursor: pointer;
+        }
+        .item-card.selected {
+          background: #f0f9ff !important;
+          border: 2px solid #0284c7 !important;
+        }
+        .keyboard-hint {
+          background: #f3f4f6;
+          padding: 10px;
+          border-radius: 6px;
+          font-size: 12px;
+          margin-bottom: 15px;
+        }
+        .keyboard-hint kbd {
+          background: white;
+          padding: 2px 6px;
+          border-radius: 3px;
+          border: 1px solid #d1d5db;
+          font-family: monospace;
+        }
         .tags {
           display: flex;
           gap: 8px;
@@ -553,10 +630,53 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       <div class="content">
         <!-- Projects Tab -->
         <div id="projects" class="tab-content active">
+          <!-- Keyboard shortcuts hint -->
+          <div class="keyboard-hint">
+            <strong>Keyboard Shortcuts:</strong> 
+            <kbd>A</kbd> Select All | 
+            <kbd>Shift+A</kbd> Approve Selected | 
+            <kbd>Shift+R</kbd> Reject Selected | 
+            <kbd>E</kbd> Enrich Selected | 
+            <kbd>Space</kbd> Toggle Selection | 
+            <kbd>Esc</kbd> Clear Selection
+          </div>
+          
+          <!-- Bulk controls -->
+          <div class="bulk-controls">
+            <div class="bulk-select">
+              <button class="button button-secondary" onclick="selectAll('projects')">
+                ☑️ Select All
+              </button>
+              <button class="button button-secondary" onclick="clearSelection('projects')">
+                ❌ Clear Selection
+              </button>
+              <button class="button button-secondary" onclick="selectByScore(80)">
+                ⭐ Select Score 80+
+              </button>
+              <span style="margin-left: 20px; font-weight: 600;">
+                <span id="selected-count-projects">0</span> selected
+              </span>
+            </div>
+            
+            <div class="bulk-actions">
+              <button class="button button-success" onclick="bulkApprove('project')" id="bulk-approve-btn">
+                ✅ Approve Selected
+              </button>
+              <button class="button button-danger" onclick="bulkReject('project')" id="bulk-reject-btn">
+                ❌ Reject Selected
+              </button>
+              <button class="button" style="background: #8b5cf6; color: white;" onclick="bulkEnrich('project')">
+                🔮 Enrich Selected
+              </button>
+            </div>
+          </div>
           
           <div class="items-grid">
             ${projects.length > 0 ? projects.map(project => `
-              <div class="item-card" id="card-${project.id}">
+              <div class="item-card" id="card-${project.id}" data-score="${project.score || 0}" data-type="project">
+                <div class="checkbox-wrapper">
+                  <input type="checkbox" id="check-${project.id}" onchange="toggleSelection('${project.id}')" />
+                </div>
                 <div class="item-header">
                   <a href="${project.website_url || project.github_url || '#'}" target="_blank" class="item-title">
                     ${project.name || 'Unnamed Project'}
@@ -751,7 +871,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       </div>
 
       <script>
+        let selectedItems = new Set();
+        let currentTab = 'projects';
+        
         function switchTab(tabName) {
+          currentTab = tabName;
+          selectedItems.clear();
+          updateSelectedCount();
+          
           // Hide all tabs
           document.querySelectorAll('.tab-content').forEach(content => {
             content.classList.remove('active');
@@ -764,6 +891,190 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           document.getElementById(tabName).classList.add('active');
           event.target.classList.add('active');
         }
+        
+        function toggleSelection(id) {
+          const card = document.getElementById('card-' + id);
+          const checkbox = document.getElementById('check-' + id);
+          
+          if (checkbox.checked) {
+            selectedItems.add(id);
+            card.classList.add('selected');
+          } else {
+            selectedItems.delete(id);
+            card.classList.remove('selected');
+          }
+          
+          updateSelectedCount();
+        }
+        
+        function selectAll(type) {
+          const cards = document.querySelectorAll('.tab-content.active .item-card');
+          cards.forEach(card => {
+            const id = card.id.replace('card-', '');
+            const checkbox = document.getElementById('check-' + id);
+            if (checkbox) {
+              checkbox.checked = true;
+              selectedItems.add(id);
+              card.classList.add('selected');
+            }
+          });
+          updateSelectedCount();
+        }
+        
+        function clearSelection(type) {
+          selectedItems.clear();
+          document.querySelectorAll('.item-card').forEach(card => {
+            card.classList.remove('selected');
+          });
+          document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+            cb.checked = false;
+          });
+          updateSelectedCount();
+        }
+        
+        function selectByScore(minScore) {
+          const cards = document.querySelectorAll('.tab-content.active .item-card');
+          cards.forEach(card => {
+            const score = parseInt(card.dataset.score);
+            if (score >= minScore) {
+              const id = card.id.replace('card-', '');
+              const checkbox = document.getElementById('check-' + id);
+              if (checkbox) {
+                checkbox.checked = true;
+                selectedItems.add(id);
+                card.classList.add('selected');
+              }
+            }
+          });
+          updateSelectedCount();
+        }
+        
+        function updateSelectedCount() {
+          const countElement = document.getElementById('selected-count-' + currentTab);
+          if (countElement) {
+            countElement.textContent = selectedItems.size;
+          }
+        }
+        
+        async function bulkApprove(type) {
+          if (selectedItems.size === 0) {
+            alert('Please select items to approve');
+            return;
+          }
+          
+          if (confirm('Approve ' + selectedItems.size + ' selected items?')) {
+            try {
+              const response = await fetch('/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  action: 'bulk_approve',
+                  type: type,
+                  ids: Array.from(selectedItems)
+                })
+              });
+              
+              const result = await response.json();
+              if (result.success) {
+                alert(result.message);
+                location.reload();
+              } else {
+                alert('Failed: ' + result.error);
+              }
+            } catch (error) {
+              alert('Error: ' + error.message);
+            }
+          }
+        }
+        
+        async function bulkReject(type) {
+          if (selectedItems.size === 0) {
+            alert('Please select items to reject');
+            return;
+          }
+          
+          const reason = prompt('Rejection reason for ' + selectedItems.size + ' items (optional):');
+          if (reason !== null) {
+            try {
+              const response = await fetch('/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  action: 'bulk_reject',
+                  type: type,
+                  ids: Array.from(selectedItems),
+                  reason: reason
+                })
+              });
+              
+              const result = await response.json();
+              if (result.success) {
+                alert(result.message);
+                location.reload();
+              } else {
+                alert('Failed: ' + result.error);
+              }
+            } catch (error) {
+              alert('Error: ' + error.message);
+            }
+          }
+        }
+        
+        async function bulkEnrich(type) {
+          if (selectedItems.size === 0) {
+            alert('Please select items to enrich');
+            return;
+          }
+          
+          if (confirm('Enrich ' + selectedItems.size + ' items with comprehensive data?')) {
+            for (const id of selectedItems) {
+              await enrichItem(type, id);
+            }
+            alert('Enrichment started for ' + selectedItems.size + ' items');
+          }
+        }
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+          // Ignore if typing in an input
+          if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+          
+          // Select all
+          if (e.key === 'a' && !e.shiftKey) {
+            e.preventDefault();
+            selectAll(currentTab);
+          }
+          
+          // Approve selected
+          if (e.key === 'A' && e.shiftKey) {
+            e.preventDefault();
+            const type = currentTab === 'projects' ? 'project' : 
+                        currentTab === 'funding' ? 'funding' : 'resource';
+            bulkApprove(type);
+          }
+          
+          // Reject selected
+          if (e.key === 'R' && e.shiftKey) {
+            e.preventDefault();
+            const type = currentTab === 'projects' ? 'project' : 
+                        currentTab === 'funding' ? 'funding' : 'resource';
+            bulkReject(type);
+          }
+          
+          // Enrich selected
+          if (e.key === 'e' && !e.shiftKey) {
+            e.preventDefault();
+            const type = currentTab === 'projects' ? 'project' : 
+                        currentTab === 'funding' ? 'funding' : 'resource';
+            bulkEnrich(type);
+          }
+          
+          // Clear selection
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            clearSelection(currentTab);
+          }
+        });
 
         async function approveItem(type, id) {
           if (confirm('Approve this ' + type + ' for the Accelerate platform? This will add it to the live platform.')) {

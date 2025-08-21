@@ -443,6 +443,41 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           </div>
         </div>
         
+        <!-- Custom Scoring Formula Editor -->
+        <div class="control-section">
+          <h2 class="section-title">🎯 Custom Scoring Formula</h2>
+          
+          <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
+            <h3 style="margin-bottom: 15px;">Active Scoring Rules</h3>
+            
+            <div id="scoring-rules">
+              <!-- Rules will be loaded here -->
+            </div>
+            
+            <button class="button button-primary" onclick="addScoringRule()" style="margin-top: 15px;">
+              ➕ Add New Rule
+            </button>
+            
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #dee2e6;">
+              <h4>Test Your Formula</h4>
+              <input type="text" placeholder="Enter Project ID to test" id="test-project-id" style="padding: 10px; border: 1px solid #ced4da; border-radius: 4px; width: 300px;">
+              <button class="button button-secondary" onclick="testScoringFormula()">
+                🧪 Test Score
+              </button>
+              <div id="test-results" style="margin-top: 15px;"></div>
+            </div>
+            
+            <div style="margin-top: 20px;">
+              <button class="button button-success" onclick="saveScoringFormula()">
+                💾 Save Formula Changes
+              </button>
+              <button class="button button-secondary" onclick="loadDefaultFormula()">
+                ↩️ Reset to Default
+              </button>
+            </div>
+          </div>
+        </div>
+        
         <!-- System Settings -->
         <div class="control-section">
           <h2 class="section-title">⚙️ System Settings</h2>
@@ -623,6 +658,171 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (window.location.search.includes('password=${ADMIN_PASSWORD}')) {
           document.getElementById('authModal').style.display = 'none';
         }
+        
+        // Scoring formula management
+        let scoringFormula = null;
+        
+        async function loadScoringFormula() {
+          try {
+            const response = await fetch('/api/scoring');
+            scoringFormula = await response.json();
+            displayScoringRules();
+          } catch (error) {
+            console.error('Failed to load scoring formula:', error);
+          }
+        }
+        
+        function displayScoringRules() {
+          const container = document.getElementById('scoring-rules');
+          if (!scoringFormula || !scoringFormula.rules) return;
+          
+          container.innerHTML = scoringFormula.rules.map((rule, index) => \`
+            <div style="background: white; padding: 15px; border-radius: 6px; margin-bottom: 10px; border: 1px solid #e5e7eb;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="flex: 1;">
+                  <strong>\${rule.name}</strong>
+                  <div style="margin-top: 10px; display: flex; gap: 10px; align-items: center;">
+                    <select id="field-\${index}" style="padding: 5px;">
+                      <option value="amount_funded" \${rule.field === 'amount_funded' ? 'selected' : ''}>Funding Amount</option>
+                      <option value="team_size" \${rule.field === 'team_size' ? 'selected' : ''}>Team Size</option>
+                      <option value="launched_date" \${rule.field === 'launched_date' ? 'selected' : ''}>Launch Date</option>
+                      <option value="social_score" \${rule.field === 'social_score' ? 'selected' : ''}>Social Score</option>
+                      <option value="github_stars" \${rule.field === 'github_stars' ? 'selected' : ''}>GitHub Stars</option>
+                      <option value="twitter_followers" \${rule.field === 'twitter_followers' ? 'selected' : ''}>Twitter Followers</option>
+                    </select>
+                    
+                    <select id="operator-\${index}" style="padding: 5px;">
+                      <option value="greater" \${rule.operator === 'greater' ? 'selected' : ''}>&gt;</option>
+                      <option value="less" \${rule.operator === 'less' ? 'selected' : ''}>&lt;</option>
+                      <option value="equals" \${rule.operator === 'equals' ? 'selected' : ''}>=</option>
+                      <option value="between" \${rule.operator === 'between' ? 'selected' : ''}>between</option>
+                    </select>
+                    
+                    <input type="text" id="value-\${index}" value="\${Array.isArray(rule.value) ? rule.value.join(',') : rule.value}" style="padding: 5px; width: 150px;">
+                    
+                    <span>→</span>
+                    
+                    <input type="number" id="points-\${index}" value="\${rule.points}" style="padding: 5px; width: 60px;" min="0" max="100">
+                    <span>points</span>
+                    
+                    <span>×</span>
+                    
+                    <input type="number" id="weight-\${index}" value="\${rule.weight}" step="0.1" style="padding: 5px; width: 60px;" min="0.1" max="2">
+                    <span>weight</span>
+                    
+                    <label style="margin-left: 10px;">
+                      <input type="checkbox" id="enabled-\${index}" \${rule.enabled ? 'checked' : ''}>
+                      Enabled
+                    </label>
+                  </div>
+                </div>
+                <button onclick="removeRule(\${index})" style="background: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
+                  Remove
+                </button>
+              </div>
+            </div>
+          \`).join('');
+        }
+        
+        function addScoringRule() {
+          if (!scoringFormula) {
+            scoringFormula = { rules: [] };
+          }
+          
+          scoringFormula.rules.push({
+            id: Date.now().toString(),
+            name: 'New Rule',
+            field: 'amount_funded',
+            operator: 'greater',
+            value: 0,
+            points: 10,
+            weight: 1,
+            enabled: true
+          });
+          
+          displayScoringRules();
+        }
+        
+        function removeRule(index) {
+          scoringFormula.rules.splice(index, 1);
+          displayScoringRules();
+        }
+        
+        async function saveScoringFormula() {
+          // Collect current values from inputs
+          scoringFormula.rules = scoringFormula.rules.map((rule, index) => ({
+            ...rule,
+            field: document.getElementById('field-' + index).value,
+            operator: document.getElementById('operator-' + index).value,
+            value: document.getElementById('operator-' + index).value === 'between' 
+              ? document.getElementById('value-' + index).value.split(',').map(v => parseFloat(v))
+              : parseFloat(document.getElementById('value-' + index).value),
+            points: parseInt(document.getElementById('points-' + index).value),
+            weight: parseFloat(document.getElementById('weight-' + index).value),
+            enabled: document.getElementById('enabled-' + index).checked
+          }));
+          
+          try {
+            const response = await fetch('/api/scoring', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ formula: scoringFormula })
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+              addLog('Scoring formula saved successfully');
+              alert('Formula saved! All new items will be scored with this formula.');
+            }
+          } catch (error) {
+            alert('Failed to save formula: ' + error.message);
+          }
+        }
+        
+        async function testScoringFormula() {
+          const testId = document.getElementById('test-project-id').value;
+          if (!testId) {
+            alert('Please enter a project ID to test');
+            return;
+          }
+          
+          try {
+            const response = await fetch('/api/scoring', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                itemId: testId, 
+                formula: scoringFormula 
+              })
+            });
+            
+            const result = await response.json();
+            
+            document.getElementById('test-results').innerHTML = \`
+              <div style="background: white; padding: 15px; border-radius: 6px; border: 2px solid #10b981;">
+                <h4>Score: \${result.score}/100</h4>
+                <div style="margin-top: 10px;">
+                  \${result.breakdown.map(b => \`
+                    <div style="padding: 5px; \${b.matched ? 'color: green;' : 'color: gray;'}">
+                      \${b.matched ? '✓' : '✗'} \${b.rule}: \${b.points} points
+                    </div>
+                  \`).join('')}
+                </div>
+              </div>
+            \`;
+          } catch (error) {
+            alert('Failed to test formula: ' + error.message);
+          }
+        }
+        
+        function loadDefaultFormula() {
+          if (confirm('Reset to default formula? Your custom rules will be lost.')) {
+            loadScoringFormula();
+          }
+        }
+        
+        // Load formula on page load
+        loadScoringFormula();
       </script>
     </body>
     </html>
