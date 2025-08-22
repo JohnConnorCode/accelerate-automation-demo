@@ -641,7 +641,7 @@ export class GracefulDegradationService extends EventEmitter {
     
     try {
       // Execute with timeout based on degradation level
-      const timeout = settings.timeouts.api;
+      const timeout = settings.timeouts?.api || 30000;
       return await this.withTimeout(operation(), timeout);
     } catch (error) {
       console.error(`[Degradation] Feature ${featureName} failed:`, error);
@@ -659,10 +659,11 @@ export class GracefulDegradationService extends EventEmitter {
   /**
    * Get current performance settings
    */
-  async getPerformanceSettings(): Promise<DegradationLevel['timeouts'] & {
+  async getPerformanceSettings(): Promise<{
     mode: string;
     apiRateLimit: number;
     batchSize: number;
+    timeouts: DegradationLevel['timeouts'];
   }> {
     const cached = await intelligentCache.get<any>('performance:settings');
     
@@ -718,7 +719,12 @@ export class GracefulDegradationService extends EventEmitter {
     enabledFeatures: string[];
     disabledFeatures: string[];
     lastHealthCheck: SystemHealth | null;
-    history: typeof this.degradationHistory;
+    history: Array<{
+      timestamp: Date;
+      fromLevel: string;
+      toLevel: string;
+      reason: string;
+    }>;
   } {
     return {
       currentLevel: this.currentLevel.level,

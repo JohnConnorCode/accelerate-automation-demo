@@ -128,7 +128,7 @@ export class OptimizedDatabaseService {
         cacheKey,
         async () => {
           const result = await this.executeQuery<T>(table);
-          return result.data;
+          return result.data || [];
         },
         {
           ttl: options?.cacheTTL || 300000, // 5 minutes default
@@ -242,7 +242,7 @@ export class OptimizedDatabaseService {
     const cacheKey = `db:${table}:select:${JSON.stringify(filters)}`;
     
     if (options?.cache !== false) {
-      const cached = await intelligentCache.get<T[]>(
+      const cached = await intelligentCache.get<any[]>(
         cacheKey,
         async () => {
           const connection = this.getPooledConnection();
@@ -262,14 +262,14 @@ export class OptimizedDatabaseService {
           }
           
           // Use indexed columns for ordering if available
-          const indexCols = this.indexedColumns[table as keyof typeof this.indexedColumns];
+          const indexCols = new OptimizedDatabaseService().indexedColumns[table as keyof OptimizedDatabaseService['indexedColumns']];
           if (indexCols?.includes('created_at')) {
             query = query.order('created_at', { ascending: false });
           }
           
           const { data, error } = await query;
           if (error) throw error;
-          return data;
+          return data || [] as T[];
         },
         {
           ttl: options?.cacheTTL || 300000,
@@ -297,7 +297,8 @@ export class OptimizedDatabaseService {
       });
     }
     
-    return await query;
+    const result = await query;
+    return { data: result.data as T[] | null, error: result.error };
   }
   
   /**

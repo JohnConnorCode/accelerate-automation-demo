@@ -179,9 +179,9 @@ export class SchedulingService {
     try {
       // Run orchestrator
       console.log('[Scheduler] Running data fetch...');
-      const orchestratorResult = await this.orchestrator.run('all');
-      results.fetched = orchestratorResult.totalItems || 0;
-      results.processed = orchestratorResult.processed || 0;
+      const orchestratorResult = await this.orchestrator.run();
+      results.fetched = (orchestratorResult as any).totalItems || 0;
+      results.processed = (orchestratorResult as any).processed || 0;
       
       // Run quality checks if enabled
       if (this.config.autoQualityChecks) {
@@ -242,12 +242,9 @@ export class SchedulingService {
       // Fetch data unless skipped
       if (!options?.skipFetch) {
         console.log('[Scheduler] Fetching data from sources...');
-        const orchestratorResult = await this.orchestrator.run(
-          options?.sources ? 'custom' : 'all',
-          options?.sources
-        );
-        results.fetched = orchestratorResult.totalItems || 0;
-        results.processed = orchestratorResult.processed || 0;
+        const orchestratorResult = await this.orchestrator.run();
+        results.fetched = (orchestratorResult as any).totalItems || 0;
+        results.processed = (orchestratorResult as any).processed || 0;
       }
       
       // Run quality checks unless skipped

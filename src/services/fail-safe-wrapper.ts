@@ -67,7 +67,7 @@ export class FailSafeWrapper {
     
     try {
       // Check circuit breaker
-      if (options?.circuitBreaker !== undefined && options.circuitBreaker !== false) {
+      if (options?.circuitBreaker && typeof options.circuitBreaker === 'object') {
         const breaker = this.checkCircuitBreaker(
           operationName,
           options?.circuitBreaker

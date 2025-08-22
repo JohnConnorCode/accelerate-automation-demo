@@ -232,7 +232,9 @@ export class MonitoringAlertingService extends EventEmitter {
         .gte('timestamp', fiveMinutesAgo);
       
       if (totalLogs && errorLogs) {
-        metrics.errorRate = totalLogs > 0 ? errorLogs / totalLogs : 0;
+        const totalCount = typeof totalLogs === 'number' ? totalLogs : 0;
+        const errorCount = typeof errorLogs === 'number' ? errorLogs : 0;
+        metrics.errorRate = totalCount > 0 ? errorCount / totalCount : 0;
       }
     } catch (error) {
       console.error('[Monitoring] Failed to calculate error rate:', error);
@@ -263,7 +265,7 @@ export class MonitoringAlertingService extends EventEmitter {
         .in('status', ['approved', 'rejected'])
         .gte('processed_at', new Date(Date.now() - 60000).toISOString());
       
-      metrics.throughput = processed || 0;
+      metrics.throughput = Array.isArray(processed) ? processed.length : 0;
     } catch (error) {
       console.error('[Monitoring] Failed to calculate throughput:', error);
     }

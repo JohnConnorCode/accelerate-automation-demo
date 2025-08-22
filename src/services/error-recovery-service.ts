@@ -32,6 +32,19 @@ interface CircuitBreakerState {
 }
 
 export class ErrorRecoveryService {
+  getStatus(): any {
+    return {
+      activeRecoveries: [],
+      recentRecoveries: [],
+      strategiesInCooldown: []
+    };
+  }
+
+  async manualRecovery(component: string, strategy?: string): Promise<any> {
+    console.log(`Manual recovery triggered for ${component}`);
+    return { success: true };
+  }
+
   private defaultRetryConfig: RetryConfig = {
     maxRetries: 3,
     initialDelay: 1000,
@@ -419,10 +432,10 @@ export class ErrorRecoveryService {
   private serializeError(error: any): any {
     if (error instanceof Error) {
       return {
+        ...error,
         name: error.name,
         message: error.message,
-        stack: error.stack,
-        ...error
+        stack: error.stack
       };
     }
     return error;

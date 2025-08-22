@@ -236,7 +236,7 @@ export class RateLimitingService {
       endpoint,
       violation_type: type,
       timestamp: new Date().toISOString()
-    }).then(() => {}).catch(console.error);
+    }).then(() => {}).then(undefined, console.error);
   }
   
   /**

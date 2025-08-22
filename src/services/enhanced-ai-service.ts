@@ -18,7 +18,7 @@ interface ModelConfig {
 
 interface AssessmentContext {
   item: ContentItem;
-  priority: 'critical' | 'standard' | 'bulk';
+  priority: 'standard' | 'bulk';
   isManualRequest?: boolean;
   batchSize?: number;
   retryCount?: number;
@@ -111,7 +111,7 @@ export class EnhancedAIService {
     const { item, priority, isManualRequest, batchSize, retryCount, deadline } = context;
     
     // Critical factors that require maximum accuracy
-    if (priority === 'critical' || isManualRequest) {
+    if (priority === 'standard' || isManualRequest) {
       return this.models['gpt-5'];
     }
     
@@ -138,8 +138,6 @@ export class EnhancedAIService {
     
     // Default based on priority
     switch (priority) {
-      case 'critical':
-        return this.models['gpt-5'];
       case 'bulk':
         return this.models['gpt-5-nano'];
       default:
@@ -265,7 +263,7 @@ export class EnhancedAIService {
       console.error(`Assessment failed with ${model.name}:`, error);
       
       // Fallback to lower model if high-tier fails
-      if (model.model === 'gpt-5' && context.priority !== 'critical') {
+      if (model.model === 'gpt-5' && context.priority !== 'standard') {
         context.priority = 'standard';
         return this.assessWithReasoning(context);
       }

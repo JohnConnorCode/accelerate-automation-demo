@@ -375,8 +375,8 @@ export class SmartSearchService {
     for (const [shortcut, config] of Object.entries(this.shortcuts)) {
       if (query.includes(shortcut)) {
         processedQuery = query.replace(shortcut, '').trim();
-        if (config.filter) {
-          filters = { ...filters, ...config.filter };
+        if ('filter' in config && config.filter) {
+          filters = { ...filters, ...config.filter } as any;
         }
       }
     }
@@ -737,7 +737,9 @@ export class SmartSearchService {
     // Keep only last 100 searches
     if (this.searchHistory.size > 100) {
       const firstKey = this.searchHistory.keys().next().value;
-      this.searchHistory.delete(firstKey);
+      if (firstKey) {
+        this.searchHistory.delete(firstKey);
+      }
     }
     
     // Store in database for long-term analytics
@@ -746,7 +748,7 @@ export class SmartSearchService {
       results_count: resultsCount,
       response_time: responseTime,
       timestamp: new Date().toISOString()
-    }).then(() => {}).catch(console.error);
+    }).then(() => {}).then(undefined, console.error);
   }
   
   /**
