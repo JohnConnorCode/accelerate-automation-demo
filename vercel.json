@@ -1,13 +1,34 @@
 {
   "version": 2,
-  "rewrites": [
-    { "source": "/", "destination": "/api/index" }
-  ],
-  "functions": {
-    "api/*.ts": {
-      "maxDuration": 60
+  "name": "accelerate-content-automation",
+  "builds": [
+    {
+      "src": "api/*.ts",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "public/*",
+      "use": "@vercel/static"
     }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1.ts"
+    },
+    {
+      "src": "/admin",
+      "dest": "/public/admin.html"
+    },
+    {
+      "src": "/",
+      "dest": "/public/index.html"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
   },
+  "public": true,
   "crons": [
     {
       "path": "/api/run",

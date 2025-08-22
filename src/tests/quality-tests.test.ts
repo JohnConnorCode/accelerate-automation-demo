@@ -67,7 +67,7 @@ describe('Content Quality Tests', () => {
   });
 
   describe('Scoring Algorithm', () => {
-    it('should score early-stage projects higher', () => {
+    it('should score early-stage projects higher', async () => {
       const earlyStage: ContentItem = {
         source: 'test',
         type: 'project',
@@ -82,11 +82,12 @@ describe('Content Quality Tests', () => {
         }
       };
       
-      const score = AccelerateScorer.calculateScore(earlyStage);
+      const scorer = new AccelerateScorer();
+      const score = await scorer.scoreContent(earlyStage);
       expect(score).toBeGreaterThan(70);
     });
     
-    it('should penalize corporate-backed projects', () => {
+    it('should penalize corporate-backed projects', async () => {
       const corporate: ContentItem = {
         source: 'test',
         type: 'project',
@@ -101,11 +102,12 @@ describe('Content Quality Tests', () => {
         }
       };
       
-      const score = AccelerateScorer.calculateScore(corporate);
+      const scorer = new AccelerateScorer();
+      const score = await scorer.scoreContent(corporate);
       expect(score).toBeLessThan(30);
     });
     
-    it('should boost projects with social proof', () => {
+    it('should boost projects with social proof', async () => {
       const socialProof: ContentItem = {
         source: 'test',
         type: 'project',
@@ -121,7 +123,8 @@ describe('Content Quality Tests', () => {
         }
       };
       
-      const score = AccelerateScorer.calculateScore(socialProof);
+      const scorer = new AccelerateScorer();
+      const score = await scorer.scoreContent(socialProof);
       expect(score).toBeGreaterThan(80);
     });
   });

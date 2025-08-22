@@ -28,12 +28,7 @@ const vercelConfig = {
     { src: "/api/webhook", dest: "/api/webhook.ts" }
   ],
   env: {
-    "SUPABASE_URL": "@supabase_url",
-    "SUPABASE_ANON_KEY": "@supabase_anon_key",
-    "GITHUB_TOKEN": "@github_token",
-    "TWITTER_BEARER_TOKEN": "@twitter_bearer_token",
-    "DISCORD_BOT_TOKEN": "@discord_bot_token",
-    "NEYNAR_API_KEY": "@neynar_api_key"
+    "NODE_ENV": "production"
   },
   crons: [
     {
