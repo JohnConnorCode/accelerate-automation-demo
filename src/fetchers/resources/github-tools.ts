@@ -64,7 +64,7 @@ export class GitHubToolsFetcher extends BaseFetcher<GitHubToolData> {
 
       return allData;
     } catch (error) {
-      console.error(`[${this.config.name}] Error:`, error);
+
       return [];
     }
   }

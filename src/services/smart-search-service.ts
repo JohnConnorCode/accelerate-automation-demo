@@ -221,7 +221,7 @@ export class SmartSearchService {
     const { data, error } = await dbQuery;
     
     if (error) {
-      console.error('[SmartSearch] Database error:', error);
+
       return [];
     }
     
@@ -620,8 +620,7 @@ export class SmartSearchService {
    * Build search index
    */
   private async buildSearchIndex(): Promise<void> {
-    console.log('[SmartSearch] Building search index...');
-    
+
     const { data } = await supabase
       .from('approved_content')
       .select('id, title, description, tags, type');
@@ -652,8 +651,7 @@ export class SmartSearchService {
         this.searchIndex.get(term)!.add(item.id);
       });
     }
-    
-    console.log(`[SmartSearch] Indexed ${this.searchIndex.size} unique terms`);
+
   }
   
   /**

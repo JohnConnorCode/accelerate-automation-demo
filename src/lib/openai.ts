@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 
 if (!process.env.OPENAI_API_KEY) {
-  console.warn('OpenAI API key not configured - AI scoring will be disabled');
+
 }
 
 export const openai = process.env.OPENAI_API_KEY 
@@ -29,7 +29,7 @@ export async function scoreContent(
   contentType: 'resource' | 'project' | 'funding'
 ): Promise<ScoringResult | null> {
   if (!openai) {
-    console.log('OpenAI not configured, skipping scoring');
+
     return null;
   }
 
@@ -58,7 +58,7 @@ Provide scores in JSON format:
 }`;
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4-turbo-preview',
+      model: 'gpt-5-mini', // Using GPT-5 mini as requested
       messages: [
         {
           role: 'system',
@@ -77,7 +77,7 @@ Provide scores in JSON format:
     const result = JSON.parse(response.choices[0].message.content || '{}');
     return result as ScoringResult;
   } catch (error) {
-    console.error('Error scoring content:', error);
+
     return null;
   }
 }

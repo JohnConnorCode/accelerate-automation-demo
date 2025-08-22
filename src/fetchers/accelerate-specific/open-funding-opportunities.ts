@@ -68,7 +68,7 @@ export class GitcoinGrantsFetcher extends BaseFetcher<z.infer<typeof GitcoinGran
         return [data];
       }
     } catch (error) {
-      console.error(`[${this.config.name}] Error:`, error);
+
     }
     
     return [];

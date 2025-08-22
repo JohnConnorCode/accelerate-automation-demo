@@ -144,8 +144,7 @@ export class RealtimeNotificationsService extends EventEmitter {
         this.handleNewNotification(payload.new as any);
       })
       .subscribe();
-    
-    console.log('[Notifications] Real-time subscription initialized');
+
   }
   
   /**
@@ -363,8 +362,7 @@ export class RealtimeNotificationsService extends EventEmitter {
    */
   private async showDesktopNotification(notification: Notification): Promise<void> {
     // This would use the browser's Notification API in a real implementation
-    console.log(`[Desktop Notification] ${notification.title}: ${notification.message}`);
-    
+
     // In a browser environment:
     /*
     if ('Notification' in window && Notification.permission === 'granted') {
@@ -388,8 +386,7 @@ export class RealtimeNotificationsService extends EventEmitter {
     const sound = template.sound;
     
     // This would play actual sounds in a browser environment
-    console.log(`[Sound] Playing ${sound} sound for ${type}`);
-    
+
     // In a browser environment:
     /*
     const audio = new Audio(`/sounds/${sound}.mp3`);
@@ -403,8 +400,7 @@ export class RealtimeNotificationsService extends EventEmitter {
    */
   private async sendEmailNotification(notification: Notification): Promise<void> {
     // This would integrate with an email service
-    console.log(`[Email] Sending email for ${notification.title}`);
-    
+
     // Store in database for email queue
     await supabase.from('email_queue').insert({
       to: process.env.ADMIN_EMAIL,

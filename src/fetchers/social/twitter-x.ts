@@ -52,7 +52,7 @@ export class TwitterFetcher extends BaseFetcher<TwitterData> {
 
   async fetch(): Promise<TwitterData[]> {
     if (!process.env.TWITTER_BEARER_TOKEN) {
-      console.warn('[Twitter] No bearer token provided');
+
       return [];
     }
 
@@ -81,7 +81,7 @@ export class TwitterFetcher extends BaseFetcher<TwitterData> {
         );
 
         if (!response.ok) {
-          console.error(`Twitter API error: ${response.status} ${response.statusText}`);
+
           continue;
         }
 
@@ -93,7 +93,7 @@ export class TwitterFetcher extends BaseFetcher<TwitterData> {
         // Respect rate limits
         await this.delay(this.config.rateLimit || 15000);
       } catch (error) {
-        console.error(`[${this.config.name}] Error fetching query "${query}":`, error);
+
       }
     }
 
@@ -202,7 +202,7 @@ export class DiscordFetcher extends BaseFetcher<z.infer<typeof DiscordMessageSch
 
   async fetch(): Promise<z.infer<typeof DiscordMessageSchema>[][]> {
     if (!process.env.DISCORD_BOT_TOKEN) {
-      console.warn('[Discord] No bot token provided');
+
       return [];
     }
 
@@ -221,7 +221,7 @@ export class DiscordFetcher extends BaseFetcher<z.infer<typeof DiscordMessageSch
           allMessages.push(data.messages || []);
         }
       } catch (error) {
-        console.error(`[Discord] Error fetching ${server.name}:`, error);
+
       }
     }
 
@@ -276,7 +276,7 @@ export class TelegramFetcher extends BaseFetcher<any> {
 
   async fetch(): Promise<any[]> {
     if (!process.env.TELEGRAM_BOT_TOKEN) {
-      console.warn('[Telegram] No bot token provided');
+
       return [];
     }
 
@@ -295,7 +295,7 @@ export class TelegramFetcher extends BaseFetcher<any> {
           }
         }
       } catch (error) {
-        console.error(`[Telegram] Error fetching ${channel}:`, error);
+
       }
     }
 

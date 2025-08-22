@@ -20,9 +20,7 @@ export const isSupabaseConfigured =
   !supabaseKey.includes('placeholder');
 
 if (!isSupabaseConfigured) {
-  console.warn('⚠️  Supabase not configured. Database features disabled.');
-  console.warn('   To enable: Set SUPABASE_URL and SUPABASE_ANON_KEY in .env');
-  console.warn('   Get from: https://app.supabase.com/project/_/settings/api');
+
 }
 
 // Create Supabase client
@@ -42,7 +40,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseKey, {
  */
 export async function testConnection(): Promise<boolean> {
   if (!isSupabaseConfigured) {
-    console.warn('[Supabase] Skipping connection test - not configured');
+
     return false;
   }
   
@@ -53,14 +51,13 @@ export async function testConnection(): Promise<boolean> {
       .limit(1);
     
     if (error) {
-      console.error('[Supabase] Connection test failed:', error);
+
       return false;
     }
-    
-    console.log('[Supabase] Connection successful');
+
     return true;
   } catch (error) {
-    console.error('[Supabase] Connection test error:', error);
+
     return false;
   }
 }

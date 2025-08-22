@@ -99,7 +99,7 @@ export class FarcasterFetcher extends BaseFetcher<z.infer<typeof FarcasterCastSc
 
         await this.delay(this.config.rateLimit || 2000);
       } catch (error) {
-        console.error(`[${this.config.name}] Error:`, error);
+
       }
     }
 
@@ -119,7 +119,7 @@ export class FarcasterFetcher extends BaseFetcher<z.infer<typeof FarcasterCastSc
 
         await this.delay(1000);
       } catch (error) {
-        console.error(`[${this.config.name}] Channel error:`, error);
+
       }
     }
 

@@ -41,7 +41,7 @@ export class ErrorRecoveryService {
   }
 
   async manualRecovery(component: string, strategy?: string): Promise<any> {
-    console.log(`Manual recovery triggered for ${component}`);
+
     return { success: true };
   }
 
@@ -112,13 +112,13 @@ export class ErrorRecoveryService {
 
         // Check if error is retryable
         if (!this.isRetryableError(error)) {
-          console.error(`[ErrorRecovery] Non-retryable error in ${operationName}:`, error);
+
           throw error;
         }
 
         // Check if we've exhausted retries
         if (retryCount >= config.maxRetries) {
-          console.error(`[ErrorRecovery] Max retries (${config.maxRetries}) exhausted for ${operationName}`);
+
           await this.handleCriticalError(operationName, error, retryCount);
           throw error;
         }
@@ -129,8 +129,6 @@ export class ErrorRecoveryService {
           config.maxDelay
         );
 
-        console.log(`[ErrorRecovery] Retry ${retryCount + 1}/${config.maxRetries} for ${operationName} after ${delay}ms`);
-        
         await this.sleep(delay);
         retryCount++;
       }
@@ -203,7 +201,7 @@ export class ErrorRecoveryService {
       if (timeSinceLastFailure > this.CIRCUIT_BREAKER_TIMEOUT) {
         breaker.state = 'half-open';
         breaker.successCount = 0;
-        console.log(`[CircuitBreaker] ${operation} moved to half-open state`);
+
       }
     }
 
@@ -227,7 +225,7 @@ export class ErrorRecoveryService {
         breaker.state = 'closed';
         breaker.failures = 0;
         breaker.successCount = 0;
-        console.log(`[CircuitBreaker] ${operation} circuit closed after successful recovery`);
+
       }
     } else if (breaker.state === 'closed') {
       // Reset failure count on success
@@ -254,10 +252,10 @@ export class ErrorRecoveryService {
     if (breaker.state === 'half-open') {
       // Immediately open circuit on failure in half-open state
       breaker.state = 'open';
-      console.log(`[CircuitBreaker] ${operation} circuit opened (failed in half-open state)`);
+
     } else if (breaker.failures >= this.CIRCUIT_BREAKER_THRESHOLD) {
       breaker.state = 'open';
-      console.log(`[CircuitBreaker] ${operation} circuit opened (threshold reached: ${breaker.failures} failures)`);
+
     }
 
     this.circuitBreakers.set(operation, breaker);
@@ -287,7 +285,7 @@ export class ErrorRecoveryService {
       // Take corrective action based on operation type
       await this.performEmergencyRecovery(operation);
     } catch (logError) {
-      console.error('[ErrorRecovery] Failed to handle critical error:', logError);
+
     }
   }
 
@@ -295,7 +293,6 @@ export class ErrorRecoveryService {
    * Perform emergency recovery actions
    */
   private async performEmergencyRecovery(operation: string): Promise<void> {
-    console.log(`[ErrorRecovery] Performing emergency recovery for ${operation}`);
 
     switch (operation) {
       case 'database_connection':
@@ -323,7 +320,7 @@ export class ErrorRecoveryService {
    * Reset database connection
    */
   private async resetDatabaseConnection(): Promise<void> {
-    console.log('[ErrorRecovery] Resetting database connection...');
+
     // In a real implementation, this would reset the connection pool
     // For Supabase, we might reinitialize the client
   }
@@ -332,7 +329,7 @@ export class ErrorRecoveryService {
    * Reset API state
    */
   private async resetApiState(): Promise<void> {
-    console.log('[ErrorRecovery] Resetting API state...');
+
     // Clear any cached tokens, reset rate limit counters
   }
 
@@ -340,8 +337,7 @@ export class ErrorRecoveryService {
    * Enable fallback mode for a service
    */
   private async enableFallbackMode(service: string): Promise<void> {
-    console.log(`[ErrorRecovery] Enabling fallback mode for ${service}`);
-    
+
     await supabase
       .from('system_settings')
       .upsert({
@@ -355,7 +351,7 @@ export class ErrorRecoveryService {
    * Generic recovery actions
    */
   private async genericRecovery(): Promise<void> {
-    console.log('[ErrorRecovery] Performing generic recovery...');
+
     // Clear caches, reset counters, etc.
   }
 
@@ -379,7 +375,7 @@ export class ErrorRecoveryService {
         created_at: new Date().toISOString()
       });
     } catch (notifyError) {
-      console.error('[ErrorRecovery] Failed to send notification:', notifyError);
+
     }
   }
 
@@ -399,8 +395,7 @@ export class ErrorRecoveryService {
    * Log successful recovery
    */
   private async logRecovery(operation: string, retryCount: number): Promise<void> {
-    console.log(`[ErrorRecovery] ${operation} recovered after ${retryCount} retries`);
-    
+
     try {
       await supabase.from('recovery_logs').insert({
         operation,
@@ -408,7 +403,7 @@ export class ErrorRecoveryService {
         timestamp: new Date().toISOString()
       });
     } catch (error) {
-      console.error('[ErrorRecovery] Failed to log recovery:', error);
+
     }
   }
 
@@ -422,7 +417,7 @@ export class ErrorRecoveryService {
       await supabase.from('error_logs').insert(this.errorLogs);
       this.errorLogs = [];
     } catch (error) {
-      console.error('[ErrorRecovery] Failed to flush error logs:', error);
+
     }
   }
 

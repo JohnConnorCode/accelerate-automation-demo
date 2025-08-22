@@ -100,7 +100,7 @@ export class EnhancedAIService {
         this.openai = new OpenAI({ apiKey: data.value });
       }
     } catch (error) {
-      console.error('Failed to load API key:', error);
+
     }
   }
 
@@ -260,8 +260,7 @@ export class EnhancedAIService {
       return assessment;
       
     } catch (error) {
-      console.error(`Assessment failed with ${model.name}:`, error);
-      
+
       // Fallback to lower model if high-tier fails
       if (model.model === 'gpt-5' && context.priority !== 'standard') {
         context.priority = 'standard';
@@ -459,7 +458,7 @@ export class EnhancedAIService {
         created_at: new Date().toISOString()
       });
     } catch (error) {
-      console.error('Failed to store assessment:', error);
+
     }
   }
 

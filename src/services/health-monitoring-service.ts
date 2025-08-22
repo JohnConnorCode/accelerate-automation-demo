@@ -78,8 +78,7 @@ export class HealthMonitoringService {
    * Start continuous health monitoring
    */
   async startMonitoring(intervalMs: number = 60000): Promise<void> {
-    console.log('[HealthMonitor] Starting health monitoring...');
-    
+
     // Initial health check
     await this.performHealthCheck();
     
@@ -96,7 +95,7 @@ export class HealthMonitoringService {
     if (this.monitoringInterval) {
       clearInterval(this.monitoringInterval);
       this.monitoringInterval = null;
-      console.log('[HealthMonitor] Health monitoring stopped');
+
     }
   }
 
@@ -172,8 +171,7 @@ export class HealthMonitoringService {
     }
     
     const duration = Date.now() - startTime;
-    console.log(`[HealthMonitor] Health check completed in ${duration}ms - Status: ${overall}`);
-    
+
     return healthMetrics;
   }
 
@@ -563,7 +561,7 @@ export class HealthMonitoringService {
         metrics.queueSize = queueSize;
       }
     } catch (error) {
-      console.error('[HealthMonitor] Error collecting metrics:', error);
+
     }
     
     return metrics;
@@ -720,7 +718,7 @@ export class HealthMonitoringService {
         recommendations: metrics.recommendations
       });
     } catch (error) {
-      console.error('[HealthMonitor] Failed to store health metrics:', error);
+
     }
   }
 
@@ -788,7 +786,7 @@ export class HealthMonitoringService {
         created_at: new Date().toISOString()
       });
     } catch (error) {
-      console.error('[HealthMonitor] Failed to send critical alert:', error);
+
     }
   }
 
@@ -796,20 +794,19 @@ export class HealthMonitoringService {
    * Attempt automatic healing for critical issues
    */
   private async attemptAutoHealing(components: ComponentHealth[]): Promise<void> {
-    console.log('[HealthMonitor] Attempting auto-healing for critical issues...');
-    
+
     for (const component of components) {
       if (component.status === 'critical') {
         switch (component.name) {
           case 'Database':
             // Reset database connections
-            console.log('[HealthMonitor] Resetting database connections...');
+
             // Implementation would reset connection pool
             break;
             
           case 'AI Service':
             // Switch to fallback AI model
-            console.log('[HealthMonitor] Switching to fallback AI model...');
+
             // Check if enableFallbackMode exists before calling
             if (typeof (this.aiService as any).enableFallbackMode === 'function') {
               await (this.aiService as any).enableFallbackMode();
@@ -818,13 +815,13 @@ export class HealthMonitoringService {
             
           case 'Error Recovery':
             // Reset circuit breakers
-            console.log('[HealthMonitor] Resetting circuit breakers...');
+
             // Implementation would reset breakers
             break;
             
           case 'Scheduler':
             // Restart scheduler
-            console.log('[HealthMonitor] Restarting scheduler...');
+
             // Check if restart exists before calling
             if (typeof (this.schedulingService as any).restart === 'function') {
               await (this.schedulingService as any).restart();
@@ -832,7 +829,7 @@ export class HealthMonitoringService {
             break;
             
           default:
-            console.log(`[HealthMonitor] No auto-healing available for ${component.name}`);
+
         }
       }
     }
@@ -867,6 +864,6 @@ export class HealthMonitoringService {
    */
   updateThresholds(config: Partial<ThresholdConfig>): void {
     this.thresholds = { ...this.thresholds, ...config };
-    console.log('[HealthMonitor] Thresholds updated:', this.thresholds);
+
   }
 }

@@ -37,7 +37,7 @@ export class Web3DirectoriesFetcher extends BaseFetcher<Web3DirectoryData> {
 
   async fetch(): Promise<Web3DirectoryData[]> {
     // For now, return mock data as we don't have a real Web3 directory API
-    console.log(`[${this.config.name}] Using mock data (no API configured)`);
+
     return [this.getMockData()];
   }
 

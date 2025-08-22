@@ -156,7 +156,7 @@ export class MirrorXYZFetcher extends BaseFetcher<z.infer<typeof MirrorEntrySche
 
         await this.delay(this.config.rateLimit || 2000);
       } catch (error) {
-        console.error(`[${this.config.name}] Error with ${name}:`, error);
+
       }
     }
 
@@ -206,7 +206,7 @@ export class MirrorXYZFetcher extends BaseFetcher<z.infer<typeof MirrorEntrySche
 
         await this.delay(1000);
       } catch (error) {
-        console.error(`[${this.config.name}] Publication error:`, error);
+
       }
     }
 

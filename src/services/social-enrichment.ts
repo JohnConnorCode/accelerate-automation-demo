@@ -221,7 +221,7 @@ export class SocialEnrichmentService {
         growth_rate: monthlyGrowth,
       };
     } catch (error) {
-      console.error(`[Social Enrichment] Twitter error for ${handle}:`, error);
+
       return undefined;
     }
   }
@@ -254,7 +254,7 @@ export class SocialEnrichmentService {
         verification_level: data.guild.verification_level || 0,
       };
     } catch (error) {
-      console.error(`[Social Enrichment] Discord error for ${inviteCode}:`, error);
+
       return undefined;
     }
   }
@@ -307,7 +307,7 @@ export class SocialEnrichmentService {
         verified: user.verified || false,
       };
     } catch (error) {
-      console.error(`[Social Enrichment] Farcaster error for ${username}:`, error);
+
       return undefined;
     }
   }
@@ -492,7 +492,7 @@ export class SocialEnrichmentService {
           enriched_at: item.metadata.social_enriched_at,
         });
     } catch (error) {
-      console.error('[Social Enrichment] Failed to store metrics:', error);
+
     }
   }
 }

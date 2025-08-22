@@ -269,8 +269,7 @@ export class GracefulDegradationService extends EventEmitter {
    * Start health monitoring
    */
   private startHealthMonitoring(): void {
-    console.log('[Degradation] Starting health monitoring...');
-    
+
     // Check health every 30 seconds
     this.healthCheckInterval = setInterval(async () => {
       await this.checkSystemHealth();
@@ -301,7 +300,7 @@ export class GracefulDegradationService extends EventEmitter {
       });
       
     } catch (error) {
-      console.error('[Degradation] Health check failed:', error);
+
       // If health check fails, assume worst case
       await this.transitionToLevel('minimal', 'Health check failure');
     }
@@ -372,9 +371,7 @@ export class GracefulDegradationService extends EventEmitter {
     const oldLevel = this.currentLevel.level;
     
     if (oldLevel === newLevel) return;
-    
-    console.log(`[Degradation] Transitioning from ${oldLevel} to ${newLevel}: ${reason}`);
-    
+
     // Record transition
     this.degradationHistory.push({
       timestamp: new Date(),
@@ -425,8 +422,7 @@ export class GracefulDegradationService extends EventEmitter {
    * Apply degradation level configuration
    */
   private async applyDegradationLevel(level: DegradationLevel): Promise<void> {
-    console.log(`[Degradation] Applying ${level.level} configuration`);
-    
+
     // Disable features
     for (const feature of level.disabledFeatures) {
       await this.disableFeature(feature);
@@ -442,8 +438,7 @@ export class GracefulDegradationService extends EventEmitter {
     
     // Update performance settings
     await this.updatePerformanceSettings(level);
-    
-    console.log(`[Degradation] Level ${level.level} applied successfully`);
+
   }
   
   /**
@@ -452,9 +447,7 @@ export class GracefulDegradationService extends EventEmitter {
   private async disableFeature(featureName: string): Promise<void> {
     const config = this.featureConfigs.get(featureName);
     if (!config) return;
-    
-    console.log(`[Degradation] Disabling feature: ${featureName}`);
-    
+
     // Store disabled state
     await intelligentCache.set(
       `feature:${featureName}:enabled`,
@@ -475,13 +468,11 @@ export class GracefulDegradationService extends EventEmitter {
     // Check dependencies
     for (const dep of config.dependencies) {
       if (!await this.isDependencyAvailable(dep)) {
-        console.warn(`[Degradation] Cannot enable ${featureName}: dependency ${dep} unavailable`);
+
         return;
       }
     }
-    
-    console.log(`[Degradation] Enabling feature: ${featureName}`);
-    
+
     // Store enabled state
     await intelligentCache.set(
       `feature:${featureName}:enabled`,
@@ -561,11 +552,11 @@ export class GracefulDegradationService extends EventEmitter {
     switch (strategy) {
       case 'aggressive':
         // Increase cache TTLs
-        console.log('[Degradation] Applying aggressive caching');
+
         break;
       case 'read-only':
         // Only read from cache, don't write
-        console.log('[Degradation] Cache set to read-only mode');
+
         break;
       default:
         // Normal caching
@@ -625,8 +616,7 @@ export class GracefulDegradationService extends EventEmitter {
     const isEnabled = await this.isFeatureEnabled(featureName);
     
     if (!isEnabled) {
-      console.log(`[Degradation] Feature ${featureName} is disabled`);
-      
+
       if (options?.skipFallback) {
         throw new Error(`Feature ${featureName} is currently unavailable`);
       }
@@ -644,8 +634,7 @@ export class GracefulDegradationService extends EventEmitter {
       const timeout = settings.timeouts?.api || 30000;
       return await this.withTimeout(operation(), timeout);
     } catch (error) {
-      console.error(`[Degradation] Feature ${featureName} failed:`, error);
-      
+
       // Try fallback on error
       if (!options?.skipFallback) {
         const fallback = options?.customFallback || (() => this.getFallback(featureName));
@@ -742,7 +731,7 @@ export class GracefulDegradationService extends EventEmitter {
     if (this.healthCheckInterval) {
       clearInterval(this.healthCheckInterval);
       this.healthCheckInterval = null;
-      console.log('[Degradation] Monitoring stopped');
+
     }
   }
 }

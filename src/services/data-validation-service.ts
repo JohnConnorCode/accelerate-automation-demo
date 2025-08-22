@@ -616,7 +616,7 @@ export class DataValidationService {
         timestamp: new Date().toISOString()
       });
     } catch (error) {
-      console.error('[DataValidation] Failed to log stats:', error);
+
     }
   }
 

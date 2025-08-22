@@ -125,7 +125,7 @@ export class FailSafeWrapper {
       
       // Try fallback if provided
       if (options?.retry?.fallbackValue !== undefined) {
-        console.warn(`[FailSafe] Using fallback for ${operationName}:`, error);
+
         return options.retry.fallbackValue;
       }
       
@@ -179,11 +179,7 @@ export class FailSafeWrapper {
         const delay = config.exponentialBackoff
           ? config.retryDelay! * Math.pow(2, attempt)
           : config.retryDelay!;
-        
-        console.log(
-          `[FailSafe] Retry ${attempt + 1}/${config.maxRetries} for ${operationName} after ${delay}ms`
-        );
-        
+
         await this.sleep(delay);
       }
     }
@@ -278,7 +274,7 @@ export class FailSafeWrapper {
       const timeSinceLastFailure = Date.now() - breaker.lastFailure.getTime();
       if (timeSinceLastFailure > config.resetTimeout!) {
         breaker.state = 'half-open';
-        console.log(`[CircuitBreaker] ${operationName} moved to half-open state`);
+
       }
     }
     
@@ -296,7 +292,7 @@ export class FailSafeWrapper {
         // Reset to closed after successful operation
         breaker.state = 'closed';
         breaker.failures = 0;
-        console.log(`[CircuitBreaker] ${operationName} circuit closed`);
+
       } else if (breaker.state === 'closed') {
         // Reset failure count on success
         breaker.failures = 0;
@@ -320,9 +316,7 @@ export class FailSafeWrapper {
     // Open circuit if threshold reached
     if (breaker.failures >= this.defaultCircuitBreakerOptions.threshold!) {
       breaker.state = 'open';
-      console.error(
-        `[CircuitBreaker] ${operationName} circuit opened after ${breaker.failures} failures`
-      );
+
     }
     
     this.circuitBreakers.set(operationName, breaker);
@@ -335,7 +329,7 @@ export class FailSafeWrapper {
     try {
       return await intelligentCache.get<T>(key);
     } catch (error) {
-      console.warn('[FailSafe] Cache read failed:', error);
+
       return null;
     }
   }
@@ -347,7 +341,7 @@ export class FailSafeWrapper {
     try {
       await intelligentCache.set(key, data, { ttl });
     } catch (error) {
-      console.warn('[FailSafe] Cache write failed:', error);
+
       // Don't throw - caching is not critical
     }
   }
@@ -370,7 +364,7 @@ export class FailSafeWrapper {
         timestamp: new Date().toISOString()
       });
     } catch (metricError) {
-      console.warn('[FailSafe] Failed to record metrics:', metricError);
+
       // Don't throw - metrics are not critical
     }
   }
@@ -558,11 +552,7 @@ export class FailSafeWrapper {
           timeout: 60000,
           onError: (error, attempt) => {
             if (error.message.includes('rate limit')) {
-              console.log(
-                `[FailSafe] Rate limited on ${apiName}, waiting ${
-                  2000 * Math.pow(2, attempt)
-                }ms`
-              );
+
             }
           }
         },
@@ -588,7 +578,7 @@ export class FailSafeWrapper {
    */
   resetCircuitBreaker(operationName: string): void {
     this.circuitBreakers.delete(operationName);
-    console.log(`[CircuitBreaker] Reset circuit for ${operationName}`);
+
   }
   
   /**
@@ -596,7 +586,7 @@ export class FailSafeWrapper {
    */
   resetAllCircuitBreakers(): void {
     this.circuitBreakers.clear();
-    console.log('[CircuitBreaker] All circuits reset');
+
   }
 }
 

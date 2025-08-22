@@ -48,7 +48,7 @@ export class GitcoinFetcher extends BaseFetcher<GitcoinResponse> {
 
       return [data];
     } catch (error) {
-      console.error(`[${this.config.name}] Error:`, error);
+
       // Return mock data for testing
       return [this.getMockData()];
     }

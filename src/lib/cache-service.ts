@@ -43,7 +43,7 @@ export class CacheService {
     // Check in-memory cache first
     const memCached = this.inMemoryCache.get(key);
     if (memCached && memCached.expires > Date.now()) {
-      console.log(`[Cache] Memory hit: ${key}`);
+
       return memCached.data as T;
     }
 
@@ -56,8 +56,7 @@ export class CacheService {
         .single();
 
       if (!error && data && new Date(data.expires_at) > new Date()) {
-        console.log(`[Cache] Database hit: ${key}`);
-        
+
         // Update in-memory cache
         this.inMemoryCache.set(key, {
           data: data.cache_value,
@@ -67,10 +66,9 @@ export class CacheService {
         return data.cache_value as T;
       }
     } catch (error) {
-      console.error('[Cache] Read error:', error);
+
     }
 
-    console.log(`[Cache] Miss: ${key}`);
     return null;
   }
 
@@ -98,10 +96,9 @@ export class CacheService {
           cache_value: value as any,
           expires_at: expiresAt.toISOString()
         });
-      
-      console.log(`[Cache] Set: ${key} (expires in ${ttl} minutes)`);
+
     } catch (error) {
-      console.error('[Cache] Write error:', error);
+
     }
   }
 
@@ -125,10 +122,10 @@ export class CacheService {
         .lt('expires_at', new Date().toISOString());
 
       if (!error) {
-        console.log('[Cache] Cleaned expired entries');
+
       }
     } catch (error) {
-      console.error('[Cache] Cleanup error:', error);
+
     }
   }
 

@@ -55,7 +55,7 @@ export class ProductHuntFetcher extends BaseFetcher<ProductHuntResponse> {
     try {
       // Skip if no token configured
       if (!process.env.PRODUCTHUNT_TOKEN) {
-        console.log('[ProductHunt] No API token configured, skipping...');
+
         return [];
       }
 
@@ -99,7 +99,7 @@ export class ProductHuntFetcher extends BaseFetcher<ProductHuntResponse> {
 
       return [data];
     } catch (error) {
-      console.error(`[${this.config.name}] Error:`, error);
+
       return [];
     }
   }

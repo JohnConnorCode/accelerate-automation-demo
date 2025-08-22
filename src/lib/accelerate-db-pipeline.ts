@@ -32,7 +32,7 @@ export class AccelerateDBPipeline {
 
     try {
       // Step 1: Score and filter
-      console.log(`[Pipeline] Processing ${items.length} items...`);
+
       const qualified = AccelerateScorer.filterQualified(items);
       const scored = AccelerateScorer.scoreAndRank(qualified);
       
@@ -42,11 +42,9 @@ export class AccelerateDBPipeline {
       );
       
       results.rejected = items.length - aboveThreshold.length;
-      console.log(`[Pipeline] ${aboveThreshold.length} items passed scoring (${results.rejected} rejected)`);
 
       // Step 3: Deduplicate
       const deduplicated = await this.deduplicateContent(aboveThreshold);
-      console.log(`[Pipeline] ${deduplicated.new.length} new, ${deduplicated.existing.length} existing items`);
 
       // Step 4: Process by type in batches
       for (let i = 0; i < deduplicated.new.length; i += this.BATCH_SIZE) {
@@ -414,14 +412,6 @@ export class AccelerateDBPipeline {
         errors: results.errors,
       });
 
-    console.log('[Pipeline] Metrics:', {
-      processed: results.processed,
-      inserted: results.inserted,
-      updated: results.updated,
-      rejected: results.rejected,
-      averageScore: metrics.averageScore.toFixed(1),
-      byType: metrics.byType,
-    });
   }
 
   /**

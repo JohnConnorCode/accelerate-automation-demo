@@ -150,8 +150,7 @@ export class MonitoringAlertingService extends EventEmitter {
    * Start continuous monitoring
    */
   private startMonitoring(intervalMs: number = 60000): void {
-    console.log('[Monitoring] Starting system monitoring...');
-    
+
     // Initial collection
     this.collectMetrics();
     
@@ -182,7 +181,7 @@ export class MonitoringAlertingService extends EventEmitter {
       this.emit('metrics', metrics);
       
     } catch (error) {
-      console.error('[Monitoring] Failed to collect metrics:', error);
+
       this.recordMetric('monitoringErrors', 1);
     }
   }
@@ -237,7 +236,7 @@ export class MonitoringAlertingService extends EventEmitter {
         metrics.errorRate = totalCount > 0 ? errorCount / totalCount : 0;
       }
     } catch (error) {
-      console.error('[Monitoring] Failed to calculate error rate:', error);
+
     }
     
     // Response time from recent operations
@@ -254,7 +253,7 @@ export class MonitoringAlertingService extends EventEmitter {
         metrics.responseTime = avgDuration;
       }
     } catch (error) {
-      console.error('[Monitoring] Failed to calculate response time:', error);
+
     }
     
     // Throughput
@@ -267,7 +266,7 @@ export class MonitoringAlertingService extends EventEmitter {
       
       metrics.throughput = Array.isArray(processed) ? processed.length : 0;
     } catch (error) {
-      console.error('[Monitoring] Failed to calculate throughput:', error);
+
     }
     
     // Queue size
@@ -279,7 +278,7 @@ export class MonitoringAlertingService extends EventEmitter {
       
       metrics.queueSize = count || 0;
     } catch (error) {
-      console.error('[Monitoring] Failed to get queue size:', error);
+
     }
     
     // Cache hit rate (would get from cache service in production)
@@ -414,8 +413,7 @@ export class MonitoringAlertingService extends EventEmitter {
     
     // Emit alert event
     this.emit('alert', alert);
-    
-    console.log(`[Alert] ${rule.level.toUpperCase()}: ${rule.message} (${currentValue})`);
+
   }
   
   /**
@@ -445,8 +443,7 @@ export class MonitoringAlertingService extends EventEmitter {
         
         // Emit resolution event
         this.emit('alert-resolved', alert);
-        
-        console.log(`[Alert] RESOLVED: ${alert.message}`);
+
       }
     }
   }
@@ -494,9 +491,9 @@ export class MonitoringAlertingService extends EventEmitter {
       });
       
       // In production, this would trigger SMS/email/Slack/PagerDuty
-      console.error(`[CRITICAL ALERT] ${alert.message}`);
+
     } catch (error) {
-      console.error('[Monitoring] Failed to send critical alert:', error);
+
     }
   }
   
@@ -510,7 +507,7 @@ export class MonitoringAlertingService extends EventEmitter {
         timestamp: new Date().toISOString()
       });
     } catch (error) {
-      console.error('[Monitoring] Failed to store metrics:', error);
+
     }
   }
   
@@ -531,7 +528,7 @@ export class MonitoringAlertingService extends EventEmitter {
         created_at: alert.timestamp.toISOString()
       });
     } catch (error) {
-      console.error('[Monitoring] Failed to store alert:', error);
+
     }
   }
   
@@ -577,7 +574,7 @@ export class MonitoringAlertingService extends EventEmitter {
         })));
       }
     } catch (error) {
-      console.error('[Monitoring] Failed to load custom rules:', error);
+
     }
   }
   
@@ -586,7 +583,7 @@ export class MonitoringAlertingService extends EventEmitter {
    */
   addAlertRule(rule: AlertRule): void {
     this.alertRules.push(rule);
-    console.log(`[Monitoring] Added alert rule for ${rule.metric}`);
+
   }
   
   /**
@@ -686,7 +683,7 @@ export class MonitoringAlertingService extends EventEmitter {
     if (this.monitoringInterval) {
       clearInterval(this.monitoringInterval);
       this.monitoringInterval = null;
-      console.log('[Monitoring] Monitoring stopped');
+
     }
   }
 }

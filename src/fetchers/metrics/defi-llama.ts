@@ -109,12 +109,12 @@ export class DefiLlamaFetcher extends BaseFetcher<z.infer<typeof DefiLlamaProtoc
             
             await this.delay(this.config.rateLimit || 1000);
           } catch (error) {
-            console.error(`[${this.config.name}] Error fetching ${protocol.name}:`, error);
+
           }
         }
       }
     } catch (error) {
-      console.error(`[${this.config.name}] Error:`, error);
+
     }
 
     // Also get recently listed protocols
@@ -131,7 +131,7 @@ export class DefiLlamaFetcher extends BaseFetcher<z.infer<typeof DefiLlamaProtoc
         }
       }
     } catch (error) {
-      console.error(`[${this.config.name}] Recent error:`, error);
+
     }
 
     return results;

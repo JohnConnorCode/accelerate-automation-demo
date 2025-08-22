@@ -83,8 +83,7 @@ export class BackupRecoveryService {
     };
 
     try {
-      console.log(`[Backup] Starting backup ${backupId}...`);
-      
+
       // Update status
       await this.updateBackupStatus(backupId, 'in_progress');
       
@@ -144,13 +143,11 @@ export class BackupRecoveryService {
       
       // Clean up old backups
       await this.cleanupOldBackups();
-      
-      console.log(`[Backup] Backup ${backupId} completed successfully in ${metadata.duration}ms`);
-      
+
       return metadata;
       
     } catch (error) {
-      console.error(`[Backup] Backup ${backupId} failed:`, error);
+
       metadata.status = 'failed';
       await this.updateBackupStatus(backupId, 'failed');
       throw error;
@@ -165,8 +162,7 @@ export class BackupRecoveryService {
     recordCount: number;
     tables: string[];
   }> {
-    console.log('[Backup] Backing up database...');
-    
+
     const tables = [
       'content_queue',
       'approved_content',
@@ -189,7 +185,7 @@ export class BackupRecoveryService {
           .select('*');
         
         if (error) {
-          console.error(`[Backup] Error backing up table ${table}:`, error);
+
           continue;
         }
         
@@ -202,11 +198,10 @@ export class BackupRecoveryService {
           const stats = await fs.stat(filePath);
           totalSize += stats.size;
           totalRecords += data.length;
-          
-          console.log(`[Backup] Backed up ${data.length} records from ${table}`);
+
         }
       } catch (error) {
-        console.error(`[Backup] Failed to backup table ${table}:`, error);
+
       }
     }
     
@@ -217,8 +212,7 @@ export class BackupRecoveryService {
    * Backup configuration files
    */
   private async backupConfiguration(backupDir: string): Promise<number> {
-    console.log('[Backup] Backing up configuration...');
-    
+
     const configFiles = [
       '.env',
       'package.json',
@@ -246,7 +240,7 @@ export class BackupRecoveryService {
         
       } catch (error) {
         // File doesn't exist or can't be copied
-        console.log(`[Backup] Skipping ${file}: ${error}`);
+
       }
     }
     
@@ -257,8 +251,7 @@ export class BackupRecoveryService {
    * Backup system logs
    */
   private async backupLogs(backupDir: string): Promise<number> {
-    console.log('[Backup] Backing up logs...');
-    
+
     let totalSize = 0;
     const logsDir = path.join(backupDir, 'logs');
     await fs.mkdir(logsDir, { recursive: true });
@@ -301,8 +294,7 @@ export class BackupRecoveryService {
     backupDir: string,
     compression: 'gzip' | 'zip'
   ): Promise<string> {
-    console.log(`[Backup] Compressing backup with ${compression}...`);
-    
+
     const archivePath = `${backupDir}.${compression === 'gzip' ? 'tar.gz' : 'zip'}`;
     
     return new Promise((resolve, reject) => {
@@ -313,7 +305,7 @@ export class BackupRecoveryService {
       });
       
       output.on('close', () => {
-        console.log(`[Backup] Compressed to ${archive.pointer()} bytes`);
+
         resolve(archivePath);
       });
       
@@ -341,8 +333,7 @@ export class BackupRecoveryService {
     skipped: number;
     errors: string[];
   }> {
-    console.log(`[Recovery] Starting restore from backup ${backupId}...`);
-    
+
     const result = {
       success: false,
       restored: 0,
@@ -384,14 +375,14 @@ export class BackupRecoveryService {
           const data = JSON.parse(jsonData);
           
           if (options?.dryRun) {
-            console.log(`[Recovery] DRY RUN: Would restore ${data.length} records to ${table}`);
+
             result.restored += data.length;
             continue;
           }
           
           // Clear existing data if not skipping
           if (!options?.skipExisting) {
-            console.log(`[Recovery] Clearing existing data in ${table}...`);
+
             await supabase.from(table).delete().neq('id', '00000000-0000-0000-0000-000000000000');
           }
           
@@ -406,17 +397,15 @@ export class BackupRecoveryService {
             
             if (error) {
               result.errors.push(`Error restoring ${table}: ${error.message}`);
-              console.error(`[Recovery] Error restoring batch to ${table}:`, error);
+
             } else {
               result.restored += batch.length;
             }
           }
-          
-          console.log(`[Recovery] Restored ${data.length} records to ${table}`);
-          
+
         } catch (error) {
           result.errors.push(`Failed to restore ${table}: ${error}`);
-          console.error(`[Recovery] Failed to restore ${table}:`, error);
+
         }
       }
       
@@ -427,11 +416,9 @@ export class BackupRecoveryService {
       );
       
       result.success = result.errors.length === 0;
-      
-      console.log(`[Recovery] Restore completed. Restored: ${result.restored}, Errors: ${result.errors.length}`);
-      
+
     } catch (error) {
-      console.error('[Recovery] Restore failed:', error);
+
       result.errors.push(`Restore failed: ${error}`);
     }
     
@@ -460,9 +447,7 @@ export class BackupRecoveryService {
     
     // Store in database
     await supabase.from('recovery_points').insert(recoveryPoint);
-    
-    console.log(`[Recovery] Created recovery point: ${recoveryPoint.id}`);
-    
+
     return recoveryPoint;
   }
 
@@ -519,8 +504,7 @@ export class BackupRecoveryService {
           nextRun: new Date(Date.now() + interval).toISOString()
         }
       }, { onConflict: 'key' });
-    
-    console.log(`[Backup] Automatic backups scheduled: ${schedule}`);
+
   }
 
   /**
@@ -603,10 +587,9 @@ export class BackupRecoveryService {
             .from('backup_metadata')
             .delete()
             .eq('id', backup.id);
-          
-          console.log(`[Backup] Cleaned up old backup: ${backup.id}`);
+
         } catch (error) {
-          console.error(`[Backup] Failed to clean up backup ${backup.id}:`, error);
+
         }
       }
     }
@@ -627,7 +610,7 @@ export class BackupRecoveryService {
             .delete()
             .eq('id', backup.id);
         } catch (error) {
-          console.error(`[Backup] Failed to clean up excess backup ${backup.id}:`, error);
+
         }
       }
     }
@@ -657,13 +640,13 @@ export class BackupRecoveryService {
     try {
       await fs.rmdir(dirPath, { recursive: true });
     } catch (error) {
-      console.error(`[Backup] Failed to cleanup directory ${dirPath}:`, error);
+
     }
   }
   
   private async uploadToCloud(filePath: string, backupId: string): Promise<void> {
     // Implementation would upload to cloud storage (S3, GCS, etc.)
-    console.log(`[Backup] Would upload ${filePath} to cloud as ${backupId}`);
+
   }
   
   private async updateBackupStatus(backupId: string, status: string): Promise<void> {

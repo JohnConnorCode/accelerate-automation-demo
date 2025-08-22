@@ -403,7 +403,7 @@ export class MonitoringService {
           checked_at: new Date().toISOString(),
         });
     } catch (error) {
-      console.error('[Monitoring] Failed to log health check:', error);
+
     }
   }
 
@@ -481,7 +481,7 @@ export class MonitoringService {
           created_at: alert.timestamp.toISOString(),
         });
     } catch (error) {
-      console.error('[Monitoring] Failed to log alert:', error);
+
     }
   }
 
@@ -495,7 +495,7 @@ export class MonitoringService {
         })
         .eq('alert_id', alert.id);
     } catch (error) {
-      console.error('[Monitoring] Failed to log alert resolution:', error);
+
     }
   }
 
@@ -531,7 +531,7 @@ export class MonitoringService {
           timestamp: metric.timestamp.toISOString(),
         });
     } catch (error) {
-      console.error('[Monitoring] Failed to log metric:', error);
+
     }
   }
 

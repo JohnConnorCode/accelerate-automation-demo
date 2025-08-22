@@ -186,7 +186,7 @@ export class DeduplicationService {
         isDuplicate: false,
       };
     } catch (error) {
-      console.error('[Dedup] Error checking duplicate:', error);
+
       // On error, assume not duplicate to avoid blocking content
       return {
         isDuplicate: false,
@@ -220,11 +220,10 @@ export class DeduplicationService {
       if (!result.isDuplicate) {
         finalUnique.push(item);
       } else {
-        console.log(`[Dedup] Duplicate found: ${item.title} - ${result.reason}`);
+
       }
     }
-    
-    console.log(`[Dedup] Processed ${items.length} items, ${finalUnique.length} unique`);
+
     return finalUnique;
   }
 
@@ -265,13 +264,12 @@ export class DeduplicationService {
         if (updateError) {
           throw updateError;
         }
-        
-        console.log(`[Dedup] Marked ${duplicates.length} duplicates`);
+
       }
       
       return duplicates.length;
     } catch (error) {
-      console.error('[Dedup] Cleanup error:', error);
+
       return 0;
     }
   }
@@ -298,7 +296,7 @@ export class DeduplicationService {
         checkDays: this.checkDays,
       };
     } catch (error) {
-      console.error('[Dedup] Stats error:', error);
+
       return null;
     }
   }

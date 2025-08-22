@@ -37,19 +37,18 @@ export class NotificationService {
         case 'webhook':
           return await this.sendWebhook(subject, content, metadata);
         default:
-          console.log(`[Notification] Unknown type: ${type}`);
+
           return false;
       }
     } catch (error) {
-      console.error(`[Notification] Error sending ${type}:`, error);
+
       return false;
     }
   }
 
   private async sendEmailInternal(subject: string, content: string, metadata?: any): Promise<boolean> {
     if (!resend) {
-      console.log('[Notification] Email not configured - logging instead');
-      console.log(`Email: ${subject}\n${content}`);
+
       return true;
     }
 
@@ -66,10 +65,9 @@ export class NotificationService {
         throw error;
       }
 
-      console.log(`[Notification] Email sent: ${data?.id}`);
       return true;
     } catch (error) {
-      console.error('[Notification] Email error:', error);
+
       return false;
     }
   }
@@ -78,7 +76,7 @@ export class NotificationService {
     const webhookUrl = process.env.SLACK_WEBHOOK_URL;
     
     if (!webhookUrl) {
-      console.log('[Notification] Slack not configured');
+
       return false;
     }
 
@@ -118,7 +116,7 @@ export class NotificationService {
 
       return response.ok;
     } catch (error) {
-      console.error('[Notification] Slack error:', error);
+
       return false;
     }
   }
@@ -127,7 +125,7 @@ export class NotificationService {
     const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
     
     if (!webhookUrl) {
-      console.log('[Notification] Discord not configured');
+
       return false;
     }
 
@@ -155,7 +153,7 @@ export class NotificationService {
 
       return response.ok;
     } catch (error) {
-      console.error('[Notification] Discord error:', error);
+
       return false;
     }
   }
@@ -164,7 +162,7 @@ export class NotificationService {
     const webhookUrl = process.env.ZAPIER_WEBHOOK_URL;
     
     if (!webhookUrl) {
-      console.log('[Notification] Webhook not configured');
+
       return false;
     }
 
@@ -182,7 +180,7 @@ export class NotificationService {
 
       return response.ok;
     } catch (error) {
-      console.error('[Notification] Webhook error:', error);
+
       return false;
     }
   }

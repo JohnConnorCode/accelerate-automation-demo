@@ -86,7 +86,7 @@ export class DevToBuilderResourcesFetcher extends BaseFetcher<z.infer<typeof Dev
         
         await this.delay(this.config.rateLimit || 1000);
       } catch (error) {
-        console.error(`[${this.config.name}] Error with search "${search}":`, error);
+
       }
     }
 
@@ -288,7 +288,7 @@ export class GitHubBuilderToolsFetcher extends BaseFetcher<z.infer<typeof GitHub
         
         await this.delay(this.config.rateLimit || 2000);
       } catch (error) {
-        console.error(`[${this.config.name}] Error with query:`, error);
+
       }
     }
 

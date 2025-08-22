@@ -96,22 +96,18 @@ export class MasterFetcher {
     // The Graph (no key required for public subgraphs)
     this.fetchers.push({ name: 'TheGraph', instance: new TheGraphFetcher() });
 
-    console.log(`[MasterFetcher] Initialized ${this.fetchers.length} fetchers`);
   }
 
   /**
    * Execute all fetchers in parallel
    */
   async fetchAll(): Promise<FetcherResult[]> {
-    console.log(`[MasterFetcher] Starting parallel fetch from ${this.fetchers.length} sources...`);
 
     const promises = this.fetchers.map(async ({ name, instance }) => {
       try {
         const startTime = Date.now();
         const result = await instance.execute();
         const duration = Date.now() - startTime;
-
-        console.log(`[${name}] Completed in ${duration}ms - ${result.fetched} items`);
 
         return {
           source: name,
@@ -120,7 +116,7 @@ export class MasterFetcher {
           error: result.errors?.join(', '),
         };
       } catch (error) {
-        console.error(`[${name}] Fatal error:`, error);
+
         return {
           source: name,
           items: [],
@@ -155,11 +151,9 @@ export class MasterFetcher {
     );
 
     if (selectedFetchers.length === 0) {
-      console.warn(`[MasterFetcher] No matching fetchers found for: ${sources.join(', ')}`);
+
       return [];
     }
-
-    console.log(`[MasterFetcher] Fetching from ${selectedFetchers.length} selected sources...`);
 
     const promises = selectedFetchers.map(async ({ name, instance }) => {
       try {

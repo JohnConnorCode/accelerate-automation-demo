@@ -48,9 +48,9 @@ export class AIQualityService {
         this.openai = new OpenAI({
           apiKey: data.value
         });
-        console.log('OpenAI API key loaded from Supabase');
+
       } else {
-        console.warn('OpenAI API key not found in Supabase, checking environment');
+
         // Fallback to environment variable
         const envKey = process.env.OPENAI_API_KEY;
         if (envKey) {
@@ -61,7 +61,7 @@ export class AIQualityService {
         }
       }
     } catch (error) {
-      console.error('Failed to fetch OpenAI API key from Supabase:', error);
+
     }
   }
 
@@ -132,8 +132,7 @@ export class AIQualityService {
       
       return assessment;
     } catch (error) {
-      console.error('AI assessment failed:', error);
-      
+
       // Fallback to basic assessment
       return this.basicAssessment(item);
     }
@@ -215,7 +214,7 @@ export class AIQualityService {
 
       return JSON.parse(response.choices[0].message.content || '{}');
     } catch (error) {
-      console.error('Scam detection failed:', error);
+
       return {
         isScam: false,
         confidence: 0,
@@ -269,7 +268,7 @@ export class AIQualityService {
 
       return JSON.parse(response.choices[0].message.content || '{}');
     } catch (error) {
-      console.error('Trend analysis failed:', error);
+
       return {
         emergingTrends: [],
         decliningTrends: [],
@@ -330,7 +329,7 @@ export class AIQualityService {
 
       return response.choices[0].message.content || 'Report generation failed';
     } catch (error) {
-      console.error('Report generation failed:', error);
+
       return 'Unable to generate report at this time.';
     }
   }
@@ -366,7 +365,7 @@ export class AIQualityService {
 
       return JSON.parse(response.choices[0].message.content || '[]');
     } catch (error) {
-      console.error('Improvement suggestions failed:', error);
+
       return [];
     }
   }
@@ -421,7 +420,7 @@ export class AIQualityService {
 
       return JSON.parse(response.choices[0].message.content || '{}');
     } catch (error) {
-      console.error('Project comparison failed:', error);
+
       return {
         similarity: 0,
         betterChoice: 'unknown',
@@ -499,7 +498,7 @@ export class AIQualityService {
         created_at: new Date().toISOString()
       });
     } catch (error) {
-      console.error('Failed to store assessment:', error);
+
     }
   }
 }

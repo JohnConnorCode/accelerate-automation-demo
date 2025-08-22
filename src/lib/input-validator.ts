@@ -211,7 +211,7 @@ export class InputValidator {
     };
     
     if (typos[domain]) {
-      console.warn(`Possible typo detected: ${domain} -> ${typos[domain]}`);
+
     }
     
     return validated;

@@ -119,7 +119,7 @@ export class EarlyStageProjectsFetcher extends BaseFetcher<z.infer<typeof GitHub
 
         await this.delay(this.config.rateLimit || 2000);
       } catch (error) {
-        console.error(`[${this.config.name}] Error with query "${query}":`, error);
+
       }
     }
 
@@ -391,7 +391,7 @@ export class ProductHuntEarlyStageFetcher extends BaseFetcher<z.infer<typeof Pro
 
   async fetch(): Promise<z.infer<typeof ProductHuntLaunchSchema>[]> {
     if (!process.env.PRODUCTHUNT_TOKEN) {
-      console.warn('[ProductHunt] No token provided');
+
       return [];
     }
 
@@ -442,7 +442,7 @@ export class ProductHuntEarlyStageFetcher extends BaseFetcher<z.infer<typeof Pro
         return [data];
       }
     } catch (error) {
-      console.error(`[${this.config.name}] Error:`, error);
+
     }
 
     return [];

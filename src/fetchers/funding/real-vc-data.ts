@@ -35,7 +35,7 @@ export class CrunchbaseFetcher extends BaseFetcher<z.infer<typeof CrunchbaseSche
 
   async fetch(): Promise<z.infer<typeof CrunchbaseSchema>[]> {
     if (!process.env.CRUNCHBASE_API_KEY) {
-      console.warn('[Crunchbase] No API key provided');
+
       return [];
     }
 
@@ -75,7 +75,7 @@ export class CrunchbaseFetcher extends BaseFetcher<z.infer<typeof CrunchbaseSche
       const data = await response.json();
       return [data];
     } catch (error) {
-      console.error(`[${this.config.name}] Error:`, error);
+
       return [];
     }
   }
@@ -148,7 +148,7 @@ export class DefiLlamaFetcher extends BaseFetcher<z.infer<typeof DefiLlamaSchema
       
       return [data];
     } catch (error) {
-      console.error(`[${this.config.name}] Error:`, error);
+
       return [];
     }
   }
@@ -238,7 +238,7 @@ export class CoinGeckoFetcher extends BaseFetcher<z.infer<typeof CoinGeckoSchema
       
       return [{ coins: details }];
     } catch (error) {
-      console.error(`[${this.config.name}] Error:`, error);
+
       return [];
     }
   }
@@ -326,7 +326,7 @@ export class MessariFetcher extends BaseFetcher<z.infer<typeof MessariSchema>> {
       const result = await response.json();
       return [result];
     } catch (error) {
-      console.error(`[${this.config.name}] Error:`, error);
+
       return [];
     }
   }

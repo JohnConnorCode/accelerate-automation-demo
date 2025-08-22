@@ -98,8 +98,7 @@ export class IntelligentCacheService {
       // Update stats
       this.stats.hits++;
       this.updateHitRate();
-      
-      console.log(`[Cache] HIT: ${key} (${cached.metadata.accessCount} accesses)`);
+
       return cached.data as T;
     }
     
@@ -109,12 +108,10 @@ export class IntelligentCacheService {
     
     // If no fetcher provided, return null
     if (!fetcher) {
-      console.log(`[Cache] MISS: ${key} (no fetcher)`);
+
       return null;
     }
-    
-    console.log(`[Cache] MISS: ${key} - fetching fresh data...`);
-    
+
     try {
       // Fetch fresh data
       const data = await fetcher();
@@ -128,11 +125,10 @@ export class IntelligentCacheService {
       
       return data;
     } catch (error) {
-      console.error(`[Cache] Error fetching data for ${key}:`, error);
-      
+
       // Return stale cache if available
       if (cached) {
-        console.log(`[Cache] Returning stale data for ${key}`);
+
         return cached.data as T;
       }
       
@@ -181,8 +177,7 @@ export class IntelligentCacheService {
     // Update stats
     this.stats.size += dataSize;
     this.stats.entries = this.cache.size;
-    
-    console.log(`[Cache] SET: ${key} (${dataSize} bytes, TTL: ${entry.metadata.ttl}ms)`);
+
   }
 
   /**
@@ -196,7 +191,7 @@ export class IntelligentCacheService {
       this.stats.size -= entry.metadata.size;
       this.cache.delete(cacheKey);
       this.stats.entries = this.cache.size;
-      console.log(`[Cache] DELETE: ${key}`);
+
       return true;
     }
     
@@ -218,8 +213,7 @@ export class IntelligentCacheService {
     }
     
     this.stats.entries = this.cache.size;
-    console.log(`[Cache] Cleared ${cleared} entries with tags: ${tags.join(', ')}`);
-    
+
     return cleared;
   }
 
@@ -239,8 +233,7 @@ export class IntelligentCacheService {
     }
     
     this.stats.entries = this.cache.size;
-    console.log(`[Cache] Invalidated ${invalidated} entries matching: ${pattern}`);
-    
+
     return invalidated;
   }
 
@@ -248,8 +241,7 @@ export class IntelligentCacheService {
    * Warm up cache with frequently accessed data
    */
   private async warmupCache(): Promise<void> {
-    console.log('[Cache] Warming up cache...');
-    
+
     try {
       // Cache system settings
       const { data: settings } = await supabase
@@ -294,11 +286,9 @@ export class IntelligentCacheService {
           priority: 'high'
         });
       }
-      
-      console.log(`[Cache] Warmed up with ${this.cache.size} entries`);
-      
+
     } catch (error) {
-      console.error('[Cache] Warmup failed:', error);
+
     }
   }
 
@@ -367,8 +357,7 @@ export class IntelligentCacheService {
    * Evict entries using LRU with priority
    */
   private async evictEntries(requiredSpace: number): Promise<void> {
-    console.log(`[Cache] Evicting entries to free ${requiredSpace} bytes...`);
-    
+
     // Sort entries by priority and last access time
     const entries = Array.from(this.cache.entries()).map(([key, entry]) => ({
       key,
@@ -398,7 +387,7 @@ export class IntelligentCacheService {
     }
     
     this.stats.entries = this.cache.size;
-    console.log(`[Cache] Evicted ${evicted} entries, freed ${freedSpace} bytes`);
+
   }
 
   /**
@@ -476,7 +465,7 @@ export class IntelligentCacheService {
     
     if (cleaned > 0) {
       this.stats.entries = this.cache.size;
-      console.log(`[Cache] Cleaned up ${cleaned} expired entries`);
+
     }
   }
 
@@ -503,7 +492,7 @@ export class IntelligentCacheService {
       entries: 0,
       hitRate: 0
     };
-    console.log('[Cache] Cleared all entries');
+
   }
 
   /**

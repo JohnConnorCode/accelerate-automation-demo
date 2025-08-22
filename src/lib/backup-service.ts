@@ -60,7 +60,7 @@ export class BackupService {
     };
 
     try {
-      console.log(`[Backup] Starting full backup ${backupId}`);
+
       await this.ensureBackupDirectory();
 
       // Tables to backup
@@ -90,17 +90,16 @@ export class BackupService {
             .select('*', { count: 'exact' });
 
           if (error) {
-            console.error(`[Backup] Error backing up ${table}:`, error);
+
             continue;
           }
 
           backupData[table] = data || [];
           metadata.tables.push(table);
           metadata.rowCounts[table] = count || 0;
-          
-          console.log(`[Backup] Backed up ${count} rows from ${table}`);
+
         } catch (error) {
-          console.error(`[Backup] Failed to backup ${table}:`, error);
+
         }
       }
 
@@ -146,7 +145,6 @@ export class BackupService {
         `Full backup ${backupId} completed successfully.\n\nTables: ${metadata.tables.length}\nTotal rows: ${Object.values(metadata.rowCounts).reduce((a, b) => a + b, 0)}\nSize: ${(metadata.size / 1024 / 1024).toFixed(2)}MB`
       );
 
-      console.log(`[Backup] Full backup completed: ${backupId}`);
       return metadata;
 
     } catch (error: any) {
@@ -154,8 +152,7 @@ export class BackupService {
       metadata.error = error.message;
       
       await this.logBackup(metadata);
-      
-      console.error('[Backup] Backup failed:', error);
+
       throw error;
     } finally {
       this.isRunning = false;
@@ -185,13 +182,13 @@ export class BackupService {
     };
 
     try {
-      console.log(`[Backup] Starting incremental backup ${backupId}`);
+
       await this.ensureBackupDirectory();
 
       // Determine cutoff timestamp
       const cutoff = sinceTimestamp || await this.getLastBackupTimestamp();
       if (!cutoff) {
-        console.log('[Backup] No previous backup found, creating full backup instead');
+
         return this.createFullBackup();
       }
 
@@ -218,7 +215,7 @@ export class BackupService {
             .gte(table.field, cutoff.toISOString());
 
           if (error) {
-            console.error(`[Backup] Error backing up ${table.name}:`, error);
+
             continue;
           }
 
@@ -226,11 +223,10 @@ export class BackupService {
             backupData[table.name] = data;
             metadata.tables.push(table.name);
             metadata.rowCounts[table.name] = count || 0;
-            
-            console.log(`[Backup] Backed up ${count} new rows from ${table.name}`);
+
           }
         } catch (error) {
-          console.error(`[Backup] Failed to backup ${table.name}:`, error);
+
         }
       }
 
@@ -264,7 +260,6 @@ export class BackupService {
       metadata.status = 'completed';
       await this.logBackup(metadata);
 
-      console.log(`[Backup] Incremental backup completed: ${backupId}`);
       return metadata;
 
     } catch (error: any) {
@@ -272,8 +267,7 @@ export class BackupService {
       metadata.error = error.message;
       
       await this.logBackup(metadata);
-      
-      console.error('[Backup] Incremental backup failed:', error);
+
       throw error;
     } finally {
       this.isRunning = false;
@@ -287,8 +281,7 @@ export class BackupService {
     const { tables, overwrite = false, dryRun = false } = options;
 
     try {
-      console.log(`[Restore] Starting restore from ${backupId}`);
-      
+
       // Find backup file
       const backupFiles = await fs.readdir(this.backupDir);
       const backupFile = backupFiles.find(f => f.includes(backupId));
@@ -310,13 +303,11 @@ export class BackupService {
       const backup = JSON.parse(backupContent);
       const { metadata: backupMeta, data: backupData } = backup;
 
-      console.log(`[Restore] Backup info: Type=${backupMeta.type}, Tables=${Object.keys(backupData).length}, Created=${backupMeta.created_at}`);
-
       if (dryRun) {
-        console.log('[Restore] Dry run mode - no changes will be made');
+
         for (const [table, rows] of Object.entries(backupData)) {
           if (tables && !tables.includes(table)) continue;
-          console.log(`[Restore] Would restore ${(rows as any[]).length} rows to ${table}`);
+
         }
         return;
       }
@@ -324,28 +315,26 @@ export class BackupService {
       // Restore each table
       for (const [table, rows] of Object.entries(backupData)) {
         if (tables && !tables.includes(table)) {
-          console.log(`[Restore] Skipping ${table} (not in restore list)`);
+
           continue;
         }
 
         const rowArray = rows as any[];
         if (rowArray.length === 0) {
-          console.log(`[Restore] Skipping ${table} (no rows)`);
+
           continue;
         }
 
-        console.log(`[Restore] Restoring ${rowArray.length} rows to ${table}`);
-
         if (overwrite) {
           // Delete existing data first
-          console.log(`[Restore] Clearing existing data from ${table}`);
+
           const { error: deleteError } = await supabase
             .from(table)
             .delete()
             .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
 
           if (deleteError) {
-            console.error(`[Restore] Error clearing ${table}:`, deleteError);
+
             continue;
           }
         }
@@ -363,9 +352,9 @@ export class BackupService {
             });
 
           if (insertError) {
-            console.error(`[Restore] Error restoring ${table} batch ${i / batchSize}:`, insertError);
+
           } else {
-            console.log(`[Restore] Restored batch ${i / batchSize + 1} of ${Math.ceil(rowArray.length / batchSize)}`);
+
           }
         }
       }
@@ -381,8 +370,6 @@ export class BackupService {
           success: true,
         });
 
-      console.log(`[Restore] Restore completed from ${backupId}`);
-      
       // Send notification
       await notificationService.sendEmail(
         process.env.ADMIN_EMAIL!,
@@ -391,8 +378,7 @@ export class BackupService {
       );
 
     } catch (error: any) {
-      console.error('[Restore] Restore failed:', error);
-      
+
       // Log failed restore
       await supabase
         .from('backup_restore_log')
@@ -470,7 +456,7 @@ export class BackupService {
       
       return backups;
     } catch (error) {
-      console.error('[Backup] Error listing backups:', error);
+
       return [];
     }
   }
@@ -488,9 +474,9 @@ export class BackupService {
       }
 
       await fs.unlink(backup.location);
-      console.log(`[Backup] Deleted backup ${backupId}`);
+
     } catch (error) {
-      console.error(`[Backup] Error deleting backup ${backupId}:`, error);
+
       throw error;
     }
   }
@@ -519,7 +505,7 @@ export class BackupService {
       
       // Verify structure
       if (!data.metadata || !data.data) {
-        console.error(`[Backup] Invalid backup structure for ${backupId}`);
+
         return false;
       }
 
@@ -527,15 +513,14 @@ export class BackupService {
       for (const [table, rows] of Object.entries(data.data)) {
         const rowArray = rows as any[];
         if (data.metadata.rowCounts && data.metadata.rowCounts[table] !== rowArray.length) {
-          console.error(`[Backup] Row count mismatch for ${table} in ${backupId}`);
+
           return false;
         }
       }
 
-      console.log(`[Backup] Backup ${backupId} verified successfully`);
       return true;
     } catch (error) {
-      console.error(`[Backup] Error verifying backup ${backupId}:`, error);
+
       return false;
     }
   }
@@ -604,10 +589,10 @@ export class BackupService {
       
       for (const backup of toDelete) {
         await fs.unlink(backup.location);
-        console.log(`[Backup] Deleted old backup ${backup.id}`);
+
       }
     } catch (error) {
-      console.error('[Backup] Error cleaning up old backups:', error);
+
     }
   }
 
@@ -627,7 +612,7 @@ export class BackupService {
           created_at: metadata.timestamp.toISOString(),
         });
     } catch (error) {
-      console.error('[Backup] Error logging backup:', error);
+
     }
   }
 
@@ -642,7 +627,7 @@ export class BackupService {
         try {
           await this.createFullBackup();
         } catch (error) {
-          console.error('[Backup] Scheduled backup failed:', error);
+
         }
       }
     }, 60000); // Check every minute
@@ -654,12 +639,11 @@ export class BackupService {
         try {
           await this.createIncrementalBackup();
         } catch (error) {
-          console.error('[Backup] Scheduled incremental backup failed:', error);
+
         }
       }
     }, 60000); // Check every minute
 
-    console.log('[Backup] Scheduled backups started');
   }
 }
 

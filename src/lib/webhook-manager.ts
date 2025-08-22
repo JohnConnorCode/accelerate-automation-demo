@@ -75,9 +75,8 @@ export class WebhookManager {
         });
       }
 
-      console.log(`[Webhooks] Loaded ${this.webhooks.size} active webhooks`);
     } catch (error) {
-      console.error('[Webhooks] Error loading webhooks:', error);
+
     }
   }
 
@@ -111,10 +110,9 @@ export class WebhookManager {
       // Add to memory
       this.webhooks.set(id, { ...validated, secret });
 
-      console.log(`[Webhooks] Registered webhook ${id} for ${validated.url}`);
       return id;
     } catch (error) {
-      console.error('[Webhooks] Registration error:', error);
+
       throw error;
     }
   }
@@ -130,10 +128,10 @@ export class WebhookManager {
       if (error) throw error;
 
       this.webhooks.delete(webhookId);
-      console.log(`[Webhooks] Unregistered webhook ${webhookId}`);
+
       return true;
     } catch (error) {
-      console.error('[Webhooks] Unregistration error:', error);
+
       return false;
     }
   }
@@ -146,8 +144,6 @@ export class WebhookManager {
     if (webhooksToTrigger.length === 0) {
       return;
     }
-
-    console.log(`[Webhooks] Triggering ${event} for ${webhooksToTrigger.length} webhooks`);
 
     for (const [webhookId, config] of webhooksToTrigger) {
       const payload: WebhookPayload = {
@@ -226,13 +222,12 @@ export class WebhookManager {
         if (response.ok) {
           success = true;
           await this.logDelivery(payload, response.status, 'success');
-          console.log(`[Webhooks] Delivered ${payload.event} to ${config.url}`);
+
         } else {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
       } catch (error: any) {
-        console.error(`[Webhooks] Delivery attempt ${attempt} failed:`, error.message);
-        
+
         if (attempt < config.retryCount) {
           // Wait before retry with exponential backoff
           const delay = config.retryDelay * Math.pow(2, attempt - 1);
@@ -283,7 +278,7 @@ export class WebhookManager {
           delivered_at: new Date().toISOString(),
         });
     } catch (error) {
-      console.error('[Webhooks] Error logging delivery:', error);
+
     }
   }
 
@@ -334,7 +329,7 @@ export class WebhookManager {
 
       return stats;
     } catch (error) {
-      console.error('[Webhooks] Error getting stats:', error);
+
       return null;
     }
   }
@@ -366,10 +361,10 @@ export class WebhookManager {
       if (error) throw error;
 
       this.webhooks.set(webhookId, validated);
-      console.log(`[Webhooks] Updated webhook ${webhookId}`);
+
       return true;
     } catch (error) {
-      console.error('[Webhooks] Update error:', error);
+
       return false;
     }
   }
@@ -378,7 +373,7 @@ export class WebhookManager {
   async testWebhook(webhookId: string): Promise<boolean> {
     const config = this.webhooks.get(webhookId);
     if (!config) {
-      console.error('[Webhooks] Webhook not found for testing');
+
       return false;
     }
 
@@ -415,10 +410,10 @@ export class WebhookManager {
       });
 
       const success = response.ok;
-      console.log(`[Webhooks] Test delivery ${success ? 'succeeded' : 'failed'}: ${response.status}`);
+
       return success;
     } catch (error: any) {
-      console.error('[Webhooks] Test delivery failed:', error.message);
+
       return false;
     }
   }

@@ -99,7 +99,7 @@ export class WellfoundFetcher extends BaseFetcher<z.infer<typeof WellfoundStartu
 
         await this.delay(this.config.rateLimit || 3000);
       } catch (error) {
-        console.error(`[${this.config.name}] Error:`, error);
+
       }
     }
 

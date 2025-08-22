@@ -57,14 +57,14 @@ export class SchedulingService {
 
       if (data?.value) {
         this.config = { ...this.config, ...data.value };
-        console.log('[Scheduler] Loaded config:', this.config);
+
       } else {
         // Save default config
         await this.saveConfig();
-        console.log('[Scheduler] Using default config: 24-hour interval');
+
       }
     } catch (error) {
-      console.error('[Scheduler] Failed to load config:', error);
+
     }
   }
 
@@ -80,10 +80,9 @@ export class SchedulingService {
           value: this.config,
           updated_at: new Date().toISOString()
         }, { onConflict: 'key' });
-      
-      console.log('[Scheduler] Config saved');
+
     } catch (error) {
-      console.error('[Scheduler] Failed to save config:', error);
+
     }
   }
 
@@ -126,20 +125,17 @@ export class SchedulingService {
     this.stopScheduler(); // Clear any existing timer
     
     if (this.config.manualOnly) {
-      console.log('[Scheduler] Manual-only mode - automatic runs disabled');
+
       return;
     }
     
     if (!this.config.enabled) {
-      console.log('[Scheduler] Scheduler is disabled');
+
       return;
     }
     
     const intervalMs = this.config.intervalHours * 60 * 60 * 1000;
-    
-    console.log(`[Scheduler] Starting scheduler with ${this.config.intervalHours}-hour interval`);
-    console.log(`[Scheduler] Next run: ${this.config.nextRun || 'calculating...'}`);
-    
+
     // Set up recurring timer
     this.scheduleTimer = setInterval(async () => {
       await this.runScheduledUpdate();
@@ -157,7 +153,7 @@ export class SchedulingService {
     if (this.scheduleTimer) {
       clearInterval(this.scheduleTimer);
       this.scheduleTimer = null;
-      console.log('[Scheduler] Scheduler stopped');
+
     }
   }
 
@@ -165,8 +161,7 @@ export class SchedulingService {
    * Run scheduled update (automatic)
    */
   private async runScheduledUpdate(): Promise<void> {
-    console.log('[Scheduler] Starting scheduled update...');
-    
+
     const startTime = Date.now();
     const results = {
       fetched: 0,
@@ -178,14 +173,14 @@ export class SchedulingService {
     
     try {
       // Run orchestrator
-      console.log('[Scheduler] Running data fetch...');
+
       const orchestratorResult = await this.orchestrator.run();
       results.fetched = (orchestratorResult as any).totalItems || 0;
       results.processed = (orchestratorResult as any).processed || 0;
       
       // Run quality checks if enabled
       if (this.config.autoQualityChecks) {
-        console.log('[Scheduler] Running automated quality checks...');
+
         const qualityStats = await this.qualityChecker.runBatchQualityChecks(
           this.config.maxItemsPerRun
         );
@@ -200,9 +195,7 @@ export class SchedulingService {
       
       // Log results
       const duration = Math.round((Date.now() - startTime) / 1000);
-      console.log(`[Scheduler] Update completed in ${duration}s`);
-      console.log(`[Scheduler] Results:`, results);
-      
+
       // Store run history
       await this.storeRunHistory(results, duration);
       
@@ -212,7 +205,7 @@ export class SchedulingService {
       }
       
     } catch (error) {
-      console.error('[Scheduler] Update failed:', error);
+
       results.errors++;
     }
   }
@@ -226,8 +219,7 @@ export class SchedulingService {
     skipAI?: boolean;
     sources?: string[];
   }): Promise<any> {
-    console.log('[Scheduler] Starting MANUAL update (CEO triggered)...');
-    
+
     const startTime = Date.now();
     const results = {
       fetched: 0,
@@ -241,7 +233,7 @@ export class SchedulingService {
     try {
       // Fetch data unless skipped
       if (!options?.skipFetch) {
-        console.log('[Scheduler] Fetching data from sources...');
+
         const orchestratorResult = await this.orchestrator.run();
         results.fetched = (orchestratorResult as any).totalItems || 0;
         results.processed = (orchestratorResult as any).processed || 0;
@@ -249,7 +241,7 @@ export class SchedulingService {
       
       // Run quality checks unless skipped
       if (!options?.skipQualityChecks) {
-        console.log('[Scheduler] Running quality checks...');
+
         const qualityStats = await this.qualityChecker.runBatchQualityChecks(
           this.config.maxItemsPerRun
         );
@@ -261,9 +253,7 @@ export class SchedulingService {
       
       // Store as manual run
       await this.storeRunHistory(results, duration);
-      
-      console.log(`[Scheduler] Manual update completed in ${duration}s`);
-      
+
       return {
         success: true,
         results,
@@ -272,7 +262,7 @@ export class SchedulingService {
       };
       
     } catch (error) {
-      console.error('[Scheduler] Manual update failed:', error);
+
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -298,7 +288,7 @@ export class SchedulingService {
         created_at: new Date().toISOString()
       });
     } catch (error) {
-      console.error('[Scheduler] Failed to store history:', error);
+
     }
   }
 
@@ -307,12 +297,7 @@ export class SchedulingService {
    */
   private async sendCompletionNotification(results: any, duration: number): Promise<void> {
     // This could send email, webhook, or dashboard notification
-    console.log('[Scheduler] Notification: Update complete', {
-      results,
-      duration,
-      nextRun: this.config.nextRun
-    });
-    
+
     // Store notification in database for dashboard
     try {
       await supabase.from('notifications').insert({
@@ -323,7 +308,7 @@ export class SchedulingService {
         created_at: new Date().toISOString()
       });
     } catch (error) {
-      console.error('[Scheduler] Failed to store notification:', error);
+
     }
   }
 
@@ -360,9 +345,9 @@ export class SchedulingService {
     await this.updateSchedule({ enabled });
     
     if (enabled && !this.config.manualOnly) {
-      console.log('[Scheduler] Enabled - will run every', this.config.intervalHours, 'hours');
+
     } else {
-      console.log('[Scheduler] Disabled - manual runs only');
+
     }
   }
 
@@ -373,9 +358,9 @@ export class SchedulingService {
     await this.updateSchedule({ manualOnly });
     
     if (manualOnly) {
-      console.log('[Scheduler] MANUAL-ONLY mode activated - no automatic runs');
+
     } else {
-      console.log('[Scheduler] Automatic mode activated - runs every', this.config.intervalHours, 'hours');
+
     }
   }
 }

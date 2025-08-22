@@ -597,14 +597,14 @@ export class AutomatedQualityChecks {
 
           stats.processed++;
         } catch (error) {
-          console.error(`Error processing item ${item.id}:`, error);
+
           stats.errors++;
         }
       }
 
       return stats;
     } catch (error) {
-      console.error('Batch quality check failed:', error);
+
       throw error;
     }
   }

@@ -48,7 +48,7 @@ describe('Critical User Paths - Integration Tests', () => {
     it('should handle network failures gracefully', async () => {
       // Mock network failure
       const originalFetch = global.fetch;
-      global.fetch = jest.fn().mockRejectedValue(new Error('Network error'));
+      global.fetch = jest.fn(() => Promise.reject(new Error('Network error'))) as any;
       
       const result = await failSafe.safeExecute(
         async () => {
@@ -225,9 +225,9 @@ describe('Critical User Paths - Integration Tests', () => {
     it('should handle database connection failures', async () => {
       // Mock database failure
       const originalFrom = supabase.from;
-      supabase.from = jest.fn().mockReturnValue({
-        select: jest.fn().mockRejectedValue(new Error('Database connection failed'))
-      });
+      supabase.from = jest.fn(() => ({
+        select: jest.fn(() => Promise.reject(new Error('Database connection failed')))
+      })) as any;
       
       const result = await failSafe.safeDbOperation(
         async () => {

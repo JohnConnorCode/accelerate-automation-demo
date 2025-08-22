@@ -76,7 +76,7 @@ export class RateLimitingService {
     this.defaultLimits.forEach(limit => {
       this.limits.set(limit.endpoint, limit);
     });
-    console.log(`[RateLimit] Initialized with ${this.limits.size} endpoint limits`);
+
   }
   
   /**
@@ -227,9 +227,7 @@ export class RateLimitingService {
   private recordViolation(clientId: string, endpoint: string, type: string): void {
     const metrics = this.getClientMetrics(clientId);
     metrics.violations++;
-    
-    console.warn(`[RateLimit] Violation: ${type} for ${clientId} on ${endpoint} (${metrics.violations} total)`);
-    
+
     // Store violation in database for analysis
     supabase.from('rate_limit_violations').insert({
       client_id: clientId,
@@ -243,8 +241,7 @@ export class RateLimitingService {
    * Block client for severe violations
    */
   private async blockClient(clientId: string, reason: string): Promise<void> {
-    console.error(`[RateLimit] BLOCKING CLIENT: ${clientId} - ${reason}`);
-    
+
     this.blockedIPs.add(clientId);
     
     const metrics = this.getClientMetrics(clientId);
@@ -267,7 +264,7 @@ export class RateLimitingService {
         m.blocked = false;
         m.violations = 0;
       }
-      console.log(`[RateLimit] Unblocked client: ${clientId}`);
+
     }, this.blockDurationMs);
   }
   
@@ -284,7 +281,7 @@ export class RateLimitingService {
       });
     } catch (error) {
       // Don't block on logging errors
-      console.error('[RateLimit] Failed to log usage:', error);
+
     }
   }
   
@@ -359,7 +356,7 @@ export class RateLimitingService {
     };
     
     this.limits.set(endpoint, { ...existing, ...config });
-    console.log(`[RateLimit] Updated limit for ${endpoint}:`, this.limits.get(endpoint));
+
   }
   
   /**
@@ -420,8 +417,7 @@ export class RateLimitingService {
           metrics.violations = 0;
         }
       }
-      
-      console.log(`[RateLimit] Cleanup: ${this.clients.size} active clients, ${this.blockedIPs.size} blocked`);
+
     }, 300000); // Every 5 minutes
   }
   
@@ -431,7 +427,7 @@ export class RateLimitingService {
   reset(): void {
     this.clients.clear();
     this.blockedIPs.clear();
-    console.log('[RateLimit] All limits reset');
+
   }
 }
 

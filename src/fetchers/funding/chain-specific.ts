@@ -38,7 +38,7 @@ export class ChainSpecificFetcher extends BaseFetcher<ChainProgramData> {
 
   async fetch(): Promise<ChainProgramData[]> {
     // Would fetch from multiple chain-specific APIs (Polygon, Avalanche, Solana, etc.)
-    console.log(`[${this.config.name}] Using mock data (no API configured)`);
+
     return [this.getMockData()];
   }
 

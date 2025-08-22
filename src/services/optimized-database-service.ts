@@ -66,7 +66,7 @@ export class OptimizedDatabaseService {
         )
       );
     }
-    console.log(`[OptimizedDB] Connection pool initialized with ${this.maxPoolSize} connections`);
+
   }
   
   /**
@@ -175,7 +175,7 @@ export class OptimizedDatabaseService {
       
       return await query;
     } catch (error) {
-      console.error(`[OptimizedDB] Query error for ${table}:`, error);
+
       return { data: null, error };
     }
   }
@@ -196,9 +196,7 @@ export class OptimizedDatabaseService {
     const chunks = this.chunkArray(data, chunkSize);
     let totalInserted = 0;
     const errors: any[] = [];
-    
-    console.log(`[OptimizedDB] Batch inserting ${data.length} items into ${table} in ${chunks.length} chunks`);
-    
+
     // Process chunks in parallel using connection pool
     const chunkPromises = chunks.map(async (chunk, index) => {
       const connection = this.getPooledConnection();
@@ -224,9 +222,7 @@ export class OptimizedDatabaseService {
     if (options?.cache !== false) {
       await intelligentCache.invalidateRelated(`db:${table}:.*`);
     }
-    
-    console.log(`[OptimizedDB] Inserted ${totalInserted}/${data.length} items, ${errors.length} errors`);
-    
+
     return { inserted: totalInserted, errors };
   }
   
@@ -311,9 +307,7 @@ export class OptimizedDatabaseService {
   }> {
     const results: any[] = [];
     const errors: any[] = [];
-    
-    console.log(`[OptimizedDB] Starting transaction with ${operations.length} operations`);
-    
+
     // Group operations by table for better performance
     const groupedOps = this.groupOperationsByTable(operations);
     
@@ -352,9 +346,7 @@ export class OptimizedDatabaseService {
       // Invalidate cache for modified tables
       await intelligentCache.invalidateRelated(`db:${table}:.*`);
     }
-    
-    console.log(`[OptimizedDB] Transaction completed: ${results.length} successes, ${errors.length} errors`);
-    
+
     return {
       success: errors.length === 0,
       results,
@@ -403,8 +395,7 @@ export class OptimizedDatabaseService {
    * Optimize table with vacuum and analyze
    */
   async optimizeTable(table: string): Promise<void> {
-    console.log(`[OptimizedDB] Optimizing table ${table}...`);
-    
+
     try {
       const connection = this.getPooledConnection();
       
@@ -413,10 +404,9 @@ export class OptimizedDatabaseService {
       
       // Invalidate all caches for this table
       await intelligentCache.invalidateRelated(`db:${table}:.*`);
-      
-      console.log(`[OptimizedDB] Table ${table} optimized successfully`);
+
     } catch (error) {
-      console.error(`[OptimizedDB] Failed to optimize table ${table}:`, error);
+
     }
   }
   
@@ -424,8 +414,7 @@ export class OptimizedDatabaseService {
    * Create missing indexes for better performance
    */
   async createIndexes(): Promise<void> {
-    console.log('[OptimizedDB] Creating performance indexes...');
-    
+
     const indexes = [
       'CREATE INDEX IF NOT EXISTS idx_content_queue_status_score ON content_queue(status, score DESC)',
       'CREATE INDEX IF NOT EXISTS idx_content_queue_created_at ON content_queue(created_at DESC)',
@@ -439,9 +428,9 @@ export class OptimizedDatabaseService {
     for (const indexSql of indexes) {
       try {
         await this.supabase.rpc('execute_sql', { query: indexSql });
-        console.log(`[OptimizedDB] Index created: ${indexSql.match(/idx_\w+/)?.[0]}`);
+
       } catch (error) {
-        console.error('[OptimizedDB] Index creation error:', error);
+
       }
     }
   }

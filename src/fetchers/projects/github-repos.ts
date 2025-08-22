@@ -50,7 +50,7 @@ export class GitHubReposFetcher extends BaseFetcher<GitHubProjectData> {
 
       return [data];
     } catch (error) {
-      console.error(`[${this.config.name}] Error:`, error);
+
       return [{ items: [] }];
     }
   }

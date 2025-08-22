@@ -45,7 +45,7 @@ export class Web3GrantsFetcher extends BaseFetcher<Web3GrantData> {
 
   async fetch(): Promise<Web3GrantData[]> {
     // Mock implementation - would aggregate from multiple grant platforms
-    console.log(`[${this.config.name}] Using mock data (no API configured)`);
+
     return [this.getMockData()];
   }
 

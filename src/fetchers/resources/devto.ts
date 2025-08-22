@@ -47,7 +47,7 @@ export class DevToFetcher extends BaseFetcher<DevToResponse> {
 
       return [data];
     } catch (error) {
-      console.error(`[${this.config.name}] Error:`, error);
+
       return [];
     }
   }

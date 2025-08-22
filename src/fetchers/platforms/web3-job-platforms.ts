@@ -179,7 +179,7 @@ export class Web3JobPlatformsFetcher extends BaseFetcher<any> {
         }
       }
     } catch (error) {
-      console.error('[Dework] Error:', error);
+
     }
 
     // Return sample data for demonstration
@@ -234,7 +234,7 @@ export class Web3JobPlatformsFetcher extends BaseFetcher<any> {
         })) || []);
       }
     } catch (error) {
-      console.error('[Layer3] Error:', error);
+
     }
 
     // Sample data
@@ -280,7 +280,7 @@ export class Web3JobPlatformsFetcher extends BaseFetcher<any> {
         })) || []);
       }
     } catch (error) {
-      console.error('[Wonderverse] Error:', error);
+
     }
 
     // Sample data

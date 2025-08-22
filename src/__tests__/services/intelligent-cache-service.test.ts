@@ -28,7 +28,7 @@ describe('IntelligentCacheService', () => {
     });
     
     it('should handle cache misses with fetcher', async () => {
-      const fetcher = jest.fn().mockResolvedValue('fetched-data');
+      const fetcher = jest.fn(() => Promise.resolve('fetched-data'));
       
       const result = await cache.get('test-key', fetcher);
       
@@ -38,7 +38,7 @@ describe('IntelligentCacheService', () => {
     
     it('should not call fetcher on cache hit', async () => {
       await cache.set('test-key', 'cached-data');
-      const fetcher = jest.fn();
+      const fetcher = jest.fn(() => Promise.resolve('fetched-data'));
       
       const result = await cache.get('test-key', fetcher);
       
@@ -125,7 +125,7 @@ describe('IntelligentCacheService', () => {
   
   describe('Error Handling', () => {
     it('should handle fetcher errors gracefully', async () => {
-      const fetcher = jest.fn().mockRejectedValue(new Error('Fetch failed'));
+      const fetcher = jest.fn(() => Promise.reject(new Error('Fetch failed')));
       
       await expect(cache.get('test-key', fetcher)).rejects.toThrow('Fetch failed');
     });
@@ -138,7 +138,7 @@ describe('IntelligentCacheService', () => {
       await new Promise(resolve => setTimeout(resolve, 150));
       
       // Fetcher fails
-      const fetcher = jest.fn().mockRejectedValue(new Error('Fetch failed'));
+      const fetcher = jest.fn(() => Promise.reject(new Error('Fetch failed')));
       
       // Should return stale data
       const result = await cache.get('test-key', fetcher);

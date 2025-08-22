@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
 import { supabase } from '../lib/supabase-client';
 import { DuplicateDetector } from '../lib/duplicate-detector';
 import { AccelerateScorer } from '../lib/accelerate-scorer';

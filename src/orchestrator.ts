@@ -89,15 +89,13 @@ export class AccelerateOrchestrator {
       new ComprehensiveGrantsFetcher(),
     );
 
-    console.log(`[Orchestrator] Initialized ${this.fetchers.length} fetchers for 80%+ coverage`);
   }
 
   /**
    * Unified enrichment pipeline
    */
   private async enrichContent(items: ContentItem[]): Promise<ContentItem[]> {
-    console.log(`[Orchestrator] Starting enrichment pipeline for ${items.length} items...`);
-    
+
     const enrichedItems: ContentItem[] = [];
     const batchSize = 10;
 
@@ -120,7 +118,7 @@ export class AccelerateOrchestrator {
             
             return enriched;
           } catch (error) {
-            console.error(`[Enrichment] Error for ${item.title}:`, error);
+
             return item; // Return original if enrichment fails
           }
         })
@@ -130,11 +128,10 @@ export class AccelerateOrchestrator {
       
       // Progress update
       if ((i + batchSize) % 50 === 0) {
-        console.log(`[Orchestrator] Enriched ${Math.min(i + batchSize, items.length)}/${items.length} items`);
+
       }
     }
 
-    console.log(`[Orchestrator] Enrichment complete. Enhanced ${enrichedItems.length} items`);
     return enrichedItems;
   }
 
@@ -187,7 +184,7 @@ export class AccelerateOrchestrator {
 
     try {
       // Test database connection first
-      console.log('[Orchestrator] Testing database connection...');
+
       const connected = await testConnection();
       if (!connected) {
         throw new Error('Failed to connect to Accelerate database');
@@ -195,10 +192,9 @@ export class AccelerateOrchestrator {
 
       // Get initial stats
       const initialStats = await getDatabaseStats();
-      console.log('[Orchestrator] Initial database stats:', initialStats);
 
       // Run all fetchers in parallel batches
-      console.log('[Orchestrator] Starting comprehensive content fetching...');
+
       const fetcherBatches = this.batchFetchers(this.fetchers, 3); // Run 3 at a time
 
       for (const batch of fetcherBatches) {
@@ -211,10 +207,10 @@ export class AccelerateOrchestrator {
             const cachedContent = await intelligentCache.get<ContentItem[]>(
               cacheKey,
               async () => {
-                console.log(`[${fetcherName}] Cache miss - fetching fresh data...`);
+
                 const rawData = await fetcher.fetch();
                 const content = await fetcher.transform(rawData);
-                console.log(`[${fetcherName}] Fetched ${content.length} items`);
+
                 return content;
               },
               {
@@ -227,7 +223,7 @@ export class AccelerateOrchestrator {
             return cachedContent || [];
           } catch (error) {
             const errorMsg = `[${fetcher.constructor.name}] Failed: ${error}`;
-            console.error(errorMsg);
+
             errors.push(errorMsg);
             return [];
           }
@@ -237,16 +233,14 @@ export class AccelerateOrchestrator {
         batchResults.forEach(content => allContent.push(...content));
       }
 
-      console.log(`[Orchestrator] Total raw content fetched: ${allContent.length} items`);
-
       // DUPLICATE DETECTION with caching
-      console.log('[Orchestrator] Checking for duplicates against existing database...');
+
       const duplicateCacheKey = `duplicates:check:${allContent.length}`;
       const duplicateResult = await intelligentCache.get(
         duplicateCacheKey,
         async () => {
           const result = await this.duplicateDetector.checkDuplicates(allContent);
-          console.log(`[Orchestrator] Found ${result.duplicates.length} duplicates, ${result.unique.length} unique items`);
+
           return result;
         },
         {
@@ -266,7 +260,7 @@ export class AccelerateOrchestrator {
       }
 
       // ENRICHMENT PIPELINE with intelligent caching
-      console.log('[Orchestrator] Starting enrichment pipeline...');
+
       const enrichmentCacheKey = `enrichment:batch:${unique.length}`;
       const enrichedContent = await intelligentCache.get(
         enrichmentCacheKey,
@@ -281,15 +275,8 @@ export class AccelerateOrchestrator {
       ) || [];
 
       // Score and rank all content
-      console.log('[Orchestrator] Scoring content for Accelerate relevance...');
+
       const metrics = AccelerateScorer.getQualityMetrics(enrichedContent);
-      console.log('[Orchestrator] Quality metrics:', {
-        total: metrics.total,
-        qualified: metrics.qualified,
-        averageScore: metrics.averageScore.toFixed(1),
-        byType: metrics.byType,
-        duplicatesFound: duplicates.length,
-      });
 
       // Filter by credibility
       const credibleContent = enrichedContent.filter(item => 
@@ -297,10 +284,8 @@ export class AccelerateOrchestrator {
         item.type === 'resource' // Resources don't need as much verification
       );
 
-      console.log(`[Orchestrator] Credible content: ${credibleContent.length}/${enrichedContent.length}`);
-
       // Process and insert into database
-      console.log('[Orchestrator] Processing qualified content for database...');
+
       const pipelineResult = await AccelerateDBPipeline.processContent(credibleContent);
       
       if (pipelineResult.errors.length > 0) {
@@ -309,7 +294,6 @@ export class AccelerateOrchestrator {
 
       // Get final stats
       const finalStats = await getDatabaseStats();
-      console.log('[Orchestrator] Final database stats:', finalStats);
 
       // Calculate changes
       const changes = {
@@ -341,7 +325,7 @@ export class AccelerateOrchestrator {
       };
 
     } catch (error) {
-      console.error('[Orchestrator] Fatal error:', error);
+
       errors.push(`Fatal error: ${error}`);
       return {
         success: false,
@@ -391,8 +375,6 @@ export class AccelerateOrchestrator {
       }
     });
 
-    console.log(`[Orchestrator] Running ${category} fetchers (${categoryFetchers.length} fetchers)`);
-    
     const allContent: ContentItem[] = [];
     for (const fetcher of categoryFetchers) {
       try {
@@ -400,7 +382,7 @@ export class AccelerateOrchestrator {
         const content = await fetcher.transform(rawData);
         allContent.push(...content);
       } catch (error) {
-        console.error(`[${fetcher.constructor.name}] Error:`, error);
+
       }
     }
 
@@ -453,16 +435,13 @@ export class AccelerateOrchestrator {
    * Run continuous monitoring with enrichment
    */
   async runContinuous(intervalMinutes: number = 60): Promise<void> {
-    console.log(`[Orchestrator] Starting continuous monitoring (every ${intervalMinutes} minutes)`);
-    console.log(`[Orchestrator] Enrichment pipeline: ENABLED`);
-    console.log(`[Orchestrator] Coverage target: 80%+`);
-    
+
     // Run immediately
     await this.run();
     
     // Set up interval
     setInterval(async () => {
-      console.log(`[Orchestrator] Running scheduled update at ${new Date().toISOString()}`);
+
       await this.run();
     }, intervalMinutes * 60 * 1000);
   }
@@ -474,21 +453,17 @@ export const orchestrator = new AccelerateOrchestrator();
 // CLI entry point
 if (require.main === module) {
   (async () => {
-    console.log('🚀 Accelerate Content Automation System v2.0');
-    console.log('==========================================');
-    console.log('80%+ Coverage | Social Enrichment | Team Verification');
-    console.log('Keeping Accelerate DB updated with verified Web3 content\n');
 
     const args = process.argv.slice(2);
     const command = args[0] || 'run';
 
     switch (command) {
       case 'run':
-        console.log('Running all fetchers with enrichment...\n');
+
         const result = await orchestrator.run();
-        console.log('\n📊 Results:', JSON.stringify(result.stats, null, 2));
+
         if (result.errors.length > 0) {
-          console.error('\n❌ Errors:', result.errors);
+
         }
         break;
 
@@ -496,15 +471,15 @@ if (require.main === module) {
       case 'funding':
       case 'resources':
       case 'metrics':
-        console.log(`Running ${command} fetchers...\n`);
+
         const categoryResult = await orchestrator.runCategory(command as any);
-        console.log('\n📊 Results:', categoryResult);
+
         break;
 
       case 'status':
-        console.log('Getting enhanced pipeline status...\n');
+
         const status = await orchestrator.getStatus();
-        console.log('📊 Status:', JSON.stringify(status, null, 2));
+
         break;
 
       case 'continuous':
@@ -513,14 +488,7 @@ if (require.main === module) {
         break;
 
       default:
-        console.log('Usage:');
-        console.log('  npm run orchestrate          # Run all fetchers with enrichment');
-        console.log('  npm run orchestrate projects # Run project fetchers');
-        console.log('  npm run orchestrate funding  # Run funding fetchers');
-        console.log('  npm run orchestrate resources # Run resource fetchers');
-        console.log('  npm run orchestrate metrics  # Run metrics fetchers');
-        console.log('  npm run orchestrate status   # Get enhanced status');
-        console.log('  npm run orchestrate continuous [minutes] # Run continuously');
+
     }
   })();
 }

@@ -52,9 +52,7 @@ export abstract class BaseFetcher<T> {
     const startTime = Date.now();
     const errors: string[] = [];
     let items: ContentItem[] = [];
-    
-    console.log(`[${this.config.name}] Starting fetch...`);
-    
+
     try {
       // Enforce rate limiting
       await this.enforceRateLimit();
@@ -77,8 +75,7 @@ export abstract class BaseFetcher<T> {
       }
       
       const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-      console.log(`[${this.config.name}] ✅ Fetched ${uniqueItems.length} items in ${duration}s`);
-      
+
       return {
         success: true,
         fetched: uniqueItems.length,
@@ -88,8 +85,7 @@ export abstract class BaseFetcher<T> {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       errors.push(errorMessage);
-      console.error(`[${this.config.name}] ❌ Failed:`, errorMessage);
-      
+
       // Log to database
       await this.logError(errorMessage);
       
@@ -154,7 +150,7 @@ export abstract class BaseFetcher<T> {
         return this.schema.parse(data); // Validate with Zod
       } catch (error) {
         if (i === retries - 1) throw error;
-        console.log(`[${this.config.name}] Retry ${i + 1}/${retries} after error:`, error);
+
         await this.delay(Math.pow(2, i) * 1000);
       }
     }
@@ -175,7 +171,7 @@ export abstract class BaseFetcher<T> {
           fetched_at: new Date()
         });
       } catch (error) {
-        console.warn(`[${this.config.name}] Invalid item skipped:`, item.title || 'Unknown');
+
       }
     }
     
@@ -201,12 +197,12 @@ export abstract class BaseFetcher<T> {
       
       const duplicateCount = items.length - unique.length;
       if (duplicateCount > 0) {
-        console.log(`[${this.config.name}] Filtered out ${duplicateCount} duplicates`);
+
       }
       
       return unique;
     } catch (error) {
-      console.error(`[${this.config.name}] Error checking duplicates:`, error);
+
       return items;
     }
   }
@@ -268,7 +264,7 @@ export abstract class BaseFetcher<T> {
           fetched_at: new Date()
         });
     } catch (error) {
-      console.error(`[${this.config.name}] Error logging to database:`, error);
+
     }
   }
 

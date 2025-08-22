@@ -244,7 +244,7 @@ export class TeamVerificationService {
         account_age_years: (Date.now() - new Date(user.created_at).getTime()) / (365 * 24 * 60 * 60 * 1000),
       };
     } catch (error) {
-      console.error(`[Team Verification] GitHub error for ${username}:`, error);
+
       return null;
     }
   }
@@ -288,7 +288,7 @@ export class TeamVerificationService {
         return data.data?.verified || false;
       }
     } catch (error) {
-      console.error(`[Team Verification] Twitter error for ${handle}:`, error);
+
     }
 
     return false;
@@ -327,7 +327,7 @@ export class TeamVerificationService {
 
       return contributors;
     } catch (error) {
-      console.error('[Team Verification] Error fetching contributors:', error);
+
       return [];
     }
   }

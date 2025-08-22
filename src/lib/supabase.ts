@@ -7,7 +7,7 @@ const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANO
 export const isConfigured = !supabaseUrl.includes('placeholder');
 
 if (!isConfigured) {
-  console.warn('⚠️ Supabase not configured. Using placeholder values.');
+
 }
 
 export const supabase = createClient(

@@ -137,7 +137,7 @@ export class ErrorLoggingService extends EventEmitter {
       try {
         await fs.mkdir(this.config.logFilePath, { recursive: true });
       } catch (error) {
-        console.error('[ErrorLogging] Failed to create log directory:', error);
+
       }
     }
     
@@ -145,8 +145,7 @@ export class ErrorLoggingService extends EventEmitter {
     this.flushInterval = setInterval(() => {
       this.flushLogs();
     }, this.config.flushIntervalMs);
-    
-    console.log('[ErrorLogging] Logging service initialized');
+
   }
   
   /**
@@ -340,7 +339,7 @@ export class ErrorLoggingService extends EventEmitter {
       
     } catch (error) {
       // Don't fail if enrichment fails
-      console.warn('[ErrorLogging] Context enrichment failed:', error);
+
     }
   }
   
@@ -383,7 +382,7 @@ export class ErrorLoggingService extends EventEmitter {
     // Database logging (don't wait for this)
     if (this.config.enableDatabaseLogging) {
       this.logToDatabase(error).catch(err => {
-        console.error('[ErrorLogging] Database logging failed:', err);
+
       });
     }
     
@@ -402,20 +401,20 @@ export class ErrorLoggingService extends EventEmitter {
     
     switch (error.level) {
       case 'debug':
-        console.debug(logMessage);
+
         break;
       case 'info':
-        console.info(logMessage);
+
         break;
       case 'warning':
-        console.warn(logMessage);
+
         break;
       case 'error':
-        console.error(logMessage);
+
         if (error.stack) console.error(error.stack);
         break;
       case 'critical':
-        console.error(`🚨 CRITICAL: ${logMessage}`);
+
         if (error.stack) console.error(error.stack);
         break;
     }
@@ -437,7 +436,7 @@ export class ErrorLoggingService extends EventEmitter {
       
       await fs.appendFile(filePath, logEntry, 'utf8');
     } catch (err) {
-      console.error('[ErrorLogging] File logging failed:', err);
+
     }
   }
   
@@ -465,7 +464,7 @@ export class ErrorLoggingService extends EventEmitter {
       });
     } catch (err) {
       // Don't throw, just log
-      console.error('[ErrorLogging] Database insert failed:', err);
+
     }
   }
   
@@ -495,7 +494,7 @@ export class ErrorLoggingService extends EventEmitter {
         
         await supabase.from('error_logs').insert(records);
       } catch (error) {
-        console.error('[ErrorLogging] Batch flush failed:', error);
+
       }
     }
     
@@ -537,7 +536,7 @@ export class ErrorLoggingService extends EventEmitter {
         created_at: new Date().toISOString()
       });
     } catch (err) {
-      console.error('[ErrorLogging] Failed to send critical notification:', err);
+
     }
   }
   
@@ -744,7 +743,7 @@ export class ErrorLoggingService extends EventEmitter {
   clearLogs(): void {
     this.errors.clear();
     this.logBuffer = [];
-    console.log('[ErrorLogging] Logs cleared');
+
   }
   
   /**
@@ -758,8 +757,7 @@ export class ErrorLoggingService extends EventEmitter {
     
     // Final flush
     this.flushLogs();
-    
-    console.log('[ErrorLogging] Service stopped');
+
   }
 }
 

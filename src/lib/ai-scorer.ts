@@ -38,7 +38,7 @@ export class AIScorer {
 
   async scoreContent(content: any): Promise<AIScore | null> {
     if (!openai) {
-      console.log('[AI Scorer] OpenAI not configured - using mock scoring');
+
       return this.getMockScore(content);
     }
 
@@ -74,7 +74,7 @@ export class AIScorer {
       
       return score;
     } catch (error) {
-      console.error('[AI Scorer] Error:', error);
+
       return this.getMockScore(content);
     }
   }

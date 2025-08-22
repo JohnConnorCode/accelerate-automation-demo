@@ -35,7 +35,7 @@ export class EcosystemProgramsFetcher extends BaseFetcher<EcosystemProgramData> 
 
   async fetch(): Promise<EcosystemProgramData[]> {
     // Would fetch from multiple ecosystem program APIs
-    console.log(`[${this.config.name}] Using mock data (no API configured)`);
+
     return [this.getMockData()];
   }
 

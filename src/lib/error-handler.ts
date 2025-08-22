@@ -98,8 +98,6 @@ class ErrorHandler {
 
   private async logError(error: Error | AppError, context?: ErrorContext): Promise<void> {
     const errorInfo = this.formatError(error, context);
-    
-    console.error('[Error]', errorInfo);
 
     try {
       await supabase
@@ -112,7 +110,7 @@ class ErrorHandler {
           timestamp: new Date().toISOString(),
         });
     } catch (logError) {
-      console.error('[Error] Failed to log error to database:', logError);
+
     }
   }
 
@@ -164,7 +162,7 @@ class ErrorHandler {
     
     // Use monitoring service to send alerts
     // This would integrate with your notification system
-    console.error('[Alert] Critical error detected:', message);
+
   }
 
   private trackErrorMetrics(error: Error | AppError, context?: ErrorContext): void {
@@ -176,7 +174,7 @@ class ErrorHandler {
     };
 
     // This would integrate with your metrics system
-    console.log('[Metrics] Error tracked:', labels);
+
   }
 
   public createErrorResponse(error: Error | AppError, req?: VercelRequest): any {
@@ -254,7 +252,7 @@ export function asyncHandler(
 
 // Global error handlers
 process.on('uncaughtException', (error: Error) => {
-  console.error('[Fatal] Uncaught Exception:', error);
+
   errorHandler.handleError(error, { service: 'process', operation: 'uncaughtException' });
   // Give time to log the error before shutting down
   setTimeout(() => {
@@ -263,7 +261,7 @@ process.on('uncaughtException', (error: Error) => {
 });
 
 process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
-  console.error('[Fatal] Unhandled Rejection at:', promise, 'reason:', reason);
+
   errorHandler.handleError(
     new Error(`Unhandled Rejection: ${reason}`),
     { service: 'process', operation: 'unhandledRejection' }

@@ -28,7 +28,7 @@ export class EtherscanFetcher extends BaseFetcher<z.infer<typeof EtherscanSchema
 
   async fetch(): Promise<z.infer<typeof EtherscanSchema>[]> {
     if (!process.env.ETHERSCAN_API_KEY) {
-      console.warn('[Etherscan] No API key provided');
+
       return [];
     }
 
@@ -59,7 +59,7 @@ export class EtherscanFetcher extends BaseFetcher<z.infer<typeof EtherscanSchema
 
       return [data];
     } catch (error) {
-      console.error(`[${this.config.name}] Error:`, error);
+
       return [];
     }
   }
@@ -124,7 +124,7 @@ export class AlchemyFetcher extends BaseFetcher<z.infer<typeof AlchemySchema>> {
 
   async fetch(): Promise<z.infer<typeof AlchemySchema>[]> {
     if (!process.env.ALCHEMY_API_KEY) {
-      console.warn('[Alchemy] No API key provided');
+
       return [];
     }
 
@@ -152,7 +152,7 @@ export class AlchemyFetcher extends BaseFetcher<z.infer<typeof AlchemySchema>> {
       const data = await response.json();
       return [data];
     } catch (error) {
-      console.error(`[${this.config.name}] Error:`, error);
+
       return [];
     }
   }
@@ -224,7 +224,7 @@ export class DuneFetcher extends BaseFetcher<z.infer<typeof DuneSchema>> {
 
   async fetch(): Promise<z.infer<typeof DuneSchema>[]> {
     if (!process.env.DUNE_API_KEY) {
-      console.warn('[Dune] No API key provided');
+
       return [];
     }
 
@@ -259,7 +259,7 @@ export class DuneFetcher extends BaseFetcher<z.infer<typeof DuneSchema>> {
           results.push(resultData);
         }
       } catch (error) {
-        console.error(`[Dune] Error with query ${query.id}:`, error);
+
       }
     }
 
@@ -358,7 +358,7 @@ export class TheGraphFetcher extends BaseFetcher<z.infer<typeof TheGraphSchema>>
           results.push(data);
         }
       } catch (error) {
-        console.error(`[TheGraph] Error with ${subgraph.name}:`, error);
+
       }
     }
 

@@ -30,7 +30,7 @@ export class EcosystemListsFetcher extends BaseFetcher<EcosystemProjectData> {
 
   async fetch(): Promise<EcosystemProjectData[]> {
     // Would fetch from multiple ecosystem APIs (Ethereum, Polygon, Solana, etc.)
-    console.log(`[${this.config.name}] Using mock data (no API configured)`);
+
     return [this.getMockData()];
   }
 

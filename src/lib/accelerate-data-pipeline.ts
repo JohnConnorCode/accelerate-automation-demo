@@ -59,16 +59,16 @@ export class AccelerateDataPipeline extends EventEmitter {
    * Main crawl function - gets raw data from various sources
    */
   async crawlSources(sources: string[] = ['github', 'devto', 'medium', 'hackernews']): Promise<any[]> {
-    console.log(`🔍 Crawling ${sources.length} sources...`);
+
     const rawData: any[] = [];
 
     for (const source of sources) {
       try {
         const data = await this.crawlSource(source);
         rawData.push(...data);
-        console.log(`✅ Crawled ${data.length} items from ${source}`);
+
       } catch (error) {
-        console.error(`❌ Failed to crawl ${source}:`, error);
+
       }
     }
 
@@ -131,7 +131,7 @@ export class AccelerateDataPipeline extends EventEmitter {
         raw: true
       }));
     } catch (error) {
-      console.error('Dev.to crawl error:', error);
+
       return [];
     }
   }
@@ -156,7 +156,7 @@ export class AccelerateDataPipeline extends EventEmitter {
       
       return articles;
     } catch (error) {
-      console.error('Medium crawl error:', error);
+
       return [];
     }
   }
@@ -194,7 +194,7 @@ export class AccelerateDataPipeline extends EventEmitter {
       
       return stories;
     } catch (error) {
-      console.error('HackerNews crawl error:', error);
+
       return [];
     }
   }
@@ -203,7 +203,7 @@ export class AccelerateDataPipeline extends EventEmitter {
    * Clean and structure raw data
    */
   async cleanData(rawData: any[]): Promise<CleanedDataItem[]> {
-    console.log(`🧹 Cleaning ${rawData.length} raw items...`);
+
     const cleaned: CleanedDataItem[] = [];
 
     for (const item of rawData) {
@@ -213,11 +213,10 @@ export class AccelerateDataPipeline extends EventEmitter {
           cleaned.push(cleanedItem);
         }
       } catch (error) {
-        console.error('Error cleaning item:', error);
+
       }
     }
 
-    console.log(`✅ Cleaned ${cleaned.length} items`);
     return cleaned;
   }
 
@@ -372,8 +371,7 @@ export class AccelerateDataPipeline extends EventEmitter {
    * Store cleaned data in database
    */
   async storeData(cleanedData: CleanedDataItem[]): Promise<void> {
-    console.log(`💾 Storing ${cleanedData.length} items...`);
-    
+
     // Batch insert for efficiency
     const batches = [];
     for (let i = 0; i < cleanedData.length; i += this.batchSize) {
@@ -399,14 +397,13 @@ export class AccelerateDataPipeline extends EventEmitter {
           })));
 
         if (error) {
-          console.error('Error storing batch:', error);
+
         }
       } catch (error) {
-        console.error('Storage error:', error);
+
       }
     }
 
-    console.log('✅ Data stored successfully');
   }
 
   /**
@@ -417,8 +414,7 @@ export class AccelerateDataPipeline extends EventEmitter {
     cleaned: number;
     stored: number;
   }> {
-    console.log('🚀 Starting Accelerate data pipeline...');
-    
+
     // Step 1: Crawl data
     const rawData = await this.crawlSources(sources);
     
@@ -433,8 +429,7 @@ export class AccelerateDataPipeline extends EventEmitter {
       cleaned: cleanedData.length,
       stored: cleanedData.length
     };
-    
-    console.log('✅ Pipeline complete:', stats);
+
     this.emit('complete', stats);
     
     return stats;
