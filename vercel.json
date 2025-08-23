@@ -1,38 +1,17 @@
 {
-  "version": 2,
-  "name": "accelerate-content-automation",
-  "builds": [
-    {
-      "src": "api/*.ts",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "public/*",
-      "use": "@vercel/static"
+  "functions": {
+    "api/*.ts": {
+      "maxDuration": 30
     }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1.ts"
-    },
-    {
-      "src": "/admin",
-      "dest": "/public/admin.html"
-    },
-    {
-      "src": "/",
-      "dest": "/public/index.html"
-    }
-  ],
-  "env": {
-    "NODE_ENV": "production"
   },
-  "public": true,
-  "crons": [
+  "rewrites": [
     {
-      "path": "/api/run",
-      "schedule": "0 0 * * *"
+      "source": "/",
+      "destination": "/public/index.html"
+    },
+    {
+      "source": "/admin",
+      "destination": "/public/admin.html"
     }
   ]
 }

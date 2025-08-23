@@ -1,5 +1,5 @@
 import { supabase } from './supabase-client';
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 
 /**
  * CACHE SERVICE
