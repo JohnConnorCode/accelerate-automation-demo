@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Save, Plus, X } from 'lucide-react'
+import { Save, Plus, X, Key, AlertCircle } from 'lucide-react'
 
 interface ContentSettings {
   minScore: number
@@ -36,17 +36,27 @@ export default function Settings() {
 
   const [keywordInput, setKeywordInput] = useState('')
   const [domainInput, setDomainInput] = useState('')
+  const [openaiKey, setOpenaiKey] = useState('')
   const [saved, setSaved] = useState(false)
+  const [keyVisible, setKeyVisible] = useState(false)
 
   useEffect(() => {
     const savedSettings = localStorage.getItem('contentSettings')
     if (savedSettings) {
       setSettings(JSON.parse(savedSettings))
     }
+    
+    const savedKey = localStorage.getItem('openai_api_key')
+    if (savedKey) {
+      setOpenaiKey(savedKey)
+    }
   }, [])
 
   const handleSave = () => {
     localStorage.setItem('contentSettings', JSON.stringify(settings))
+    if (openaiKey) {
+      localStorage.setItem('openai_api_key', openaiKey)
+    }
     setSaved(true)
     setTimeout(() => setSaved(false), 3000)
   }
@@ -99,6 +109,52 @@ export default function Settings() {
       </div>
 
       <div className="space-y-6">
+        {/* OpenAI API Key */}
+        <div className="border-b border-gray-200 pb-6">
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Key className="w-5 h-5" />
+            OpenAI API Configuration
+          </h2>
+          
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5" />
+              <div className="text-sm text-yellow-800">
+                <p className="font-semibold">GPT-4 Integration</p>
+                <p>Add your OpenAI API key to enable advanced content enrichment with GPT-4. This will provide:</p>
+                <ul className="list-disc list-inside mt-1">
+                  <li>AI-powered content analysis</li>
+                  <li>Quality assessment and insights</li>
+                  <li>Automatic categorization</li>
+                  <li>Smart summaries and keyword extraction</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex gap-2">
+            <input
+              type={keyVisible ? 'text' : 'password'}
+              value={openaiKey}
+              onChange={(e) => setOpenaiKey(e.target.value)}
+              placeholder="sk-..."
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary"
+            />
+            <button
+              onClick={() => setKeyVisible(!keyVisible)}
+              className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+            >
+              {keyVisible ? 'Hide' : 'Show'}
+            </button>
+          </div>
+          
+          {!openaiKey && (
+            <p className="text-sm text-gray-500 mt-2">
+              Get your API key from <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">OpenAI Platform</a>
+            </p>
+          )}
+        </div>
+        
         {/* Score Settings */}
         <div className="border-b border-gray-200 pb-6">
           <h2 className="text-lg font-semibold mb-4">Score Thresholds</h2>

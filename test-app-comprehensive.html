@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Comprehensive App Test</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #00ff00; }
+        .test { margin: 10px 0; padding: 10px; border: 1px solid #333; }
+        .pass { border-color: #00ff00; }
+        .fail { border-color: #ff0000; color: #ff0000; }
+        .pending { border-color: #ffff00; color: #ffff00; }
+        h2 { color: #00ffff; }
+        pre { background: #000; padding: 10px; overflow-x: auto; }
+        button { background: #00ff00; color: #000; border: none; padding: 10px; cursor: pointer; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Comprehensive Content Automation Test Suite</h1>
+    
+    <div id="status"></div>
+    <div id="results"></div>
+    
+    <script>
+        const API_BASE = 'http://localhost:3001';
+        const SUPABASE_URL = 'https://eqpfvmwmdtsgddpsodsr.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcGZ2bXdtZHRzZ2RkcHNvZHNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU4MjE4NzgsImV4cCI6MjA2MTM5Nzg3OH0.HAyBibHx0dqzXEAAr2MYxv1sfs13PLANLXLXM2NIWKI';
+        
+        const results = [];
+        let testCount = 0;
+        
+        function log(message, type = 'info') {
+            const status = document.getElementById('status');
+            const color = type === 'error' ? '#ff0000' : type === 'success' ? '#00ff00' : '#ffff00';
+            status.innerHTML += `<div style="color: ${color}">[${new Date().toISOString()}] ${message}</div>`;
+        }
+        
+        async function testEndpoint(name, url, options = {}) {
+            testCount++;
+            const test = { name, status: 'pending', response: null, error: null };
+            
+            try {
+                log(`Testing: ${name}...`, 'info');
+                const response = await fetch(url, {
+                    ...options,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    }
+                });
+                
+                test.status = response.ok ? 'pass' : 'fail';
+                test.statusCode = response.status;
+                
+                try {
+                    test.response = await response.json();
+                } catch {
+                    test.response = await response.text();
+                }
+                
+                if (!response.ok) {
+                    test.error = `HTTP ${response.status}`;
+                }
+                
+                log(`✓ ${name}: ${test.status.toUpperCase()} (${response.status})`, test.status === 'pass' ? 'success' : 'error');
+            } catch (error) {
+                test.status = 'fail';
+                test.error = error.message;
+                log(`✗ ${name}: FAILED - ${error.message}`, 'error');
+            }
+            
+            results.push(test);
+            updateResults();
+            return test;
+        }
+        
+        async function testSupabase() {
+            log('Testing Supabase connection...', 'info');
+            
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/content_queue?limit=1`, {
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`
+                    }
+                });
+                
+                if (response.ok) {
+                    log('✓ Supabase connection successful', 'success');
+                    return true;
+                } else {
+                    log(`✗ Supabase connection failed: ${response.status}`, 'error');
+                    return false;
+                }
+            } catch (error) {
+                log(`✗ Supabase connection error: ${error.message}`, 'error');
+                return false;
+            }
+        }
+        
+        async function testContentFlow() {
+            log('Testing complete content flow...', 'info');
+            
+            // 1. Create test content
+            const testContent = {
+                title: `Test Content ${Date.now()}`,
+                description: 'This is a test content item with a description that is longer than 50 characters to meet validation requirements.',
+                source: 'Test Suite',
+                url: 'https://example.com/test',
+                category: 'projects',
+                score: 85
+            };
+            
+            // 2. Queue content
+            const queueResult = await testEndpoint(
+                'Queue Content',
+                `${API_BASE}/api/admin`,
+                {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'queue',
+                        items: [testContent]
+                    })
+                }
+            );
+            
+            // 3. Get queue
+            const queueList = await testEndpoint(
+                'Get Queue',
+                `${API_BASE}/api/dashboard`
+            );
+            
+            // 4. Approve content (if we have an ID)
+            if (queueList.response && queueList.response.items && queueList.response.items.length > 0) {
+                const itemId = queueList.response.items[0].id;
+                
+                await testEndpoint(
+                    'Approve Content',
+                    `${API_BASE}/api/admin`,
+                    {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            action: 'approve',
+                            ids: [itemId]
+                        })
+                    }
+                );
+                
+                // 5. Enrich content
+                await testEndpoint(
+                    'Enrich Content',
+                    `${API_BASE}/api/enrich`,
+                    {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            id: itemId,
+                            options: {
+                                aiAnalysis: true,
+                                keywords: true
+                            }
+                        })
+                    }
+                );
+            }
+        }
+        
+        async function testGPTIntegration() {
+            log('Testing GPT integration...', 'info');
+            
+            await testEndpoint(
+                'AI Assessment',
+                `${API_BASE}/api/ai-assess`,
+                {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        content: {
+                            title: 'AI Startup Revolutionizes Healthcare',
+                            description: 'A new AI startup is using GPT-5 technology to revolutionize healthcare diagnostics and treatment planning.',
+                            source: 'TechNews'
+                        }
+                    })
+                }
+            );
+        }
+        
+        function updateResults() {
+            const resultsDiv = document.getElementById('results');
+            const passed = results.filter(r => r.status === 'pass').length;
+            const failed = results.filter(r => r.status === 'fail').length;
+            
+            let html = `
+                <h2>Test Results: ${passed}/${testCount} Passed</h2>
+                <div style="margin: 20px 0;">
+                    <span style="color: #00ff00">✓ Passed: ${passed}</span> | 
+                    <span style="color: #ff0000">✗ Failed: ${failed}</span>
+                </div>
+            `;
+            
+            results.forEach(test => {
+                html += `
+                    <div class="test ${test.status}">
+                        <strong>${test.name}</strong> - ${test.status.toUpperCase()}
+                        ${test.statusCode ? `(HTTP ${test.statusCode})` : ''}
+                        ${test.error ? `<div>Error: ${test.error}</div>` : ''}
+                        ${test.response ? `<pre>${JSON.stringify(test.response, null, 2)}</pre>` : ''}
+                    </div>
+                `;
+            });
+            
+            resultsDiv.innerHTML = html;
+        }
+        
+        async function runAllTests() {
+            log('Starting comprehensive test suite...', 'info');
+            
+            // Test React app
+            await testEndpoint('React App Home', `${API_BASE}/`);
+            
+            // Test API endpoints
+            await testEndpoint('Health Check', `${API_BASE}/api/health`);
+            await testEndpoint('Status', `${API_BASE}/api/status`);
+            await testEndpoint('Dashboard Stats', `${API_BASE}/api/dashboard`);
+            await testEndpoint('Analytics', `${API_BASE}/api/analytics`);
+            
+            // Test Supabase
+            await testSupabase();
+            
+            // Test content flow
+            await testContentFlow();
+            
+            // Test GPT integration
+            await testGPTIntegration();
+            
+            // Test performance
+            await testEndpoint('Performance Report', `${API_BASE}/api/performance`);
+            
+            // Test search
+            await testEndpoint(
+                'Search Content',
+                `${API_BASE}/api/search`,
+                {
+                    method: 'POST',
+                    body: JSON.stringify({ query: 'AI' })
+                }
+            );
+            
+            log('Test suite complete!', 'success');
+        }
+        
+        // Run tests on load
+        window.onload = () => {
+            runAllTests();
+        };
+    </script>
+    
+    <div style="margin-top: 30px;">
+        <button onclick="location.reload()">Run Tests Again</button>
+        <button onclick="runAllTests()">Run Without Reload</button>
+    </div>
+</body>
+</html>

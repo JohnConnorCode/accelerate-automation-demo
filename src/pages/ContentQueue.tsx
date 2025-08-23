@@ -1,48 +1,74 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Check, X, Zap, RefreshCw, Search, Package, DollarSign, BookOpen } from 'lucide-react'
-import { contentService, ContentCategory } from '../services/contentService'
+import { Check, X, Zap, RefreshCw, Search, Package, DollarSign, BookOpen, AlertCircle, Loader2 } from 'lucide-react'
+import { contentServiceV2, ContentCategory } from '../services/contentServiceV2'
 
 export default function ContentQueue() {
   const queryClient = useQueryClient()
   const [statusFilter, setStatusFilter] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<ContentCategory | ''>('')
 
-  const { data: items = [], isLoading, refetch } = useQuery({
+  const { data: items = [], isLoading, error, refetch } = useQuery({
     queryKey: ['content-queue', statusFilter, categoryFilter],
-    queryFn: () => contentService.getQueue({
+    queryFn: () => contentServiceV2.getQueue({
       status: statusFilter || undefined,
       category: categoryFilter || undefined
     }),
   })
 
   const approveMutation = useMutation({
-    mutationFn: (id: string) => contentService.approveContent([id]),
+    mutationFn: async (id: string) => {
+      const result = await contentServiceV2.approveContent([id])
+      if (!result.success) throw new Error('Failed to approve')
+      return result
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['content-queue'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
     },
+    onError: (error) => {
+      console.error('Approval failed:', error)
+      alert('Failed to approve content. Please try again.')
+    }
   })
 
   const rejectMutation = useMutation({
-    mutationFn: (id: string) => contentService.rejectContent([id]),
+    mutationFn: async (id: string) => {
+      const result = await contentServiceV2.rejectContent([id])
+      if (!result.success) throw new Error('Failed to reject')
+      return result
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['content-queue'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
     },
+    onError: (error) => {
+      console.error('Rejection failed:', error)
+      alert('Failed to reject content. Please try again.')
+    }
   })
 
   const enrichMutation = useMutation({
-    mutationFn: (id: string) => contentService.enrichContent(id, {
-      aiAnalysis: true,
-      sentiment: true,
-      keywords: true,
-      category: true,
-      summary: true
-    }),
+    mutationFn: async (id: string) => {
+      const result = await contentServiceV2.enrichContent(id, {
+        aiAnalysis: true,
+        sentiment: true,
+        keywords: true,
+        category: true,
+        summary: true,
+        gptEnhancement: true
+      })
+      if (!result.success) throw new Error('Failed to enrich')
+      return result
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['content-queue'] })
+      alert('Content enriched successfully!')
     },
+    onError: (error) => {
+      console.error('Enrichment failed:', error)
+      alert('Failed to enrich content. Please check your API keys and try again.')
+    }
   })
 
   const runDiscovery = async () => {
