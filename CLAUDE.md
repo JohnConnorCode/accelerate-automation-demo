@@ -1,7 +1,11 @@
 # 🚨 CRITICAL - VERIFY DIRECTORY BEFORE ANY WORK 🚨
 
-## THIS IS: accelerate-content-automation
-## NOT: polyist-builder-connect
+## THIS IS: accelerate-content-automation (THE AUTOMATION APP)
+## NOT: polyist-builder-connect (NEVER TOUCH THIS APP)
+
+## 🔴 ABSOLUTE RULE 🔴
+**THIS IS THE ONLY APP YOU WORK ON**
+**NEVER EVER TOUCH polyist-builder-connect**
 
 ### ⚠️ MANDATORY FIRST COMMAND - NO EXCEPTIONS
 ```bash
