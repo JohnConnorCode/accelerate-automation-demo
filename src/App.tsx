@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { useAuth } from './contexts/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
 import Login from './pages/Login'
@@ -12,15 +13,38 @@ import { SystemDiagnostics } from './pages/SystemDiagnostics'
 import { DataSources } from './pages/DataSources'
 
 function App() {
+  const { user, loading } = useAuth()
+  
+  // Show loading state while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+  
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
+      {/* Public routes */}
+      <Route path="/login" element={
+        user ? <Navigate to="/dashboard" replace /> : <Login />
+      } />
+      
+      {/* Root redirect based on auth status */}
       <Route path="/" element={
+        user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />
+      } />
+      
+      {/* Protected admin routes */}
+      <Route element={
         <ProtectedRoute adminOnly={true}>
           <Layout />
         </ProtectedRoute>
       }>
-        <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="queue" element={<ContentQueue />} />
         <Route path="settings" element={<Settings />} />
@@ -30,6 +54,9 @@ function App() {
         <Route path="diagnostics" element={<SystemDiagnostics />} />
         <Route path="sources" element={<DataSources />} />
       </Route>
+      
+      {/* Catch all - redirect to login */}
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   )
 }
