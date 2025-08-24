@@ -20,6 +20,8 @@ If you see ANYTHING else, STOP IMMEDIATELY and navigate to the correct folder.
 2. **NEVER assume you're in the right directory** - Check EVERY session
 3. **This is a SEPARATE app** from polyist-builder-connect
 4. **Working in wrong directory = DESTROYING PRODUCTION**
+5. **NO STATIC HTML PAGES** - ALL pages must be React components integrated into the app routes
+6. **NEVER create standalone .html files** - Always use React components and routes
 
 ## Project Context
 

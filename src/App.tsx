@@ -7,6 +7,8 @@ import ContentQueue from './pages/ContentQueue'
 import Settings from './pages/Settings'
 import Analytics from './pages/Analytics'
 import SystemTest from './pages/SystemTest'
+import { AdminSettings } from './pages/AdminSettings'
+import { SystemDiagnostics } from './pages/SystemDiagnostics'
 
 function App() {
   return (
@@ -21,8 +23,10 @@ function App() {
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="queue" element={<ContentQueue />} />
         <Route path="settings" element={<Settings />} />
+        <Route path="admin" element={<AdminSettings />} />
         <Route path="analytics" element={<Analytics />} />
         <Route path="test" element={<SystemTest />} />
+        <Route path="diagnostics" element={<SystemDiagnostics />} />
       </Route>
     </Routes>
   )

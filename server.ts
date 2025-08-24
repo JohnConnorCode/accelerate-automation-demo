@@ -6,6 +6,7 @@ import { supabase } from './src/lib/supabase'
 import { requireApiKey, rateLimit } from './src/middleware/auth'
 import { requireAdmin, verifyToken } from './src/middleware/authJWT'
 import { logger, logAuditEvent, logError } from './src/services/logger'
+import { scheduler } from './src/services/scheduler'
 import dotenv from 'dotenv'
 
 // Load environment variables
@@ -13,6 +14,9 @@ dotenv.config({ path: process.env.NODE_ENV === 'production' ? '.env.production' 
 
 const app = express()
 const PORT = process.env.PORT || 3000
+
+// Initialize scheduler
+scheduler.initialize()
 
 // Security: Restrict CORS in production
 const corsOptions = {
@@ -340,6 +344,30 @@ app.post('/api/search', async (req, res) => {
   }
 })
 
+// Scheduler endpoints
+app.get('/api/scheduler/status', requireAdmin, (req, res) => {
+  const tasks = scheduler.getActiveTasks();
+  res.json({
+    active: true,
+    tasks,
+    count: tasks.length
+  });
+});
+
+app.post('/api/scheduler/run', requireAdmin, async (req, res) => {
+  const { task } = req.body;
+  
+  try {
+    const result = await scheduler.runTaskNow(task);
+    logAuditEvent(req.user!.id, 'RUN_SCHEDULED_TASK', 'scheduler', { task });
+    res.json({ success: true, result });
+  } catch (error) {
+    res.status(400).json({ 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`API server running on http://localhost:${PORT}`)
   console.log('Available endpoints:')
@@ -352,4 +380,6 @@ app.listen(PORT, () => {
   console.log('  POST /api/enrich')
   console.log('  POST /api/ai-assess')
   console.log('  POST /api/search')
+  console.log('  GET  /api/scheduler/status')
+  console.log('  POST /api/scheduler/run')
 })

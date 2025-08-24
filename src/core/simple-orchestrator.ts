@@ -4,6 +4,10 @@
 import { fetcher } from './simple-fetcher';
 import { scorer } from './simple-scorer';
 import { supabase } from '../lib/supabase-client';
+import { deduplicationService } from '../services/deduplication';
+import { scoreContent } from '../lib/openai';
+import { enrichmentService } from '../services/enrichment';
+import { criteriaService } from '../services/criteria-service';
 
 interface OrchestrationResult {
   fetched: number;
@@ -18,6 +22,9 @@ export class SimpleOrchestrator {
   private readonly sources = new Map([
     ['github', 'https://api.github.com/search/repositories?q=stars:>100+language:typescript&sort=updated'],
     ['hackernews', 'https://hn.algolia.com/api/v1/search?tags=story&hitsPerPage=50'],
+    ['producthunt', 'https://api.producthunt.com/v2/api/graphql'],
+    ['devto', 'https://dev.to/api/articles?per_page=30&tag=webdev,javascript,react'],
+    ['defilama', 'https://api.llama.fi/protocols'],
   ]);
 
   /**
@@ -44,21 +51,84 @@ export class SimpleOrchestrator {
         result.errors.push(...fetchResult.errors);
       }
 
-      // Step 2: Score and filter content
+      // Step 2: Score and filter content with AI enrichment
       const scoredItems = [];
       for (const fetchResult of fetchResults) {
         for (const item of fetchResult.items) {
-          const scoreResult = scorer.score(item);
+          // First get basic score
+          const basicScore = scorer.score(item);
           result.scored++;
           
-          if (scoreResult.recommendation !== 'reject') {
+          // Skip if basic score is too low
+          if (basicScore.score < 20) {
+            result.rejected++;
+            continue;
+          }
+          
+          // Detect content type using dynamic criteria
+          const contentType = this.detectContentType(item, fetchResult.source);
+          console.log(`📋 Detected type: ${contentType}`);
+          
+          // Full enrichment for promising items
+          let enrichedData = null;
+          let finalScore = basicScore.score;
+          let finalConfidence = basicScore.confidence;
+          
+          try {
+            // Perform comprehensive enrichment
+            enrichedData = await enrichmentService.enrichContent(item, fetchResult.source);
+            
+            // Calculate score using dynamic criteria from database
+            const dynamicScore = await criteriaService.scoreContent(
+              enrichedData || item,
+              contentType
+            );
+            
+            // Combine scores with weights
+            if (enrichedData && enrichedData.validation.verified) {
+              finalScore = Math.round(
+                (dynamicScore * 0.5) +
+                (enrichedData.validation.completeness * 0.2) +
+                (enrichedData.validation.data_quality * 0.15) +
+                (basicScore.score * 0.15)
+              );
+              finalConfidence = enrichedData.ai_analysis?.confidence || basicScore.confidence;
+              
+              console.log(`✨ Fully enriched: ${enrichedData.title}`);
+              console.log(`   Type: ${contentType}`);
+              console.log(`   Dynamic Score: ${dynamicScore}`);
+              console.log(`   Final Score: ${basicScore.score} -> ${finalScore}`);
+            } else {
+              // Use dynamic scoring even without full enrichment
+              finalScore = await criteriaService.scoreContent(item, contentType);
+            }
+          } catch (error) {
+            console.warn('Enrichment failed, using basic score:', error);
+          }
+          
+          // Make final decision
+          const finalRecommendation = this.getRecommendation(finalScore, finalConfidence);
+          
+          if (finalRecommendation !== 'reject') {
             scoredItems.push({
-              ...item,
+              ...(enrichedData || item),
               source: fetchResult.source,
-              score: scoreResult.score,
-              confidence: scoreResult.confidence,
-              factors: scoreResult.factors,
-              recommendation: scoreResult.recommendation
+              content_type: contentType,
+              score: finalScore,
+              confidence: finalConfidence,
+              factors: basicScore.factors,
+              recommendation: finalRecommendation,
+              ai_enriched: !!enrichedData,
+              enrichment_data: enrichedData ? {
+                company: enrichedData.company,
+                team: enrichedData.team,
+                funding: enrichedData.funding,
+                technology: enrichedData.technology,
+                metrics: enrichedData.metrics,
+                social: enrichedData.social,
+                ai_analysis: enrichedData.ai_analysis,
+                validation: enrichedData.validation
+              } : null
             });
           } else {
             result.rejected++;
@@ -66,19 +136,26 @@ export class SimpleOrchestrator {
         }
       }
 
-      // Step 3: Store approved content
-      if (scoredItems.length > 0) {
+      // Step 3: Deduplicate content
+      const { unique, duplicates } = await deduplicationService.filterDuplicates(scoredItems);
+      result.rejected += duplicates.length;
+
+      // Step 4: Store unique approved content
+      if (unique.length > 0) {
         const { data, error } = await supabase
           .from('content_curated')
-          .insert(scoredItems.map(item => ({
+          .insert(unique.map(item => ({
             title: item.title || item.name || 'Untitled',
             description: item.description || item.tagline || '',
             url: item.url || item.html_url || '',
             source: item.source,
+            content_type: item.content_type,
+            type_confidence: item.type_confidence,
             score: item.score,
             confidence: item.confidence,
             factors: item.factors,
             recommendation: item.recommendation,
+            content_hash: item.content_hash,
             raw_data: item,
             created_at: new Date().toISOString()
           })));
@@ -86,7 +163,7 @@ export class SimpleOrchestrator {
         if (error) {
           result.errors.push(`Storage error: ${error.message}`);
         } else {
-          result.stored = scoredItems.length;
+          result.stored = unique.length;
         }
       }
 
@@ -96,6 +173,39 @@ export class SimpleOrchestrator {
 
     result.duration = (Date.now() - startTime) / 1000;
     return result;
+  }
+
+  /**
+   * Detect content type based on source and content
+   */
+  private detectContentType(item: any, source: string): 'project' | 'funding' | 'resource' {
+    const text = `${item.title || ''} ${item.description || ''}`.toLowerCase();
+    
+    // Source-based detection
+    if (source === 'producthunt' || source === 'github') return 'project';
+    if (source === 'defilama') return 'funding';
+    
+    // Content-based detection
+    // Check for project indicators
+    if (item.team_size || item.launch_date || item.founders) return 'project';
+    if (text.includes('startup') || text.includes('founder') || text.includes('building')) return 'project';
+    
+    // Check for funding indicators
+    if (item.funding_amount || item.deadline || item.application_url) return 'funding';
+    if (text.includes('grant') || text.includes('accelerator') || text.includes('incubator')) return 'funding';
+    
+    // Default to resource
+    return 'resource';
+  }
+
+  /**
+   * Get recommendation based on score and confidence
+   */
+  private getRecommendation(score: number, confidence: number): string {
+    if (score < 30 || confidence < 0.4) return 'reject';
+    if (score < 50) return 'review';
+    if (score < 75) return 'approve';
+    return 'feature';
   }
 
   /**
