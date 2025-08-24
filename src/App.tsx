@@ -9,6 +9,7 @@ import Analytics from './pages/Analytics'
 import SystemTest from './pages/SystemTest'
 import { AdminSettings } from './pages/AdminSettings'
 import { SystemDiagnostics } from './pages/SystemDiagnostics'
+import { DataSources } from './pages/DataSources'
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
         <Route path="analytics" element={<Analytics />} />
         <Route path="test" element={<SystemTest />} />
         <Route path="diagnostics" element={<SystemDiagnostics />} />
+        <Route path="sources" element={<DataSources />} />
       </Route>
     </Routes>
   )
