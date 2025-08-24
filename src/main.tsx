@@ -1,31 +1,22 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { BrowserRouter } from 'react-router-dom'
-import App from './App'
-import ErrorBoundary from './components/ErrorBoundary'
-import { AuthProvider } from './contexts/AuthContext'
-import './index.css'
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      retry: 3,
-    },
-  },
-})
+// Minimal app to test if React renders
+const MinimalApp = () => {
+  return (
+    <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
+      <h1>Accelerate Content Automation</h1>
+      <p>Minimal test version - checking if React renders</p>
+      <button onClick={() => alert('Button clicked!')}>
+        Test Button
+      </button>
+    </div>
+  )
+}
 
+// Simple render without any providers
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <AuthProvider>
-            <App />
-          </AuthProvider>
-        </BrowserRouter>
-      </QueryClientProvider>
-    </ErrorBoundary>
+    <MinimalApp />
   </React.StrictMode>
 )
