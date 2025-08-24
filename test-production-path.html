@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Production Path Issue</title>
+</head>
+<body>
+    <h1>Testing Path Module Polyfill</h1>
+    <div id="test-results"></div>
+    
+    <script>
+        // Simulate the production environment
+        const results = document.getElementById('test-results');
+        
+        // Test 1: Check if path exists
+        if (typeof window.path !== 'undefined') {
+            results.innerHTML += '<p style="color: green;">✓ window.path is defined</p>';
+            
+            // Test 2: Check if path.resolve exists
+            if (typeof window.path.resolve === 'function') {
+                results.innerHTML += '<p style="color: green;">✓ path.resolve is a function</p>';
+                
+                // Test 3: Try to use path.resolve
+                try {
+                    const resolved = window.path.resolve('/test', 'path');
+                    results.innerHTML += `<p style="color: green;">✓ path.resolve works: ${resolved}</p>`;
+                } catch (e) {
+                    results.innerHTML += `<p style="color: red;">✗ path.resolve failed: ${e.message}</p>`;
+                }
+            } else {
+                results.innerHTML += '<p style="color: red;">✗ path.resolve is not a function</p>';
+            }
+        } else {
+            results.innerHTML += '<p style="color: red;">✗ window.path is not defined</p>';
+        }
+        
+        // Now load the actual production JS to see if it breaks
+        results.innerHTML += '<h2>Loading production JS...</h2>';
+        
+        // Simulate dotenv's configDotenv function
+        function configDotenv(options) {
+            const cwd = process.cwd();
+            const path = window.path || require('path'); // This is where it fails
+            const dotenvPath = path.resolve(cwd, '.env');
+            return dotenvPath;
+        }
+        
+        try {
+            const result = configDotenv({});
+            results.innerHTML += `<p style="color: green;">✓ configDotenv works: ${result}</p>`;
+        } catch (e) {
+            results.innerHTML += `<p style="color: red;">✗ configDotenv failed: ${e.message}</p>`;
+        }
+    </script>
+</body>
+</html>

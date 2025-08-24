@@ -1,9 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '../types/supabase';
-import * as dotenv from 'dotenv';
-
-// Load environment variables first
-dotenv.config();
 
 /**
  * SUPABASE CLIENT FOR ACCELERATE PLATFORM
@@ -11,8 +7,15 @@ dotenv.config();
  */
 
 // Get environment variables with fallbacks
-const supabaseUrl = process.env.SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseKey = process.env.SUPABASE_ANON_KEY || 'placeholder-key';
+// In browser, use import.meta.env for Vite
+// In Node.js, use process.env
+const supabaseUrl = typeof window !== 'undefined' 
+  ? (import.meta as any).env?.VITE_SUPABASE_URL || 'https://placeholder.supabase.co'
+  : process.env.SUPABASE_URL || 'https://placeholder.supabase.co';
+
+const supabaseKey = typeof window !== 'undefined'
+  ? (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || 'placeholder-key'
+  : process.env.SUPABASE_ANON_KEY || 'placeholder-key';
 
 // Check if properly configured
 export const isSupabaseConfigured = 
