@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Check, X, Zap, RefreshCw, Search, Package, DollarSign, BookOpen, AlertCircle, Loader2 } from 'lucide-react'
-import { contentServiceV2, ContentCategory } from '../services/contentServiceV2'
+import { contentServiceV2, ContentCategory } from '../services/contentServiceV2-frontend'
 
 export default function ContentQueue() {
   const queryClient = useQueryClient()
@@ -10,16 +10,13 @@ export default function ContentQueue() {
 
   const { data: items = [], isLoading, error, refetch } = useQuery({
     queryKey: ['content-queue', statusFilter, categoryFilter],
-    queryFn: () => contentServiceV2.getQueue({
-      status: statusFilter || undefined,
-      category: categoryFilter || undefined
-    }),
+    queryFn: () => contentServiceV2.getQueue(),
   })
 
   const approveMutation = useMutation({
     mutationFn: async (id: string) => {
-      const result = await contentServiceV2.approveContent([id])
-      if (!result.success) throw new Error('Failed to approve')
+      const result = await contentServiceV2.approveContent(id)
+      if (!result) throw new Error('Failed to approve')
       return result
     },
     onSuccess: () => {
@@ -34,8 +31,8 @@ export default function ContentQueue() {
 
   const rejectMutation = useMutation({
     mutationFn: async (id: string) => {
-      const result = await contentServiceV2.rejectContent([id])
-      if (!result.success) throw new Error('Failed to reject')
+      const result = await contentServiceV2.rejectContent(id)
+      if (!result) throw new Error('Failed to reject')
       return result
     },
     onSuccess: () => {
@@ -50,14 +47,9 @@ export default function ContentQueue() {
 
   const enrichMutation = useMutation({
     mutationFn: async (id: string) => {
-      const result = await contentServiceV2.enrichContent(id, {
-        aiAnalysis: true,
-        sentiment: true,
-        keywords: true,
-        category: true,
-        summary: true,
-        gptEnhancement: true
-      })
+      const item = items.find((i: any) => i.id === id)
+      if (!item) throw new Error('Item not found')
+      const result = await contentServiceV2.enrichContent(item)
       if (!result.success) throw new Error('Failed to enrich')
       return result
     },

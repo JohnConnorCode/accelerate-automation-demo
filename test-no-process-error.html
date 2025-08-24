@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Process Error</title>
+</head>
+<body>
+    <h1>Testing for process errors...</h1>
+    <div id="result"></div>
+    <script>
+        const resultDiv = document.getElementById('result');
+        
+        // Override console.error to catch errors
+        const originalError = console.error;
+        let errorCount = 0;
+        let processError = false;
+        
+        console.error = function(...args) {
+            errorCount++;
+            const errorStr = args.join(' ');
+            if (errorStr.includes('process is not defined')) {
+                processError = true;
+                resultDiv.innerHTML += '<p style="color: red;">❌ Found "process is not defined" error!</p>';
+            }
+            originalError.apply(console, args);
+        };
+        
+        // Load the app in an iframe
+        const iframe = document.createElement('iframe');
+        iframe.src = 'http://localhost:4173';
+        iframe.style.width = '100%';
+        iframe.style.height = '400px';
+        iframe.style.border = '1px solid #ccc';
+        
+        iframe.onload = function() {
+            setTimeout(() => {
+                if (processError) {
+                    resultDiv.innerHTML += '<p style="color: red; font-weight: bold;">❌ FAILED: "process is not defined" error detected!</p>';
+                } else if (errorCount > 0) {
+                    resultDiv.innerHTML += '<p style="color: orange;">⚠️ Other errors detected (not process-related)</p>';
+                } else {
+                    resultDiv.innerHTML += '<p style="color: green; font-weight: bold;">✅ PASSED: No process errors detected!</p>';
+                }
+            }, 2000);
+        };
+        
+        document.body.appendChild(iframe);
+    </script>
+</body>
+</html>

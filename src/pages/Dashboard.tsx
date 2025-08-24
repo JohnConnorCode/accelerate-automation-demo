@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { TrendingUp, Clock, CheckCircle, XCircle, Package, DollarSign, BookOpen, Zap, AlertCircle } from 'lucide-react'
-import { contentServiceV2 } from '../services/contentServiceV2'
+import { contentServiceV2 } from '../services/contentServiceV2-frontend'
 
 export default function Dashboard() {
   const { data: stats, isLoading, error } = useQuery({

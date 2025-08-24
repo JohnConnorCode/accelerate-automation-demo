@@ -129,7 +129,8 @@
     "ts-node": "^10.9.2",
     "tsx": "^4.0.0",
     "typescript": "^5.3.0",
-    "vercel": "^32.0.0"
+    "vercel": "^32.0.0",
+    "vite-plugin-node-polyfills": "^0.24.0"
   },
   "jest": {
     "preset": "ts-jest",

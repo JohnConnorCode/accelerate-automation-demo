@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { CheckCircle, XCircle, Loader2, PlayCircle, AlertTriangle, Shield, Database, Cpu, Globe } from 'lucide-react'
-import { contentServiceV2 } from '../services/contentServiceV2'
+import { contentServiceV2 } from '../services/contentServiceV2-frontend'
 import { supabase } from '../lib/supabase'
 
 interface TestResult {
@@ -129,9 +129,9 @@ export default function SystemTest() {
             category: 'projects' as const,
             source: 'Test Suite',
           }
-          const validation = contentServiceV2.validateContent(testItem)
-          if (!validation.isValid) {
-            throw new Error(`Validation failed: ${validation.errors.join(', ')}`)
+          const validation = await contentServiceV2.validateContent(testItem)
+          if (!validation.valid) {
+            throw new Error(`Validation failed: ${validation.error || 'Unknown error'}`)
           }
           return validation
         },
@@ -232,11 +232,11 @@ export default function SystemTest() {
             { title: 'Test', description: 'Valid description over 50 characters long for testing', category: 'invalid' as any },
           ]
           
-          const results = invalidInputs.map(input => 
-            contentServiceV2.validateContent(input)
+          const results = await Promise.all(
+            invalidInputs.map(input => contentServiceV2.validateContent(input))
           )
           
-          const allInvalid = results.every(r => !r.isValid)
+          const allInvalid = results.every(r => !r.valid)
           if (!allInvalid) {
             throw new Error('Invalid input was not caught')
           }
@@ -244,7 +244,7 @@ export default function SystemTest() {
           return { 
             testedInputs: invalidInputs.length,
             allCaught: allInvalid,
-            errors: results.map(r => r.errors)
+            errors: results.map(r => r.error || 'No error')
           }
         },
       },
