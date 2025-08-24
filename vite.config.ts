@@ -9,23 +9,20 @@ export default defineConfig({
     react(),
     nodePolyfills({
       // Include specific polyfills
-      include: ['process', 'buffer'],
+      include: ['process', 'buffer', 'util'],
       // Whether to polyfill specific globals
       globals: {
         Buffer: true,
         global: true,
         process: true,
       },
+      protocolImports: true,
     })
   ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src')
     }
-  },
-  define: {
-    // Define process.env as empty object to prevent errors
-    'process.env': {},
   },
   build: {
     rollupOptions: {
