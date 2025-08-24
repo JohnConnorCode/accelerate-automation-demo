@@ -450,7 +450,9 @@ export class AccelerateOrchestrator {
 // Export singleton instance
 export const orchestrator = new AccelerateOrchestrator();
 
-// CLI entry point
+// CLI entry point (Node.js only - removed for browser compatibility)
+// The code below has been commented out to prevent browser errors
+/*
 if (require.main === module) {
   (async () => {
 
@@ -492,3 +494,4 @@ if (require.main === module) {
     }
   })();
 }
+*/

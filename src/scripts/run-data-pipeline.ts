@@ -33,9 +33,6 @@ async function main() {
   }
 }
 
-// Run if called directly
-if (require.main === module) {
-  main().catch(console.error);
-}
+// Run if called directly (Node.js only - removed for browser compatibility)
 
 export { main as runDataPipeline };
