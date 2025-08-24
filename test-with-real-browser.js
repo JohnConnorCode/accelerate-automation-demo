@@ -30,9 +30,12 @@ async function testProductionSite() {
             console.log(`❌ Page Error: ${error.message}`);
         });
         
-        // Navigate to the site
-        console.log('📍 Navigating to: https://accelerate-content-automation.vercel.app');
-        const response = await page.goto('https://accelerate-content-automation.vercel.app', {
+        // Navigate to the site - check if LOCAL or PRODUCTION
+        const url = process.argv[2] === 'local' 
+            ? 'http://localhost:4173' 
+            : 'https://accelerate-content-automation.vercel.app';
+        console.log(`📍 Navigating to: ${url}`);
+        const response = await page.goto(url, {
             waitUntil: 'networkidle2',
             timeout: 30000
         });

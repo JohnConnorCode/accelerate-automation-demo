@@ -8,7 +8,7 @@ export default defineConfig({
     react()
   ],
   define: {
-    'process.env': {},
+    'process.env': '{}',
     'global': 'globalThis',
   },
   resolve: {
@@ -17,12 +17,12 @@ export default defineConfig({
     }
   },
   build: {
+    target: 'es2020',
+    minify: false, // Disable minification completely to avoid Deferred class issues
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          supabase: ['@supabase/supabase-js']
-        }
+        // Single chunk to avoid splitting issues
+        manualChunks: undefined
       }
     }
   },
@@ -33,6 +33,12 @@ export default defineConfig({
         target: 'http://localhost:3000',
         changeOrigin: true
       }
+    }
+  },
+  optimizeDeps: {
+    include: ['@supabase/supabase-js'],
+    esbuildOptions: {
+      target: 'es2020'
     }
   }
 })

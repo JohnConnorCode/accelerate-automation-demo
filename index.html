@@ -5,6 +5,85 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Accelerate Content Automation</title>
+    <script>
+      // Critical polyfills for Supabase - must run before any modules load
+      // Fix for "d.resolve is not a function" error in minified builds
+      if (typeof window !== 'undefined') {
+        // Polyfill for Deferred class used by Supabase auth
+        window.Deferred = class Deferred {
+          constructor() {
+            this.promise = new Promise((resolve, reject) => {
+              this.resolve = resolve;
+              this.reject = reject;
+            });
+          }
+        };
+        window.Deferred.promiseConstructor = Promise;
+        
+        // Comprehensive path module polyfill for browser
+        window.path = {
+          resolve: function(...segments) {
+            let resolvedPath = '';
+            let resolvedAbsolute = false;
+
+            for (let i = segments.length - 1; i >= -1 && !resolvedAbsolute; i--) {
+              const path = i >= 0 ? segments[i] : '/';
+              
+              if (!path) continue;
+              
+              resolvedPath = path + '/' + resolvedPath;
+              resolvedAbsolute = path.charAt(0) === '/';
+            }
+
+            resolvedPath = resolvedPath.split('/').filter(p => p).join('/');
+            
+            if (resolvedAbsolute) {
+              return '/' + resolvedPath;
+            }
+            return resolvedPath || '.';
+          },
+          join: function(...paths) {
+            return paths.filter(p => p).join('/').replace(/\/+/g, '/');
+          },
+          dirname: function(path) {
+            const parts = path.split('/');
+            parts.pop();
+            return parts.join('/') || '/';
+          },
+          basename: function(path, ext) {
+            const base = path.split('/').pop();
+            if (ext && base.endsWith(ext)) {
+              return base.slice(0, -ext.length);
+            }
+            return base;
+          },
+          extname: function(path) {
+            const base = path.split('/').pop();
+            const lastDot = base.lastIndexOf('.');
+            if (lastDot === -1) return '';
+            return base.slice(lastDot);
+          },
+          sep: '/',
+          delimiter: ':',
+          posix: null,
+          win32: null
+        };
+        
+        // Set posix to itself for compatibility
+        window.path.posix = window.path;
+        
+        // Ensure global and process are defined with all needed properties
+        window.global = window.global || window;
+        window.process = window.process || { 
+          env: {},
+          cwd: function() { return '/'; },
+          platform: 'browser',
+          version: 'v16.0.0',
+          versions: { node: '16.0.0' },
+          browser: true
+        };
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

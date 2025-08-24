@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Local Build</title>
+    <script>
+        // Add polyfills before anything else
+        window.process = window.process || { 
+            env: {},
+            cwd: function() { return '/'; }
+        };
+        window.global = window.global || window;
+        
+        // Capture console errors
+        window.addEventListener('error', function(e) {
+            console.error('Window error:', e.message, e.filename, e.lineno, e.colno);
+            document.getElementById('errors').innerHTML += 
+                '<div style="color: red;">Error: ' + e.message + '</div>';
+        });
+        
+        console.log('Polyfills set:', { process: window.process, global: window.global });
+    </script>
+</head>
+<body>
+    <h1>Test Local Build</h1>
+    <div id="errors" style="background: #fee; padding: 10px; margin: 10px 0;"></div>
+    <div id="root"></div>
+    
+    <!-- Load the actual built files -->
+    <script type="module">
+        import('./dist/assets/index-wNUbrzZo.js')
+            .then(() => {
+                console.log('App loaded successfully');
+                document.getElementById('errors').innerHTML += 
+                    '<div style="color: green;">App loaded!</div>';
+            })
+            .catch(err => {
+                console.error('Failed to load app:', err);
+                document.getElementById('errors').innerHTML += 
+                    '<div style="color: red;">Failed to load: ' + err.message + '</div>';
+            });
+    </script>
+</body>
+</html>
