@@ -10,6 +10,13 @@ import { ContentItem } from './base-fetcher';
 
 export class AccelerateScorer {
   /**
+   * Instance method for scoring content
+   */
+  async scoreContent(item: ContentItem): Promise<number> {
+    return AccelerateScorer.scoreForAccelerate(item);
+  }
+
+  /**
    * Main scoring function - returns 0-100
    */
   static scoreForAccelerate(item: ContentItem): number {

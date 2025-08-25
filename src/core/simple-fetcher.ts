@@ -141,15 +141,15 @@ class SimpleFetcher {
       if (result.items.length === 0) continue;
 
       try {
+        const insertData = result.items.map(item => ({
+          source: result.source,
+          data: item,
+          fetched_at: new Date().toISOString()
+        }));
+        
         const { error } = await supabase
           .from('content_raw')
-          .insert(
-            result.items.map(item => ({
-              source: result.source,
-              data: item,
-              fetched_at: new Date().toISOString()
-            }))
-          );
+          .insert(insertData as any);
 
         if (error) throw error;
         stored += result.items.length;

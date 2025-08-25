@@ -1,5 +1,10 @@
 // Jest Setup File - Complete Mocks and Configuration
-// Note: @testing-library/jest-dom is for DOM testing, not needed for node environment
+import '@testing-library/jest-dom'
+
+// Add TextEncoder/TextDecoder polyfill for jsdom
+import { TextEncoder, TextDecoder } from 'util'
+global.TextEncoder = TextEncoder as any
+global.TextDecoder = TextDecoder as any
 
 // Mock environment variables
 process.env.VITE_SUPABASE_URL = 'https://test.supabase.co';
@@ -47,6 +52,8 @@ const mockSupabaseClient = {
     order: jest.fn().mockReturnThis(),
     limit: jest.fn().mockReturnThis(),
     range: jest.fn().mockReturnThis(),
+    textSearch: jest.fn().mockReturnThis(),
+    filter: jest.fn().mockReturnThis(),
     single: jest.fn().mockResolvedValue({ data: null, error: null }),
     maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
     then: jest.fn((resolve) => resolve({ data: [], error: null })),

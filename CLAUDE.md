@@ -22,16 +22,33 @@ If you see ANYTHING else, STOP IMMEDIATELY and navigate to the correct folder.
 4. **Working in wrong directory = DESTROYING PRODUCTION**
 5. **NO STATIC HTML PAGES** - ALL pages must be React components integrated into the app routes
 6. **NEVER create standalone .html files** - Always use React components and routes
+7. **THIS IS A BUSINESS TOOL** - Think holistically, integrate everything properly
+8. **NO TEST HTML FILES** - Use the React app for ALL testing
+9. **FULLY INTEGRATED ONLY** - Every feature must be part of the main app
+10. **NO STRAY FILES** - No random test files, everything organized
 
 ## Project Context
 
 **Application**: Accelerate Content Automation System
-**Purpose**: Automated content discovery and enrichment
+**Purpose**: Professional business tool for automated Web3 opportunity discovery
+**Business Process**: 
+1. Fetch FROM internet → Enrich → Score → Approve → Live Tables
+2. Content types: Projects, Funding Programs, Resources
+3. Quality control: Everything reviewed before going live
+4. NO garbage in production: Approval required to prevent errors
+
 **Tech Stack**: 
-- Next.js/Vercel serverless functions
-- TypeScript
-- React frontend
-- Supabase backend
+- React + TypeScript + Vite (frontend)
+- Supabase (backend database)
+- Real APIs only (GitHub, DeFiLlama, CoinGecko, etc.)
+- Shadcn/ui components
+
+**Key Requirements**:
+- Fully integrated React application
+- Professional business tool quality
+- Complete approval workflow
+- No standalone HTML files ever
+- Everything properly routed in App.tsx
 
 ## Directory Structure
 ```
@@ -46,6 +63,10 @@ If you see ANYTHING else, STOP IMMEDIATELY and navigate to the correct folder.
 - ❌ Working in polyist-builder-connect instead of this folder
 - ❌ Converting TypeScript to JavaScript (use TypeScript!)
 - ❌ Not checking current directory before starting work
+- ❌ Creating standalone HTML files (NEVER DO THIS!)
+- ❌ Making test HTML files instead of using React app
+- ❌ Not integrating features into the main app
+- ❌ Treating this like a toy project instead of business tool
 
 ## Verification Commands
 ```bash

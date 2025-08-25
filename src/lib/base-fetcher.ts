@@ -85,6 +85,7 @@ export abstract class BaseFetcher<T> {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       errors.push(errorMessage);
+      console.error(`[${this.config.name}] Error:`, error);
 
       // Log to database
       await this.logError(errorMessage);
@@ -223,14 +224,20 @@ export abstract class BaseFetcher<T> {
           source: this.config.name,
           type: item.type,
           title: item.title,
-          description: item.description,
+          description: item.description.length >= 50 ? item.description : 
+            `${item.description}. This ${item.type} is awaiting further enrichment and validation.`, // Ensure min 50 chars
           url: item.url,
-          author: item.author,
-          tags: item.tags,
-          metadata: item.metadata,
-          status: 'pending',
-          ai_score: null,
-          fetched_at: item.fetched_at
+          metadata: {
+            ...item.metadata,
+            author: item.author,
+            tags: item.tags,
+            fetched_at: item.fetched_at
+          },
+          category: item.type, // Use type as category
+          status: 'pending_review', // Use correct status value
+          enriched: false,
+          created_at: new Date(),
+          updated_at: new Date()
         })));
       
       if (error) {

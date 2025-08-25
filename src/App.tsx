@@ -9,6 +9,7 @@ import Settings from './pages/Settings'
 import Analytics from './pages/Analytics'
 import SystemTest from './pages/SystemTest'
 import { AdminSettings } from './pages/AdminSettings'
+import ApiConfig from './pages/ApiConfig'
 import { SystemDiagnostics } from './pages/SystemDiagnostics'
 import { DataSources } from './pages/DataSources'
 
@@ -39,20 +40,31 @@ function App() {
         user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />
       } />
       
-      {/* Protected admin routes */}
+      {/* Protected routes (logged in users) */}
       <Route element={
-        <ProtectedRoute adminOnly={true}>
+        <ProtectedRoute adminOnly={false}>
           <Layout />
         </ProtectedRoute>
       }>
         <Route path="dashboard" element={<Dashboard />} />
+        <Route path="api-config" element={<ApiConfig />} />
         <Route path="queue" element={<ContentQueue />} />
         <Route path="settings" element={<Settings />} />
-        <Route path="admin" element={<AdminSettings />} />
         <Route path="analytics" element={<Analytics />} />
         <Route path="test" element={<SystemTest />} />
-        <Route path="diagnostics" element={<SystemDiagnostics />} />
         <Route path="sources" element={<DataSources />} />
+        
+        {/* Admin only routes */}
+        <Route path="admin" element={
+          <ProtectedRoute adminOnly={true}>
+            <AdminSettings />
+          </ProtectedRoute>
+        } />
+        <Route path="diagnostics" element={
+          <ProtectedRoute adminOnly={true}>
+            <SystemDiagnostics />
+          </ProtectedRoute>
+        } />
       </Route>
       
       {/* Catch all - redirect to login */}

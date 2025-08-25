@@ -1,5 +1,5 @@
 import { Outlet, NavLink } from 'react-router-dom'
-import { Home, Layers, Settings, BarChart3, Zap, FlaskConical, LogOut, User, Database } from 'lucide-react'
+import { Home, Layers, Settings, BarChart3, Zap, FlaskConical, LogOut, User, Database, Key } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
 export default function Layout() {
@@ -27,6 +27,18 @@ export default function Layout() {
               >
                 <Home className="w-5 h-5" />
                 Dashboard
+              </NavLink>
+              
+              <NavLink
+                to="/api-config"
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-4 py-3 rounded-lg text-white/80 hover:bg-white/10 transition-colors ${
+                    isActive ? 'bg-white/20 text-white' : ''
+                  }`
+                }
+              >
+                <Key className="w-5 h-5" />
+                API Config
               </NavLink>
               
               <NavLink
@@ -88,6 +100,39 @@ export default function Layout() {
                 <FlaskConical className="w-5 h-5" />
                 System Test
               </NavLink>
+              
+              {/* Admin only links */}
+              {isAdmin && (
+                <>
+                  <div className="mt-4 pt-4 border-t border-white/20">
+                    <p className="text-white/60 text-xs uppercase tracking-wider px-4 mb-2">Admin</p>
+                  </div>
+                  
+                  <NavLink
+                    to="/admin"
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 px-4 py-3 rounded-lg text-white/80 hover:bg-white/10 transition-colors ${
+                        isActive ? 'bg-white/20 text-white' : ''
+                      }`
+                    }
+                  >
+                    <Settings className="w-5 h-5" />
+                    Admin Settings
+                  </NavLink>
+                  
+                  <NavLink
+                    to="/diagnostics"
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 px-4 py-3 rounded-lg text-white/80 hover:bg-white/10 transition-colors ${
+                        isActive ? 'bg-white/20 text-white' : ''
+                      }`
+                    }
+                  >
+                    <FlaskConical className="w-5 h-5" />
+                    Diagnostics
+                  </NavLink>
+                </>
+              )}
             </nav>
           </div>
           

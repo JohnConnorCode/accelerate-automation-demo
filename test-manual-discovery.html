@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Manual Discovery</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f3f4f6;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #111827;
+            margin-bottom: 20px;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+        }
+        .success {
+            background: #dcfce7;
+            border-color: #86efac;
+            color: #166534;
+        }
+        .error {
+            background: #fee2e2;
+            border-color: #fca5a5;
+            color: #991b1b;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 8px;
+            background: #f9fafb;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .stat-card {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+        }
+        .stat-label {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 5px;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #111827;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Manual Discovery Test</h1>
+        <p>Test the content discovery pipeline directly</p>
+        
+        <div style="margin: 20px 0;">
+            <button id="runDiscovery" onclick="runDiscovery()">Run Discovery</button>
+            <button id="checkStatus" onclick="checkStatus()">Check Status</button>
+            <button id="viewQueue" onclick="viewQueue()">View Queue</button>
+            <button id="checkScheduler" onclick="checkScheduler()">Check Scheduler</button>
+        </div>
+        
+        <div id="status" class="status"></div>
+        
+        <div id="stats" class="stats" style="display:none;">
+            <div class="stat-card">
+                <div class="stat-label">Items Fetched</div>
+                <div class="stat-value" id="fetched">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Items Scored</div>
+                <div class="stat-value" id="scored">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Items Stored</div>
+                <div class="stat-value" id="stored">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Items Rejected</div>
+                <div class="stat-value" id="rejected">0</div>
+            </div>
+        </div>
+        
+        <div id="logs" style="margin-top: 20px;"></div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const logs = document.getElementById('logs');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.style.borderLeft = type === 'error' ? '3px solid #ef4444' : 
+                                     type === 'success' ? '3px solid #10b981' : 
+                                     '3px solid #3b82f6';
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logs.insertBefore(entry, logs.firstChild);
+        }
+
+        function updateStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.className = 'status ' + type;
+            status.innerHTML = message;
+        }
+
+        async function runDiscovery() {
+            const button = document.getElementById('runDiscovery');
+            button.disabled = true;
+            
+            updateStatus('🔄 Running discovery...', 'info');
+            log('Starting content discovery...');
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/scheduler/run', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ task: 'content-fetch' })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    const result = data.result || {};
+                    updateStatus(`✅ Discovery complete! Fetched ${result.fetched || 0} items, stored ${result.stored || 0} unique items.`, 'success');
+                    
+                    // Update stats
+                    document.getElementById('stats').style.display = 'grid';
+                    document.getElementById('fetched').textContent = result.fetched || 0;
+                    document.getElementById('scored').textContent = result.scored || 0;
+                    document.getElementById('stored').textContent = result.stored || 0;
+                    document.getElementById('rejected').textContent = result.rejected || 0;
+                    
+                    log(`Discovery completed in ${result.duration || 0}s`, 'success');
+                    if (result.errors && result.errors.length > 0) {
+                        result.errors.forEach(err => log(`Error: ${err}`, 'error'));
+                    }
+                } else {
+                    throw new Error(data.error || 'Discovery failed');
+                }
+            } catch (error) {
+                updateStatus(`❌ Error: ${error.message}`, 'error');
+                log(`Error: ${error.message}`, 'error');
+                console.error('Discovery error:', error);
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        async function checkStatus() {
+            log('Checking pipeline status...');
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/status');
+                const data = await response.json();
+                
+                updateStatus(`Pipeline Status: ${data.status || 'unknown'}`, 'info');
+                log(`Uptime: ${Math.floor(data.uptime / 60)} minutes`);
+                
+                if (data.stats) {
+                    log(`Queue: ${data.stats.pending || 0} pending, ${data.stats.approved || 0} approved`);
+                }
+            } catch (error) {
+                log(`Status check failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function viewQueue() {
+            log('Fetching queue items...');
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/dashboard');
+                const data = await response.json();
+                
+                if (data.items && data.items.length > 0) {
+                    updateStatus(`📋 ${data.items.length} items in queue`, 'info');
+                    data.items.forEach(item => {
+                        log(`• ${item.title || 'Untitled'} (Score: ${item.quality_score || 0})`);
+                    });
+                } else {
+                    updateStatus('Queue is empty', 'info');
+                    log('No items in queue');
+                }
+            } catch (error) {
+                log(`Queue fetch failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkScheduler() {
+            log('Checking scheduler status...');
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/scheduler/status');
+                const data = await response.json();
+                
+                updateStatus(`Scheduler: ${data.active ? 'Active' : 'Inactive'} with ${data.count || 0} tasks`, 'info');
+                
+                if (data.tasks && data.tasks.length > 0) {
+                    data.tasks.forEach(task => {
+                        log(`• Task: ${task}`);
+                    });
+                }
+            } catch (error) {
+                log(`Scheduler check failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-check status on load
+        window.addEventListener('load', () => {
+            log('Test interface ready');
+            checkStatus();
+        });
+    </script>
+</body>
+</html>

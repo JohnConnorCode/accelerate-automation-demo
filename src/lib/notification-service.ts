@@ -16,11 +16,30 @@ export class NotificationService {
   private adminEmail: string;
   private fromEmail: string;
   private fromName: string;
+  private notifications: any[] = [];
+  private unreadCount: number = 0;
   
   constructor() {
     this.adminEmail = process.env.ADMIN_EMAIL || 'admin@example.com';
     this.fromEmail = process.env.NOTIFICATION_FROM_EMAIL || 'noreply@example.com';
     this.fromName = process.env.NOTIFICATION_FROM_NAME || 'Accelerate Platform';
+  }
+
+  async send(notification: any): Promise<void> {
+    this.notifications.push({ ...notification, read: false });
+    this.unreadCount++;
+  }
+
+  getUnreadCount(): number {
+    return this.unreadCount;
+  }
+
+  async markAsRead(id: string): Promise<void> {
+    const notification = this.notifications.find(n => n.id === id);
+    if (notification && !notification.read) {
+      notification.read = true;
+      this.unreadCount--;
+    }
   }
 
   async sendNotification(options: NotificationOptions): Promise<boolean> {

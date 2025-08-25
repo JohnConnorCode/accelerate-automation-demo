@@ -8,6 +8,7 @@ import { deduplicationService } from '../services/deduplication';
 import { scoreContent } from '../lib/openai';
 import { enrichmentService } from '../services/enrichment';
 import { criteriaService } from '../services/criteria-service';
+import { apiKeyService } from '../services/api-key-service';
 
 interface OrchestrationResult {
   fetched: number;
@@ -42,6 +43,19 @@ export class SimpleOrchestrator {
     };
 
     try {
+      // Initialize API keys from database
+      await apiKeyService.initialize();
+      
+      // Update sources with API keys if available
+      const githubKey = apiKeyService.getKey('github');
+      if (githubKey) {
+        // Add auth to GitHub URL
+        const githubUrl = this.sources.get('github');
+        if (githubUrl) {
+          this.sources.set('github', githubUrl + '&access_token=' + githubKey);
+        }
+      }
+      
       // Step 1: Fetch content
       const fetchResults = await fetcher.fetchAll(this.sources);
       
@@ -142,23 +156,25 @@ export class SimpleOrchestrator {
 
       // Step 4: Store unique approved content
       if (unique.length > 0) {
+        const insertData = unique.map(item => ({
+          title: item.title || item.name || 'Untitled',
+          description: item.description || item.tagline || '',
+          url: item.url || item.html_url || '',
+          source: item.source,
+          content_type: item.content_type,
+          type_confidence: item.type_confidence,
+          score: item.score,
+          confidence: item.confidence,
+          factors: item.factors,
+          recommendation: item.recommendation,
+          content_hash: item.content_hash,
+          raw_data: item,
+          created_at: new Date().toISOString()
+        }));
+        
         const { data, error } = await supabase
           .from('content_curated')
-          .insert(unique.map(item => ({
-            title: item.title || item.name || 'Untitled',
-            description: item.description || item.tagline || '',
-            url: item.url || item.html_url || '',
-            source: item.source,
-            content_type: item.content_type,
-            type_confidence: item.type_confidence,
-            score: item.score,
-            confidence: item.confidence,
-            factors: item.factors,
-            recommendation: item.recommendation,
-            content_hash: item.content_hash,
-            raw_data: item,
-            created_at: new Date().toISOString()
-          })));
+          .insert(insertData as any);
 
         if (error) {
           result.errors.push(`Storage error: ${error.message}`);
@@ -236,13 +252,13 @@ export class SimpleOrchestrator {
 
       const breakdown: Record<string, number> = {};
       if (breakdownData) {
-        for (const item of breakdownData) {
+        for (const item of breakdownData as any[]) {
           breakdown[item.source] = (breakdown[item.source] || 0) + 1;
         }
       }
 
       return {
-        lastRun: lastRunData?.[0]?.created_at ? new Date(lastRunData[0].created_at) : undefined,
+        lastRun: (lastRunData as any)?.[0]?.created_at ? new Date((lastRunData as any)[0].created_at) : undefined,
         totalContent: totalContent || 0,
         breakdown
       };

@@ -44,19 +44,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkAdminStatus = async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('is_admin')
-        .eq('id', userId)
+      // Check if user exists in admin_users table
+      const { data: adminData, error: adminError } = await supabase
+        .from('admin_users')
+        .select('*')
+        .eq('user_id', userId)
         .single()
       
-      if (error) {
-        console.error('Error checking admin status:', error)
+      if (adminError) {
+        // Not in admin_users table means not an admin
+        if (adminError.code === 'PGRST116') {
+          setIsAdmin(false)
+          return
+        }
+        console.error('Error checking admin status:', adminError)
         setIsAdmin(false)
         return
       }
       
-      setIsAdmin(data?.is_admin || false)
+      // If found in admin_users table, user is admin
+      setIsAdmin(!!adminData)
     } catch (error) {
       console.error('Error checking admin status:', error)
       setIsAdmin(false)
@@ -70,7 +77,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         password,
       })
       
-      if (error) throw error
+      if (error) {
+        // Provide more user-friendly error messages
+        if (error.message.includes('Invalid login credentials')) {
+          throw new Error('Invalid email or password. Please try again.')
+        } else if (error.message.includes('Email not confirmed')) {
+          throw new Error('Please verify your email before signing in.')
+        } else if (error.message.includes('User not found')) {
+          throw new Error('No account found with this email address.')
+        } else {
+          throw new Error(error.message || 'Authentication failed. Please try again.')
+        }
+      }
       
       if (data.user) {
         await checkAdminStatus(data.user.id)
@@ -78,6 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       return { error: null }
     } catch (error) {
+      console.error('Sign in error:', error)
       return { error: error as Error }
     }
   }
@@ -94,10 +113,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
       })
       
-      if (error) throw error
+      if (error) {
+        // Provide more user-friendly error messages
+        if (error.message.includes('already registered')) {
+          throw new Error('An account with this email already exists.')
+        } else if (error.message.includes('weak password')) {
+          throw new Error('Password is too weak. Please use at least 6 characters.')
+        } else if (error.message.includes('invalid email')) {
+          throw new Error('Please enter a valid email address.')
+        } else {
+          throw new Error(error.message || 'Registration failed. Please try again.')
+        }
+      }
       
       return { error: null }
     } catch (error) {
+      console.error('Sign up error:', error)
       return { error: error as Error }
     }
   }

@@ -16,21 +16,47 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    
+    // Validate inputs
+    if (!email || !password) {
+      setError('Please enter both email and password')
+      return
+    }
+    
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters')
+      return
+    }
+    
     setLoading(true)
 
     try {
       if (isSignUp) {
+        if (!fullName || fullName.trim().length === 0) {
+          setError('Please enter your full name')
+          setLoading(false)
+          return
+        }
+        
         const { error } = await signUp(email, password, fullName)
-        if (error) throw error
-        setError('Check your email to confirm your account!')
+        if (error) {
+          setError(error.message)
+        } else {
+          setError('✅ Check your email to confirm your account!')
+        }
         setLoading(false)
       } else {
         const { error } = await signIn(email, password)
-        if (error) throw error
-        navigate('/dashboard')
+        if (error) {
+          setError(error.message)
+          setLoading(false)
+        } else {
+          navigate('/dashboard')
+        }
       }
     } catch (err: any) {
-      setError(err.message || 'Authentication failed')
+      console.error('Auth error:', err)
+      setError(err.message || 'Authentication failed. Please try again.')
       setLoading(false)
     }
   }
@@ -50,13 +76,13 @@ export default function Login() {
         </h2>
 
         {error && (
-          <div className={`mb-4 p-3 rounded-lg flex items-start gap-2 ${
-            error.includes('Check your email') 
-              ? 'bg-green-50 text-green-700' 
-              : 'bg-red-50 text-red-700'
-          }`}>
-            <AlertCircle className="w-5 h-5 mt-0.5" />
-            <span className="text-sm">{error}</span>
+          <div className={`mb-4 p-4 rounded-lg flex items-start gap-3 border ${
+            error.includes('✅') 
+              ? 'bg-green-50 text-green-700 border-green-200' 
+              : 'bg-red-50 text-red-700 border-red-200'
+          } animate-pulse-once`}>
+            <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
+            <span className="text-sm font-medium">{error}</span>
           </div>
         )}
 
