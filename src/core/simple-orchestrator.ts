@@ -9,6 +9,8 @@ import { scoreContent } from '../lib/openai';
 import { enrichmentService } from '../services/enrichment';
 import { criteriaService } from '../services/criteria-service';
 import { apiKeyService } from '../services/api-key-service';
+import { noApiDataFetcher } from '../fetchers/no-api-sources';
+import { accelerateCriteriaScorer } from '../services/accelerate-criteria-scorer';
 
 interface OrchestrationResult {
   fetched: number;
@@ -56,8 +58,22 @@ export class SimpleOrchestrator {
         }
       }
       
-      // Step 1: Fetch content
+      // Step 1a: Fetch from API sources (if keys available)
       const fetchResults = await fetcher.fetchAll(this.sources);
+      
+      // Step 1b: ALSO fetch from public sources (no API keys needed!)
+      console.log('🌐 Fetching from public sources (no API keys required)...');
+      const publicData = await noApiDataFetcher.fetchAllPublicSources();
+      console.log(`✅ Got ${publicData.length} items from public sources!`);
+      
+      // Add public data to fetch results
+      if (publicData.length > 0) {
+        fetchResults.push({
+          source: 'public-sources',
+          items: publicData,
+          errors: []
+        });
+      }
       
       // Count fetched items
       for (const fetchResult of fetchResults) {
@@ -83,9 +99,17 @@ export class SimpleOrchestrator {
           const contentType = this.detectContentType(item, fetchResult.source);
           console.log(`📋 Detected type: ${contentType}`);
           
+          // Apply ACCELERATE criteria scoring
+          const criteriaResult = accelerateCriteriaScorer.score(item, contentType as any);
+          if (!criteriaResult.eligible) {
+            console.log(`❌ Rejected by ACCELERATE criteria: ${criteriaResult.reasons.join(', ')}`);
+            result.rejected++;
+            continue;
+          }
+          
           // Full enrichment for promising items
           let enrichedData = null;
-          let finalScore = basicScore.score;
+          let finalScore = Math.max(basicScore.score, criteriaResult.score); // Use higher score
           let finalConfidence = basicScore.confidence;
           
           try {
