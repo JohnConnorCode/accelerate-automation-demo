@@ -53,7 +53,8 @@ export class SimpleOrchestrator {
     ['hackernews', 'https://hn.algolia.com/api/v1/search?tags=story&hitsPerPage=50'],
     ['producthunt', 'https://api.producthunt.com/v2/api/graphql'],
     ['devto', 'https://dev.to/api/articles?per_page=30&tag=webdev,javascript,react'],
-    ['defilama', 'https://api.llama.fi/protocols'],
+    // Disabled - fetches 6000+ items which is too many
+    // ['defilama', 'https://api.llama.fi/protocols'],
   ]);
 
   /**
