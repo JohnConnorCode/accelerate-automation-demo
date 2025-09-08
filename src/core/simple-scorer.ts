@@ -33,7 +33,15 @@ export class SimpleScorer {
     'blockchain', 'ai', 'ml', 'web3', 'defi', 'nft', 'dao',
     'startup', 'founder', 'funding', 'seed', 'series',
     'developer', 'builder', 'open source', 'github',
-    'accelerator', 'incubator', 'venture', 'investment'
+    'accelerator', 'incubator', 'venture', 'investment',
+    'saas', 'platform', 'api', 'framework', 'tool',
+    'react', 'nextjs', 'typescript', 'python', 'rust'
+  ]);
+  
+  // HIGH QUALITY indicators
+  private readonly qualityIndicators = new Set([
+    'production', 'enterprise', 'customers', 'revenue',
+    'team', 'backed', 'yc', 'techstars', 'funded'
   ]);
 
   /**
@@ -64,49 +72,55 @@ export class SimpleScorer {
    * Extract scoring criteria from content
    */
   private extractCriteria(content: any): ScoringCriteria {
-    const text = `${content.title || ''} ${content.description || ''}`.toLowerCase();
+    const text = `${content.title || content.name || ''} ${content.description || ''}`.toLowerCase();
+    
+    // Check for GitHub stars as a quality metric
+    const hasHighStars = content.stargazers_count > 100 || content.stars > 100;
+    const hasVeryHighStars = content.stargazers_count > 1000 || content.stars > 1000;
     
     return {
-      hasTitle: !!content.title,
+      hasTitle: !!(content.title || content.name),
       hasDescription: !!content.description,
       descriptionLength: (content.description || '').length,
-      hasUrl: !!content.url,
-      hasDate: !!content.date || !!content.created_at,
-      age: this.calculateAge(content.date || content.created_at),
-      hasTeam: !!content.team || !!content.team_size,
-      hasFunding: !!content.funding || !!content.funding_raised,
-      hasMetrics: !!(content.metrics || content.traction || content.users),
+      hasUrl: !!(content.url || content.html_url),
+      hasDate: !!(content.date || content.created_at || content.pushed_at),
+      age: this.calculateAge(content.date || content.created_at || content.pushed_at),
+      hasTeam: !!(content.team || content.team_size || content.owner),
+      hasFunding: !!(content.funding || content.funding_raised || hasVeryHighStars), // High stars = validated
+      hasMetrics: !!(content.metrics || content.traction || content.users || hasHighStars),
       keywordMatches: this.countKeywords(text)
     };
   }
 
   /**
-   * Calculate scoring factors
+   * Calculate scoring factors - STRICT for HIGH QUALITY
    */
   private calculateFactors(criteria: ScoringCriteria): ScoreResult['factors'] {
-    // Quality (0-30)
+    // Quality (0-30) - MUCH STRICTER
     let quality = 0;
-    if (criteria.hasTitle) quality += 5;
-    if (criteria.hasDescription) quality += 5;
-    if (criteria.descriptionLength > 100) quality += 10;
-    if (criteria.descriptionLength > 300) quality += 10;
+    if (criteria.hasTitle) quality += 2;
+    if (criteria.hasDescription) quality += 3;
+    if (criteria.descriptionLength > 200) quality += 5;  // Need substantial description
+    if (criteria.descriptionLength > 500) quality += 10; // Really detailed
+    if (criteria.hasMetrics) quality += 10; // Must have metrics/traction
     
-    // Relevance (0-30)
-    let relevance = Math.min(30, criteria.keywordMatches * 5);
+    // Relevance (0-30) - Need multiple keyword matches
+    let relevance = Math.min(30, criteria.keywordMatches * 3);
+    if (criteria.keywordMatches < 2) relevance = 0; // Must match at least 2 keywords
     
-    // Freshness (0-20)
+    // Freshness (0-20) - Strict on recency
     let freshness = 20;
-    if (criteria.age > 7) freshness = 15;
-    if (criteria.age > 30) freshness = 10;
-    if (criteria.age > 90) freshness = 5;
-    if (criteria.age > 365) freshness = 0;
+    if (criteria.age > 3) freshness = 15;   // Older than 3 days
+    if (criteria.age > 7) freshness = 10;   // Older than a week
+    if (criteria.age > 30) freshness = 5;   // Older than a month
+    if (criteria.age > 90) freshness = 0;   // Too old
     
-    // Completeness (0-20)
+    // Completeness (0-20) - Need ALL data
     let completeness = 0;
-    if (criteria.hasUrl) completeness += 5;
-    if (criteria.hasDate) completeness += 5;
-    if (criteria.hasTeam) completeness += 5;
-    if (criteria.hasFunding || criteria.hasMetrics) completeness += 5;
+    if (criteria.hasUrl) completeness += 3;
+    if (criteria.hasDate) completeness += 3;
+    if (criteria.hasTeam) completeness += 7;     // Team info is important
+    if (criteria.hasFunding) completeness += 7;  // Funding info is important
     
     return {
       quality: Math.round(quality),

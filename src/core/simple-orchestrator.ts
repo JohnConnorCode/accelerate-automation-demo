@@ -23,7 +23,7 @@ interface OrchestrationResult {
 
 export class SimpleOrchestrator {
   private maxItemsPerBatch = 10; // Process max 10 items at a time
-  private minScoreThreshold = 5; // Lower threshold to accept more items
+  private minScoreThreshold = 30; // HIGH QUALITY threshold - only accept good items
   
   /**
    * Configure batch size for processing
@@ -49,10 +49,11 @@ export class SimpleOrchestrator {
     }
   }
   private readonly sources = new Map([
-    ['github', 'https://api.github.com/search/repositories?q=stars:>100+language:typescript&sort=updated'],
-    ['hackernews', 'https://hn.algolia.com/api/v1/search?tags=story&hitsPerPage=50'],
+    // HIGH QUALITY: Only repos with 500+ stars, recently updated
+    ['github', 'https://api.github.com/search/repositories?q=stars:>500+pushed:>2024-01-01&sort=stars&order=desc'],
+    ['hackernews', 'https://hn.algolia.com/api/v1/search?tags=story&hitsPerPage=50&numericFilters=points>100'],
     ['producthunt', 'https://api.producthunt.com/v2/api/graphql'],
-    ['devto', 'https://dev.to/api/articles?per_page=30&tag=webdev,javascript,react'],
+    ['devto', 'https://dev.to/api/articles?per_page=30&tag=webdev,javascript,react&top=7'],
     // Disabled - fetches 6000+ items which is too many
     // ['defilama', 'https://api.llama.fi/protocols'],
   ]);
@@ -188,8 +189,9 @@ export class SimpleOrchestrator {
               console.log(`   Dynamic Score: ${dynamicScore}`);
               console.log(`   Final Score: ${basicScore.score} -> ${finalScore}`);
             } else {
-              // Use dynamic scoring even without full enrichment
-              finalScore = await criteriaService.scoreContent(item, contentType);
+              // Keep the good score we already have - don't overwrite with bad criteriaService
+              // finalScore = await criteriaService.scoreContent(item, contentType);
+              // finalScore already set above as Math.max(basicScore.score, criteriaResult.score)
             }
           } catch (error) {
             console.warn('Enrichment failed, using basic score:', error);
@@ -197,6 +199,11 @@ export class SimpleOrchestrator {
           
           // Make final decision
           const finalRecommendation = this.getRecommendation(finalScore, finalConfidence);
+          
+          // Debug logging
+          if (totalEvaluated <= 5) {
+            console.log(`    Final: score=${finalScore}, confidence=${finalConfidence}, recommendation=${finalRecommendation}`);
+          }
           
           if (finalRecommendation !== 'reject') {
             totalProcessed++;
@@ -236,9 +243,16 @@ export class SimpleOrchestrator {
       }
       
       console.log(`📦 Evaluated ${totalEvaluated} items, accepted ${totalProcessed} items`);
+      console.log(`📋 Scored items array has ${scoredItems.length} items`);
 
       // Step 3: Deduplicate content
       console.log(`\n🔍 Found ${scoredItems.length} items that passed scoring`);
+      if (scoredItems.length > 0) {
+        console.log('Sample scored items:');
+        scoredItems.slice(0, 3).forEach(item => {
+          console.log(`  - ${item.title || item.name} (score: ${item.score})`);
+        });
+      }
       const { unique, duplicates } = await deduplicationService.filterDuplicates(scoredItems);
       console.log(`🔄 After deduplication: ${unique.length} unique, ${duplicates.length} duplicates`);
       
