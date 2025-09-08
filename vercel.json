@@ -18,12 +18,5 @@
       "path": "/api/cron/fetch-content",
       "schedule": "0 0 * * *"
     }
-  ],
-  "env": {
-    "VITE_SUPABASE_URL": "@supabase-url",
-    "VITE_SUPABASE_ANON_KEY": "@supabase-anon-key",
-    "SUPABASE_SERVICE_KEY": "@supabase-service-key",
-    "OPENAI_API_KEY": "@openai-api-key",
-    "CRON_SECRET": "@cron-secret"
-  }
+  ]
 }
