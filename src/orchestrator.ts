@@ -12,7 +12,8 @@ import { TeamVerificationService } from './services/team-verification';
 import { intelligentCache } from './services/intelligent-cache-service';
 
 // Import REAL fetchers from QUALITY sources
-import { ProductHuntLaunchesFetcher } from './fetchers/real-sources/producthunt-launches';
+import { HackerNewsYCJobsFetcher } from './fetchers/real-sources/hackernews-yc-jobs';
+import { IndieHackersProjectsFetcher } from './fetchers/real-sources/indiehackers-projects';
 import { YCombinatorStartupsFetcher } from './fetchers/real-sources/ycombinator-startups';
 import { GitHubWeb3ProjectsFetcher } from './fetchers/real-sources/github-web3-projects';
 import { DevToStartupResourcesFetcher } from './fetchers/real-sources/devto-startup-resources';
@@ -44,26 +45,26 @@ export class AccelerateOrchestrator {
    * Initialize QUALITY fetchers from REAL startup sources
    */
   private initializeFetchers(): void {
-    // PRIMARY SOURCES - Where startups actually launch
+    // PRIMARY SOURCES - REAL startups and companies
     this.fetchers.push(
-      new ProductHuntLaunchesFetcher(), // #1 - Where products launch daily
-      new YCombinatorStartupsFetcher(), // #2 - Vetted, funded startups
+      new HackerNewsYCJobsFetcher(), // #1 - Real YC companies hiring
+      new IndieHackersProjectsFetcher(), // #2 - Real indie projects with revenue
+      new YCombinatorStartupsFetcher(), // #3 - YC companies (limited but real)
     );
     
     // SECONDARY SOURCES - Additional coverage
     this.fetchers.push(
-      new GitHubWeb3ProjectsFetcher(), // Open source projects
-      new DevToStartupResourcesFetcher(), // Technical resources
+      new GitHubWeb3ProjectsFetcher(), // Open source Web3 projects
+      new DevToStartupResourcesFetcher(), // Technical resources and tutorials
     );
     
-    // Note: Removed all fake fetchers that returned mock data:
-    // - GitcoinGrantsFetcher: API returns 404
-    // - EthereumFoundationFetcher: Returns hardcoded mock data
-    // - AcceleratorsFetcher: Returns hardcoded program list
+    // ALL FAKE FETCHERS REMOVED:
+    // ✅ Removed GitcoinGrantsFetcher (API 404)
+    // ✅ Removed EthereumFoundationFetcher (hardcoded mock data)
+    // ✅ Removed AcceleratorsFetcher (hardcoded list)
+    // ✅ Removed ProductHuntLaunchesFetcher (Cloudflare blocks RSS)
     
-    // Platform fetchers need to be verified before use
-    // Most require API keys or return questionable data
-
+    console.log(`📊 Initialized ${this.fetchers.length} REAL data fetchers`);
   }
 
   /**
@@ -149,11 +150,12 @@ export class AccelerateOrchestrator {
   /**
    * Run all fetchers with enrichment pipeline
    */
-  async run(): Promise<{
+  async run(options: { batchSize?: number } = {}): Promise<{
     success: boolean;
     stats: any;
     errors: string[];
   }> {
+    const BATCH_SIZE = options.batchSize || 10; // Default to 10 items
     const errors: string[] = [];
     const allContent: ContentItem[] = [];
 
@@ -260,9 +262,13 @@ export class AccelerateOrchestrator {
         item.type === 'funding' // Funding opportunities are pre-vetted
       );
 
+      // LIMIT TO BATCH SIZE - Critical for manual control
+      const limitedContent = credibleContent.slice(0, BATCH_SIZE);
+      console.log(`🎯 Processing ${limitedContent.length} items (batch size: ${BATCH_SIZE})`);
+
       // Process and insert into database
 
-      const pipelineResult = await AccelerateDBPipeline.processContent(credibleContent);
+      const pipelineResult = await AccelerateDBPipeline.processContent(limitedContent);
       
       if (pipelineResult.errors.length > 0) {
         errors.push(...pipelineResult.errors);
