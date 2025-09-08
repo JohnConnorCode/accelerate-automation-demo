@@ -200,7 +200,7 @@ export class SimpleOrchestrator {
           
           if (finalRecommendation !== 'reject') {
             totalProcessed++;
-            if (totalProcessed > this.maxItemsPerBatch) {
+            if (totalProcessed >= this.maxItemsPerBatch) {
               console.log(`🎯 Reached batch limit of ${this.maxItemsPerBatch} items`);
               break;
             }

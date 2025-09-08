@@ -58,6 +58,12 @@ app.get('/api/status', async (req, res) => {
   }
 })
 
+// Test manual controls endpoint
+app.post('/api/test-controls', async (req, res) => {
+  const { testManualControls } = await import('./src/api/test-controls')
+  return testManualControls(req, res)
+})
+
 // Dashboard endpoint
 app.get('/api/dashboard', async (req, res) => {
   try {
