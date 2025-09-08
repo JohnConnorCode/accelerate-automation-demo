@@ -71,23 +71,23 @@ export class AccelerateOrchestrator {
       new AcceleratorsFetcher(),
     );
 
-    // NEW Platform fetchers for expanded coverage
-    this.fetchers.push(
-      new WellfoundFetcher(),
-      // new FarcasterFetcher(), // DISABLED - needs API key
-      new MirrorXYZFetcher(),
-      new Web3JobPlatformsFetcher(),
-    );
+    // NEW Platform fetchers for expanded coverage - DISABLED for testing
+    // this.fetchers.push(
+    //   new WellfoundFetcher(),
+    //   // new FarcasterFetcher(), // DISABLED - needs API key
+    //   new MirrorXYZFetcher(),
+    //   new Web3JobPlatformsFetcher(),
+    // );
 
     // NEW Metrics fetchers for validation - DISABLED (returns 6000+ items)
     // this.fetchers.push(
     //   new DefiLlamaFetcher(),
     // );
 
-    // NEW Comprehensive grants aggregator
-    this.fetchers.push(
-      new ComprehensiveGrantsFetcher(),
-    );
+    // NEW Comprehensive grants aggregator - DISABLED for testing
+    // this.fetchers.push(
+    //   new ComprehensiveGrantsFetcher(),
+    // );
 
   }
 
@@ -281,7 +281,8 @@ export class AccelerateOrchestrator {
       // Filter by credibility
       const credibleContent = enrichedContent.filter(item => 
         (item.metadata?.final_credibility_score || 0) > 20 || // Min credibility
-        item.type === 'resource' // Resources don't need as much verification
+        item.type === 'resource' || // Resources don't need as much verification
+        item.type === 'funding' // Funding opportunities are pre-vetted
       );
 
       // Process and insert into database
