@@ -92,8 +92,9 @@ export class AccelerateDBPipeline {
                 results.inserted++;
                 break;
             }
-          } catch (error) {
-            results.errors.push(`Failed to insert ${item.type}: ${item.title} - ${error}`);
+          } catch (error: any) {
+            console.error(`Detailed error for ${item.type}: ${item.title}:`, error);
+            results.errors.push(`Failed to insert ${item.type}: ${item.title} - ${error.message || error}`);
           }
         }
       }
@@ -173,7 +174,7 @@ export class AccelerateDBPipeline {
       twitter_url: meta.twitter_url,
       
       // Status and tags
-      status: 'pending', // For queue/approval workflow
+      status: 'active', // Must be 'active' per database constraint
       tags: item.tags || [],
       
       // Supported chains if available
@@ -314,13 +315,13 @@ export class AccelerateDBPipeline {
       description: item.description,
       url: item.url,
       
-      // Type and category
-      resource_type: meta.resource_type || 'tool',
-      category: meta.category || 'general',
+      // Type and category (must match database constraints)
+      resource_type: 'Tool', // Database requires capitalized: Tool, Framework, etc.
+      category: meta.category || 'Development Tools', // Valid category from DB
       
       // Tags and status
       tags: item.tags || [],
-      status: 'pending',
+      status: 'active', // Must be 'active' per database constraint
       
       // Pricing
       price_type: meta.price_type || 'free',
@@ -329,7 +330,7 @@ export class AccelerateDBPipeline {
       // Details
       difficulty_level: meta.difficulty_level || 'intermediate',
       time_commitment: meta.time_commitment,
-      target_audience: 'early-stage founders',
+      target_audience: ['early-stage founders', 'web3 builders'], // Array type
       
       // Provider
       provider_name: meta.provider_name || item.author || item.source,
