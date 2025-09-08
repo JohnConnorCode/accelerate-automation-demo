@@ -55,7 +55,7 @@ export class NoApiDataFetcher {
     // 3. DEV.TO - Public API (No auth needed!)
     {
       name: 'devto-articles',
-      url: 'https://dev.to/api/articles?per_page=30&tag=web3,blockchain,startup',
+      url: 'https://dev.to/api/articles?per_page=30&top=7',  // Top articles from last week
       type: 'json',
       parser: (articles: any[]) => articles.map(a => ({
         title: a.title,
