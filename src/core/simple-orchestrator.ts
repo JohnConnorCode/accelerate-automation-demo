@@ -158,13 +158,18 @@ export class SimpleOrchestrator {
           let finalScore = Math.max(basicScore.score, criteriaResult.score); // Use higher score
           let finalConfidence = basicScore.confidence;
           
-          // DISABLED FOR TESTING - enrichment takes way too long
-          const SKIP_ENRICHMENT = true;
+          // Enable enrichment for HIGH QUALITY items only
+          const SKIP_ENRICHMENT = false;
           
           try {
-            if (!SKIP_ENRICHMENT && finalScore > 70) {
-              // Only enrich high-scoring items
+            if (!SKIP_ENRICHMENT && finalScore >= 30) {
+              // Enrich all high-quality items (30+ score)
+              console.log(`🔬 Enriching ${item.title || item.name} (score: ${finalScore})...`);
               enrichedData = await enrichmentService.enrichContent(item, fetchResult.source);
+              console.log(`   ✅ Enrichment complete`);
+              if (enrichedData) {
+                console.log(`   📊 Enriched data validation:`, enrichedData.validation);
+              }
             }
             
             // SKIP dynamic scoring - it's probably failing
@@ -174,20 +179,24 @@ export class SimpleOrchestrator {
             // );
             const dynamicScore = finalScore; // Just use the score we already have
             
-            // Combine scores with weights
-            if (enrichedData && enrichedData.validation.verified) {
-              finalScore = Math.round(
-                (dynamicScore * 0.5) +
-                (enrichedData.validation.completeness * 0.2) +
-                (enrichedData.validation.data_quality * 0.15) +
-                (basicScore.score * 0.15)
+            // Combine scores with weights - USE ENRICHED DATA EVEN IF NOT FULLY VERIFIED
+            if (enrichedData) {
+              // Even partial enrichment is valuable - don't require full verification
+              const enrichmentBonus = Math.round(
+                (enrichedData.validation.completeness * 0.1) +  // Up to 10 points from completeness
+                (enrichedData.validation.data_quality * 0.1)     // Up to 10 points from quality
               );
+              
+              // Add enrichment bonus to score
+              finalScore = Math.min(100, finalScore + enrichmentBonus);
               finalConfidence = enrichedData.ai_analysis?.confidence || basicScore.confidence;
               
-              console.log(`✨ Fully enriched: ${enrichedData.title}`);
+              console.log(`✨ Enriched: ${enrichedData.title}`);
               console.log(`   Type: ${contentType}`);
-              console.log(`   Dynamic Score: ${dynamicScore}`);
-              console.log(`   Final Score: ${basicScore.score} -> ${finalScore}`);
+              console.log(`   Completeness: ${enrichedData.validation.completeness}%`);
+              console.log(`   Quality: ${enrichedData.validation.data_quality}%`);
+              console.log(`   Verified: ${enrichedData.validation.verified}`);
+              console.log(`   Score boost: +${enrichmentBonus} (${basicScore.score} -> ${finalScore})`);
             } else {
               // Keep the good score we already have - don't overwrite with bad criteriaService
               // finalScore = await criteriaService.scoreContent(item, contentType);
@@ -212,8 +221,15 @@ export class SimpleOrchestrator {
               break;
             }
             
+            // Normalize GitHub API URLs to regular GitHub URLs
+            let normalizedUrl = (enrichedData || item).url || (enrichedData || item).html_url || '';
+            if (normalizedUrl.includes('api.github.com/repos/')) {
+              normalizedUrl = normalizedUrl.replace('api.github.com/repos/', 'github.com/');
+            }
+            
             scoredItems.push({
               ...(enrichedData || item),
+              url: normalizedUrl, // Use normalized URL
               source: fetchResult.source,
               content_type: contentType,
               score: finalScore,

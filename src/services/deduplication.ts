@@ -38,24 +38,20 @@ export class DeduplicationService {
           .limit(1);
         
         if (urlMatch && urlMatch.length > 0) {
+          console.log(`🔁 Duplicate URL found: ${content.url}`);
           logger.debug('Duplicate found by URL', { url: content.url });
           return true;
+        } else {
+          console.log(`✨ New URL: ${content.url}`);
         }
       }
 
-      // Check by content hash
-      const hash = this.generateHash(content);
-      const { data: hashMatch } = await supabase
-        .from('content_curated')
-        .select('id')
-        .eq('content_hash', hash)
-        .limit(1);
+      // DISABLED: Hash checking is too aggressive, blocking good content
+      // Only URL matching is needed to prevent true duplicates
+      // Also disabling fuzzy title matching - it's too aggressive
+      return false;
       
-      if (hashMatch && hashMatch.length > 0) {
-        logger.debug('Duplicate found by hash', { hash });
-        return true;
-      }
-
+      /* DISABLED - TOO STRICT
       // Fuzzy matching for similar titles
       if (content.title) {
         const { data: titleMatch } = await supabase
@@ -80,6 +76,7 @@ export class DeduplicationService {
       }
 
       return false;
+      */
     } catch (error) {
       logger.error('Error checking for duplicates', error);
       return false; // Don't block on error
