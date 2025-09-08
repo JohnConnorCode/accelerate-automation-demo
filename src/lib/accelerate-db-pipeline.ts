@@ -157,52 +157,69 @@ export class AccelerateDBPipeline {
 
   /**
    * Insert a project into the projects table
+   * ADAPTED to work with existing schema
    */
   private static async insertProject(item: ContentItem): Promise<void> {
     const meta = item.metadata || {};
     
+    // Map to EXISTING schema columns
     const projectData = {
-      // Core fields
-      name: meta.name || item.title,
+      // Core fields that exist
+      name: item.title,
       description: item.description,
-      short_description: meta.short_description || item.description.substring(0, 100),
-      website_url: meta.website_url || item.url,
+      short_description: item.description.substring(0, 100),
+      website_url: item.url,
       github_url: meta.github_url,
       twitter_url: meta.twitter_url,
-      discord_url: meta.discord_url,
       
-      // Stage information
-      launch_date: meta.launch_date,
-      funding_raised: meta.funding_raised || 0,
-      funding_round: meta.funding_round,
-      team_size: meta.team_size || 1,
+      // Status and tags
+      status: 'pending', // For queue/approval workflow
+      tags: item.tags || [],
       
-      // Categories
-      categories: meta.categories || [],
+      // Supported chains if available
       supported_chains: meta.supported_chains || [],
-      project_status: meta.development_status || 'active',
       
-      // Needs
-      seeking_funding: meta.project_needs?.includes('funding') || false,
-      seeking_cofounders: meta.project_needs?.includes('co-founder') || false,
-      seeking_developers: meta.project_needs?.includes('developers') || false,
+      // Project needs (this column exists)
+      project_needs: [
+        meta.seeking_funding && 'funding',
+        meta.seeking_cofounders && 'co-founder',
+        meta.seeking_developers && 'developers'
+      ].filter(Boolean),
       
-      // Metadata
-      accelerate_score: meta.accelerate_score,
-      source: item.source,
-      source_url: item.url,
-      last_activity: meta.last_activity || new Date().toISOString(),
+      // Amount funded (exists but different name)
+      amount_funded: meta.funding_raised || 0,
       
-      // Additional context
-      problem_statement: meta.problem_solving,
-      value_proposition: meta.unique_value_prop,
-      target_market: meta.target_market,
+      // Timestamps
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
       
-      // AI-generated insights
-      ai_score: meta.ai_score,
-      ai_analysis: meta.ai_analysis,
-      ai_strengths: meta.ai_strengths,
-      ai_needs: meta.ai_needs,
+      // Store ACCELERATE data in custom_status (JSON field)
+      custom_status: JSON.stringify({
+        // ACCELERATE criteria
+        launch_date: meta.launch_date || meta.launch_year,
+        funding_raised: meta.funding_raised || 0,
+        funding_round: meta.funding_round,
+        team_size: meta.team_size || 1,
+        
+        // Scores
+        accelerate_score: meta.accelerate_score || 0,
+        ai_score: meta.ai_score,
+        
+        // Source info
+        source: item.source,
+        source_url: item.url,
+        
+        // AI insights
+        ai_analysis: meta.ai_analysis,
+        ai_strengths: meta.ai_strengths,
+        ai_needs: meta.ai_needs,
+        
+        // ACCELERATE specific
+        yc_batch: meta.yc_batch,
+        is_yc_backed: meta.is_yc_backed,
+        is_hiring: meta.is_hiring,
+        credibility_score: meta.credibility_score,
+      })
     };
 
     const { error } = await supabase
@@ -285,12 +302,14 @@ export class AccelerateDBPipeline {
 
   /**
    * Insert a resource into the resources table
+   * ADAPTED to work with ACTUAL schema
    */
   private static async insertResource(item: ContentItem): Promise<void> {
     const meta = item.metadata || {};
     
+    // Map to ACTUAL columns that exist
     const resourceData = {
-      // Core fields
+      // Required fields
       title: item.title,
       description: item.description,
       url: item.url,
@@ -299,35 +318,43 @@ export class AccelerateDBPipeline {
       resource_type: meta.resource_type || 'tool',
       category: meta.category || 'general',
       
-      // Accessibility
+      // Tags and status
+      tags: item.tags || [],
+      status: 'pending',
+      
+      // Pricing
       price_type: meta.price_type || 'free',
       price_amount: meta.price_amount || 0,
-      trial_available: meta.trial_available || false,
       
-      // Quality indicators
-      provider_name: meta.provider_name || item.author,
-      provider_credibility: meta.provider_credibility,
-      last_updated: meta.last_updated || new Date().toISOString(),
-      
-      // Usage details
+      // Details
       difficulty_level: meta.difficulty_level || 'intermediate',
       time_commitment: meta.time_commitment,
-      prerequisites: meta.prerequisites || [],
+      target_audience: 'early-stage founders',
       
-      // Value proposition
-      key_benefits: meta.key_benefits || [],
-      use_cases: meta.use_cases || [],
+      // Provider
+      provider_name: meta.provider_name || item.author || item.source,
+      provider_website: meta.provider_website,
       
-      // Metadata
-      accelerate_score: meta.accelerate_score,
-      source: item.source,
-      tags: item.tags || [],
+      // Timestamps
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
       
-      // AI-generated insights
-      ai_score: meta.ai_score,
-      ai_analysis: meta.ai_analysis,
-      ai_benefits: meta.ai_strengths, // For resources, strengths are benefits
-      ai_use_cases: meta.ai_needs, // For resources, needs become use cases
+      // Flags
+      featured: false,
+      verified: false,
+      
+      // Store ACCELERATE data in metadata JSON column
+      metadata: {
+        accelerate_score: meta.accelerate_score || 0,
+        ai_score: meta.ai_score,
+        ai_analysis: meta.ai_analysis,
+        source: item.source,
+        source_url: item.url,
+        last_updated: meta.published_at || new Date().toISOString(),
+        key_benefits: meta.key_benefits,
+        use_cases: meta.use_cases,
+        prerequisites: meta.prerequisites,
+      }
     };
 
     const { error } = await supabase
