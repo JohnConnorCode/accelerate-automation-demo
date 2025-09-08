@@ -2,13 +2,14 @@
  * Scheduler service for automated content fetching
  */
 import * as cron from 'node-cron';
-import { orchestrator } from '../core/simple-orchestrator';
+// FIXED: Use PROPER orchestrator with Accelerate fetchers!
+import { AccelerateOrchestrator } from '../orchestrator';
 import { notificationService } from '../lib/notification-service';
 import { logger } from './logger';
 
 export class Scheduler {
   private tasks: Map<string, cron.ScheduledTask> = new Map();
-  private orchestrator = orchestrator; // Use singleton instance
+  private orchestrator = new AccelerateOrchestrator(); // Use PROPER orchestrator!
 
   /**
    * Initialize default scheduled tasks

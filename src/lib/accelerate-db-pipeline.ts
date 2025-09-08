@@ -1,5 +1,6 @@
 import { ContentItem } from './base-fetcher';
 import { AccelerateScorer } from './accelerate-scorer';
+import { AIScorer } from './ai-scorer';
 import { supabase } from './supabase-client';
 
 /**
@@ -11,6 +12,7 @@ import { supabase } from './supabase-client';
 export class AccelerateDBPipeline {
   private static readonly MIN_SCORE_THRESHOLD = 30; // Minimum score to qualify
   private static readonly BATCH_SIZE = 50; // Process in batches
+  private static aiScorer = new AIScorer(); // AI scoring integration
   
   /**
    * Main pipeline - processes content and updates Accelerate DB
@@ -31,10 +33,32 @@ export class AccelerateDBPipeline {
     };
 
     try {
-      // Step 1: Score and filter
+      // Step 1: Score and filter with both traditional and AI scoring
 
       const qualified = AccelerateScorer.filterQualified(items);
-      const scored = AccelerateScorer.scoreAndRank(qualified);
+      let scored = AccelerateScorer.scoreAndRank(qualified);
+      
+      // Step 1b: Apply AI scoring for deeper analysis
+      console.log(`🤖 Applying AI scoring to ${scored.length} items...`);
+      const aiScoredItems = await this.aiScorer.scoreItems(scored);
+      
+      // Merge AI insights with traditional scoring
+      scored = aiScoredItems.map(item => ({
+        ...item,
+        metadata: {
+          ...item.metadata,
+          // Keep the higher of the two scores
+          accelerate_score: Math.max(
+            item.metadata?.accelerate_score || 0,
+            item.metadata?.ai_score || 0
+          ),
+          // Preserve all AI insights
+          ai_analysis: item.metadata?.ai_analysis,
+          ai_score: item.metadata?.ai_score,
+          ai_needs: item.metadata?.ai_needs,
+          ai_strengths: item.metadata?.ai_strengths
+        }
+      }));
       
       // Step 2: Apply minimum threshold
       const aboveThreshold = scored.filter(item => 
@@ -173,6 +197,12 @@ export class AccelerateDBPipeline {
       problem_statement: meta.problem_solving,
       value_proposition: meta.unique_value_prop,
       target_market: meta.target_market,
+      
+      // AI-generated insights
+      ai_score: meta.ai_score,
+      ai_analysis: meta.ai_analysis,
+      ai_strengths: meta.ai_strengths,
+      ai_needs: meta.ai_needs,
     };
 
     const { error } = await supabase
@@ -235,6 +265,12 @@ export class AccelerateDBPipeline {
       accelerate_score: meta.accelerate_score,
       source: item.source,
       source_url: item.url,
+      
+      // AI-generated insights
+      ai_score: meta.ai_score,
+      ai_analysis: meta.ai_analysis,
+      ai_strengths: meta.ai_strengths,
+      ai_requirements: meta.ai_needs, // For funding, needs become requirements
     };
 
     const { error } = await supabase
@@ -286,6 +322,12 @@ export class AccelerateDBPipeline {
       accelerate_score: meta.accelerate_score,
       source: item.source,
       tags: item.tags || [],
+      
+      // AI-generated insights
+      ai_score: meta.ai_score,
+      ai_analysis: meta.ai_analysis,
+      ai_benefits: meta.ai_strengths, // For resources, strengths are benefits
+      ai_use_cases: meta.ai_needs, // For resources, needs become use cases
     };
 
     const { error } = await supabase
