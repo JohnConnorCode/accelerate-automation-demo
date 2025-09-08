@@ -118,6 +118,60 @@ export class AIScorer {
     return results;
   }
 
+  /**
+   * Score multiple ContentItems and return them with AI metadata
+   * This is the method expected by AccelerateDBPipeline
+   */
+  async scoreItems(items: any[]): Promise<any[]> {
+    const client = getOpenAIClient();
+    
+    if (!client) {
+      console.log('⚠️ No OpenAI client - returning items without AI scoring');
+      return items;
+    }
+
+    console.log(`🤖 Scoring ${items.length} items with AI...`);
+    
+    // Score items in batches
+    const scoredItems = [];
+    for (let i = 0; i < items.length; i += 5) {
+      const batch = items.slice(i, i + 5);
+      
+      for (const item of batch) {
+        try {
+          const score = await this.scoreContent(item);
+          
+          if (score) {
+            // Add AI metadata to the item
+            scoredItems.push({
+              ...item,
+              metadata: {
+                ...item.metadata,
+                ai_score: Math.round(score.overall * 100),
+                ai_analysis: score.reasoning,
+                ai_needs: score.categories.filter(c => c.includes('need')).join(', '),
+                ai_strengths: score.categories.filter(c => !c.includes('need')).join(', '),
+                ai_recommendation: score.recommendation,
+              }
+            });
+          } else {
+            scoredItems.push(item);
+          }
+        } catch (error) {
+          console.error(`Error scoring item: ${error}`);
+          scoredItems.push(item);
+        }
+      }
+      
+      // Rate limiting
+      if (i + 5 < items.length) {
+        await this.delay(1000);
+      }
+    }
+    
+    return scoredItems;
+  }
+
   private buildPrompt(content: any): string {
     return `
     Score this content for the ACCELERATE platform (helps Web3 builders find funding and resources):

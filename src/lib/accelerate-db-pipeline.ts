@@ -43,7 +43,7 @@ export class AccelerateDBPipeline {
       const aiScoredItems = await this.aiScorer.scoreItems(scored);
       
       // Merge AI insights with traditional scoring
-      scored = aiScoredItems.map(item => ({
+      scored = aiScoredItems.map((item: any) => ({
         ...item,
         metadata: {
           ...item.metadata,

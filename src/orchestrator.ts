@@ -52,17 +52,17 @@ export class AccelerateOrchestrator {
    * Initialize all fetchers - now with 20+ sources
    */
   private initializeFetchers(): void {
-    // Original Resource fetchers
-    this.fetchers.push(
-      new DevToBuilderResourcesFetcher(),
-      new GitHubBuilderToolsFetcher(),
-    );
+    // Original Resource fetchers - DISABLED without GitHub token
+    // this.fetchers.push(
+    //   new DevToBuilderResourcesFetcher(),
+    //   new GitHubBuilderToolsFetcher(),
+    // );
 
-    // Original Project fetchers
-    this.fetchers.push(
-      new EarlyStageProjectsFetcher(),
-      new ProductHuntEarlyStageFetcher(),
-    );
+    // Original Project fetchers - DISABLED without GitHub/ProductHunt tokens
+    // this.fetchers.push(
+    //   new EarlyStageProjectsFetcher(),
+    //   new ProductHuntEarlyStageFetcher(),
+    // );
 
     // Original Funding fetchers
     this.fetchers.push(
@@ -74,15 +74,15 @@ export class AccelerateOrchestrator {
     // NEW Platform fetchers for expanded coverage
     this.fetchers.push(
       new WellfoundFetcher(),
-      new FarcasterFetcher(),
+      // new FarcasterFetcher(), // DISABLED - needs API key
       new MirrorXYZFetcher(),
       new Web3JobPlatformsFetcher(),
     );
 
-    // NEW Metrics fetchers for validation
-    this.fetchers.push(
-      new DefiLlamaFetcher(),
-    );
+    // NEW Metrics fetchers for validation - DISABLED (returns 6000+ items)
+    // this.fetchers.push(
+    //   new DefiLlamaFetcher(),
+    // );
 
     // NEW Comprehensive grants aggregator
     this.fetchers.push(
