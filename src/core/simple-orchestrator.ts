@@ -143,14 +143,14 @@ export class SimpleOrchestrator {
           const contentType = this.detectContentType(item, fetchResult.source);
           // Don't log every single item - it's too much
           
-          // SKIP ACCELERATE criteria scoring - it's rejecting everything
-          // const criteriaResult = accelerateCriteriaScorer.score(item, contentType as any);
-          // if (!criteriaResult.eligible) {
-          //   console.log(`❌ Rejected by ACCELERATE criteria: ${criteriaResult.reasons.join(', ')}`);
-          //   result.rejected++;
-          //   continue;
-          // }
-          const criteriaResult = { score: 50, eligible: true, reasons: [] }; // Just pass everything
+          // ACCELERATE criteria scoring - now with warnings instead of rejections
+          const criteriaResult = accelerateCriteriaScorer.score(item, contentType as any);
+          if (!criteriaResult.eligible) {
+            // Log warning but don't reject - let manual review decide
+            console.log(`⚠️ ACCELERATE criteria warning for ${item.title || item.name}: ${criteriaResult.reasons.join(', ')}`);
+            // Still use the score but mark for review
+            criteriaResult.score = Math.max(criteriaResult.score, 10); // Ensure minimum score
+          }
           
           // Skip enrichment for now - it's too slow (30-60s per item!)
           let enrichedData = null;
