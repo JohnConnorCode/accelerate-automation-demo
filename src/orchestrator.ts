@@ -11,10 +11,11 @@ import { TeamVerificationService } from './services/team-verification';
 // Import intelligent cache for lightning-fast responses
 import { intelligentCache } from './services/intelligent-cache-service';
 
-// Import REAL fetchers that actually work - NO FAKE DATA
+// Import REAL fetchers from QUALITY sources
+import { ProductHuntLaunchesFetcher } from './fetchers/real-sources/producthunt-launches';
+import { YCombinatorStartupsFetcher } from './fetchers/real-sources/ycombinator-startups';
 import { GitHubWeb3ProjectsFetcher } from './fetchers/real-sources/github-web3-projects';
 import { DevToStartupResourcesFetcher } from './fetchers/real-sources/devto-startup-resources';
-// REMOVED fake fetchers that return mock data or don't work
 
 // Platform fetchers removed - need verification
 // Most platform fetchers either need API keys or don't exist yet
@@ -40,13 +41,19 @@ export class AccelerateOrchestrator {
   }
 
   /**
-   * Initialize REAL fetchers that actually work
+   * Initialize QUALITY fetchers from REAL startup sources
    */
   private initializeFetchers(): void {
-    // REAL fetchers that use public APIs - NO FAKE DATA
+    // PRIMARY SOURCES - Where startups actually launch
     this.fetchers.push(
-      new GitHubWeb3ProjectsFetcher(), // Real GitHub projects
-      new DevToStartupResourcesFetcher(), // Real Dev.to articles
+      new ProductHuntLaunchesFetcher(), // #1 - Where products launch daily
+      new YCombinatorStartupsFetcher(), // #2 - Vetted, funded startups
+    );
+    
+    // SECONDARY SOURCES - Additional coverage
+    this.fetchers.push(
+      new GitHubWeb3ProjectsFetcher(), // Open source projects
+      new DevToStartupResourcesFetcher(), // Technical resources
     );
     
     // Note: Removed all fake fetchers that returned mock data:
