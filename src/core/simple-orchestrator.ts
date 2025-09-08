@@ -11,6 +11,7 @@ import { criteriaService } from '../services/criteria-service';
 import { apiKeyService } from '../services/api-key-service';
 import { noApiDataFetcher } from '../fetchers/no-api-sources';
 import { accelerateCriteriaScorer } from '../services/accelerate-criteria-scorer';
+import { AIScorer } from '../lib/ai-scorer';
 
 interface OrchestrationResult {
   fetched: number;
@@ -24,6 +25,7 @@ interface OrchestrationResult {
 export class SimpleOrchestrator {
   private maxItemsPerBatch = 10; // Process max 10 items at a time
   private minScoreThreshold = 30; // HIGH QUALITY threshold - only accept good items
+  private aiScorer = new AIScorer(); // AI-powered scoring
   
   /**
    * Configure batch size for processing
@@ -129,13 +131,30 @@ export class SimpleOrchestrator {
           const basicScore = scorer.score(item);
           result.scored++;
           
-          // Log first few scores for debugging
-          if (totalEvaluated <= 5) {
-            console.log(`  📊 Item: ${item.title || item.name || 'Untitled'} - Score: ${basicScore.score}`);
+          // NOW GET AI SCORE (if available)
+          let aiScore = null;
+          let aiBoost = 0;
+          try {
+            aiScore = await this.aiScorer.scoreContent(item);
+            if (aiScore) {
+              // AI score is 0-1, convert to 0-100 and add as boost
+              aiBoost = Math.round(aiScore.overall * 30); // Up to 30 point AI boost
+              console.log(`  🤖 AI Score: ${aiScore.overall.toFixed(2)} → +${aiBoost} points (${aiScore.recommendation})`);
+            }
+          } catch (error) {
+            console.log(`  ⚠️ AI scoring failed:`, error);
           }
           
-          // Skip if basic score is too low
-          if (basicScore.score < this.minScoreThreshold) {
+          // Combine basic + AI scores
+          const combinedScore = basicScore.score + aiBoost;
+          
+          // Log first few scores for debugging
+          if (totalEvaluated <= 5) {
+            console.log(`  📊 Item: ${item.title || item.name || 'Untitled'} - Score: ${basicScore.score} + AI:${aiBoost} = ${combinedScore}`);
+          }
+          
+          // Skip if combined score is too low
+          if (combinedScore < this.minScoreThreshold) {
             result.rejected++;
             continue;
           }
@@ -155,8 +174,9 @@ export class SimpleOrchestrator {
           
           // Skip enrichment for now - it's too slow (30-60s per item!)
           let enrichedData = null;
-          let finalScore = Math.max(basicScore.score, criteriaResult.score); // Use higher score
-          let finalConfidence = basicScore.confidence;
+          // Use combined score (basic + AI) as the base, then consider criteria
+          let finalScore = Math.max(combinedScore, criteriaResult.score); // Use higher score
+          let finalConfidence = aiScore ? aiScore.overall : basicScore.confidence;
           
           // Enable enrichment for HIGH QUALITY items only
           const SKIP_ENRICHMENT = false;
@@ -227,7 +247,8 @@ export class SimpleOrchestrator {
               normalizedUrl = normalizedUrl.replace('api.github.com/repos/', 'github.com/');
             }
             
-            scoredItems.push({
+            // AI-FORMATTED FINAL DATA
+            const aiFormattedItem = {
               ...(enrichedData || item),
               url: normalizedUrl, // Use normalized URL
               source: fetchResult.source,
@@ -237,6 +258,27 @@ export class SimpleOrchestrator {
               factors: basicScore.factors,
               recommendation: finalRecommendation,
               ai_enriched: !!enrichedData,
+              
+              // AI-GENERATED FIELDS FOR ACCELERATOR
+              ai_summary: aiScore ? aiScore.reasoning : enrichedData?.ai_analysis?.summary || 'High-quality content for builders',
+              ai_categories: aiScore ? aiScore.categories : ['web3', 'builders'],
+              ai_sentiment: aiScore ? aiScore.sentiment : 'positive',
+              ai_recommendation: aiScore ? aiScore.recommendation : finalRecommendation,
+              ai_relevance: aiScore ? aiScore.relevance : 0.8,
+              ai_quality: aiScore ? aiScore.quality : 0.8,
+              ai_urgency: aiScore ? aiScore.urgency : 0.5,
+              ai_authority: aiScore ? aiScore.authority : 0.7,
+              
+              // ACCELERATOR-SPECIFIC FORMATTING
+              accelerator_ready: true,
+              accelerator_tags: [
+                contentType,
+                ...(aiScore?.categories || []),
+                finalScore >= 70 ? 'top-tier' : 'quality',
+                enrichedData ? 'enriched' : 'standard'
+              ],
+              accelerator_priority: finalScore >= 70 ? 'high' : finalScore >= 50 ? 'medium' : 'low',
+              
               enrichment_data: enrichedData ? {
                 company: enrichedData.company,
                 team: enrichedData.team,
@@ -247,7 +289,9 @@ export class SimpleOrchestrator {
                 ai_analysis: enrichedData.ai_analysis,
                 validation: enrichedData.validation
               } : null
-            });
+            };
+            
+            scoredItems.push(aiFormattedItem);
           } else {
             result.rejected++;
           }

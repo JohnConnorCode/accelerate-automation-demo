@@ -106,28 +106,42 @@ export class AIScorer {
 
   private buildPrompt(content: any): string {
     return `
-    Score this Web3 content for builders:
+    Score this content for the ACCELERATE platform (helps Web3 builders find funding and resources):
     
     Title: ${content.title}
     Description: ${content.description}
     URL: ${content.url}
     Tags: ${content.tags?.join(', ') || 'none'}
     Type: ${content.content_type || 'unknown'}
+    Source: ${content.source || 'unknown'}
+    
+    ACCELERATE CONTEXT:
+    - We track PROJECTS (startups seeking funding/cofounders/developers)
+    - We track FUNDING (accelerators, grants, VCs offering capital)
+    - We track RESOURCES (tools, guides, services for builders)
+    
+    SCORING CRITERIA:
+    - Is this a legitimate Web3/startup PROJECT seeking funding or team?
+    - Is this a FUNDING opportunity (grant, accelerator, VC)?
+    - Is this a valuable RESOURCE for builders?
+    - Does it have clear value for the Accelerate community?
     
     Return a JSON object with these exact fields:
     {
-      "relevance": 0-1 score for relevance to Web3 builders,
-      "quality": 0-1 score for content quality and depth,
-      "urgency": 0-1 score for time sensitivity,
+      "relevance": 0-1 score for relevance to Accelerate users,
+      "quality": 0-1 score for legitimacy and professionalism,
+      "urgency": 0-1 score for time sensitivity (deadlines, etc),
       "authority": 0-1 score for source credibility,
       "overall": 0-1 weighted average (will be calculated),
-      "reasoning": "Brief explanation of scores",
-      "categories": ["web3", "defi", etc] - suggested categories,
+      "reasoning": "Why this is/isn't valuable for Accelerate",
+      "categories": ["project", "funding", "resource", "web3", etc],
       "sentiment": "positive" | "neutral" | "negative",
       "recommendation": "approve" | "review" | "reject"
     }
     
-    Focus on practical value for builders, technical depth, and immediate usefulness.
+    Be STRICT: Only approve content that clearly fits Accelerate's mission.
+    Reject: news articles, random crypto tokens, low-quality content.
+    Approve: Real startups, legitimate funding opportunities, useful builder tools.
     `;
   }
 
