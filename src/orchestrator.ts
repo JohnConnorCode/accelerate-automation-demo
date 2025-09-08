@@ -11,22 +11,13 @@ import { TeamVerificationService } from './services/team-verification';
 // Import intelligent cache for lightning-fast responses
 import { intelligentCache } from './services/intelligent-cache-service';
 
-// Import all fetchers - ACCELERATE SPECIFIC
-import { DevToBuilderResourcesFetcher, GitHubBuilderToolsFetcher } from './fetchers/accelerate-specific/builder-resources';
-import { EarlyStageProjectsFetcher, ProductHuntEarlyStageFetcher } from './fetchers/accelerate-specific/early-stage-projects';
-import { GitcoinGrantsFetcher, EthereumFoundationFetcher, AcceleratorsFetcher } from './fetchers/accelerate-specific/open-funding-opportunities';
+// Import REAL fetchers that actually work - NO FAKE DATA
+import { GitHubWeb3ProjectsFetcher } from './fetchers/real-sources/github-web3-projects';
+import { DevToStartupResourcesFetcher } from './fetchers/real-sources/devto-startup-resources';
+// REMOVED fake fetchers that return mock data or don't work
 
-// Import NEW data source fetchers - MORE COVERAGE
-import { WellfoundFetcher } from './fetchers/platforms/angellist-wellfound';
-import { FarcasterFetcher } from './fetchers/platforms/farcaster';
-import { MirrorXYZFetcher } from './fetchers/platforms/mirror-xyz';
-import { Web3JobPlatformsFetcher } from './fetchers/platforms/web3-job-platforms';
-
-// Import metrics fetchers
-import { DefiLlamaFetcher } from './fetchers/metrics/defi-llama';
-
-// Import comprehensive grants
-import { ComprehensiveGrantsFetcher } from './fetchers/grants/comprehensive-grants';
+// Platform fetchers removed - need verification
+// Most platform fetchers either need API keys or don't exist yet
 
 /**
  * ACCELERATE CONTENT ORCHESTRATOR v2.0
@@ -49,45 +40,22 @@ export class AccelerateOrchestrator {
   }
 
   /**
-   * Initialize all fetchers - now with 20+ sources
+   * Initialize REAL fetchers that actually work
    */
   private initializeFetchers(): void {
-    // Original Resource fetchers - DISABLED without GitHub token
-    // this.fetchers.push(
-    //   new DevToBuilderResourcesFetcher(),
-    //   new GitHubBuilderToolsFetcher(),
-    // );
-
-    // Original Project fetchers - DISABLED without GitHub/ProductHunt tokens
-    // this.fetchers.push(
-    //   new EarlyStageProjectsFetcher(),
-    //   new ProductHuntEarlyStageFetcher(),
-    // );
-
-    // Original Funding fetchers
+    // REAL fetchers that use public APIs - NO FAKE DATA
     this.fetchers.push(
-      new GitcoinGrantsFetcher(),
-      new EthereumFoundationFetcher(),
-      new AcceleratorsFetcher(),
+      new GitHubWeb3ProjectsFetcher(), // Real GitHub projects
+      new DevToStartupResourcesFetcher(), // Real Dev.to articles
     );
-
-    // NEW Platform fetchers for expanded coverage - DISABLED for testing
-    // this.fetchers.push(
-    //   new WellfoundFetcher(),
-    //   // new FarcasterFetcher(), // DISABLED - needs API key
-    //   new MirrorXYZFetcher(),
-    //   new Web3JobPlatformsFetcher(),
-    // );
-
-    // NEW Metrics fetchers for validation - DISABLED (returns 6000+ items)
-    // this.fetchers.push(
-    //   new DefiLlamaFetcher(),
-    // );
-
-    // NEW Comprehensive grants aggregator - DISABLED for testing
-    // this.fetchers.push(
-    //   new ComprehensiveGrantsFetcher(),
-    // );
+    
+    // Note: Removed all fake fetchers that returned mock data:
+    // - GitcoinGrantsFetcher: API returns 404
+    // - EthereumFoundationFetcher: Returns hardcoded mock data
+    // - AcceleratorsFetcher: Returns hardcoded program list
+    
+    // Platform fetchers need to be verified before use
+    // Most require API keys or return questionable data
 
   }
 
