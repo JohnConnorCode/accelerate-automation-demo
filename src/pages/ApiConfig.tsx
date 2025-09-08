@@ -113,11 +113,11 @@ export default function ApiConfig() {
       const { data, error } = await supabase
         .from('api_keys')
         .insert({
-          service_name: newKey.service,
+          service: newKey.service,
           key_name: newKey.name,
           encrypted_key: newKey.key, // In production, this should be encrypted
-          description: `${newKey.name} for ${services.find(s => s.id === newKey.service)?.name}`,
-          is_active: true
+          is_active: true,
+          usage_count: 0
         })
         .select()
         .single()
@@ -302,7 +302,7 @@ export default function ApiConfig() {
         <div className="p-6 border-b">
           <h2 className="text-xl font-semibold">Configured API Keys</h2>
           <p className="text-sm text-gray-600 mt-1">
-            {apiKeys.length} total keys • {apiKeys.filter(k => k.isActive).length} active
+            {apiKeys.length} total keys • {apiKeys.filter(k => k.is_active).length} active
           </p>
         </div>
         

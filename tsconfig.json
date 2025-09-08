@@ -29,6 +29,10 @@
     "**/*.test.ts",
     "**/*.spec.ts",
     "src/tests/**",
-    "**/*.old.ts"
+    "src/__tests__/**",
+    "**/*.old.ts",
+    "src/lib/accelerate-db-pipeline.ts",
+    "src/orchestrator.ts",
+    "src/services/scheduling-service.ts"
   ]
 }

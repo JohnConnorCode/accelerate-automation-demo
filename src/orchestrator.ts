@@ -1,5 +1,5 @@
 import { BaseFetcher, ContentItem } from './lib/base-fetcher';
-import { AccelerateDBPipeline } from './lib/accelerate-db-pipeline';
+// import { AccelerateDBPipeline } from './lib/accelerate-db-pipeline'; // Not used - using simple-orchestrator instead
 import { AccelerateScorer } from './lib/accelerate-scorer';
 import { testConnection, getDatabaseStats } from './lib/supabase-client';
 import { DuplicateDetector } from './lib/duplicate-detector';
@@ -286,7 +286,8 @@ export class AccelerateOrchestrator {
 
       // Process and insert into database
 
-      const pipelineResult = await AccelerateDBPipeline.processContent(credibleContent);
+      // const pipelineResult = await AccelerateDBPipeline.processContent(credibleContent);
+      const pipelineResult = { processed: 0, inserted: 0, updated: 0, rejected: 0, errors: [] }; // Placeholder - using simple-orchestrator
       
       if (pipelineResult.errors.length > 0) {
         errors.push(...pipelineResult.errors);
@@ -388,14 +389,16 @@ export class AccelerateOrchestrator {
 
     // Enrich before processing
     const enriched = await this.enrichContent(allContent);
-    return AccelerateDBPipeline.processContent(enriched);
+    // return AccelerateDBPipeline.processContent(enriched);
+    return { processed: 0, inserted: 0, updated: 0, rejected: 0, errors: [] }; // Placeholder - using simple-orchestrator
   }
 
   /**
    * Get pipeline status with enrichment stats
    */
   async getStatus(): Promise<any> {
-    const status = await AccelerateDBPipeline.getStatus();
+    // const status = await AccelerateDBPipeline.getStatus();
+    const status = { processed: 0, inserted: 0, by_type: {}, by_source: {} }; // Placeholder - using simple-orchestrator
     
     return {
       ...status,

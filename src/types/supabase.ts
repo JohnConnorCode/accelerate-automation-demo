@@ -143,6 +143,148 @@ export interface Database {
         Insert: Omit<Database['public']['Tables']['content_metrics']['Row'], 'id'>
         Update: Partial<Database['public']['Tables']['content_metrics']['Insert']>
       }
+      content_curated: {
+        Row: {
+          id: string
+          created_at: string
+          updated_at: string
+          title: string
+          description: string
+          url: string
+          source: string
+          type: string
+          score: number
+          confidence: number
+          factors: Json
+          recommendation: string
+          content_hash: string | null
+          raw_data: Json
+          metadata: Json
+          tags: string[]
+        }
+        Insert: Omit<Database['public']['Tables']['content_curated']['Row'], 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Database['public']['Tables']['content_curated']['Insert']>
+      }
+      content_raw: {
+        Row: {
+          id: string
+          created_at: string
+          source: string
+          data: Json
+          fetched_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['content_raw']['Row'], 'id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['content_raw']['Insert']>
+      }
+      api_cache: {
+        Row: {
+          id: string
+          created_at: string
+          cache_key: string
+          cache_value: Json
+          expires_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['api_cache']['Row'], 'id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['api_cache']['Insert']>
+      }
+      api_keys: {
+        Row: {
+          id: string
+          created_at: string
+          updated_at: string
+          service: string
+          key_name: string
+          encrypted_key: string
+          is_active: boolean
+          last_used: string | null
+          usage_count: number
+        }
+        Insert: Omit<Database['public']['Tables']['api_keys']['Row'], 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Database['public']['Tables']['api_keys']['Insert']>
+      }
+      content_queue: {
+        Row: {
+          id: string
+          created_at: string
+          updated_at: string
+          title: string
+          description: string
+          url: string
+          source: string
+          type: string
+          status: string
+          score: number
+          quality_score: number | null
+          raw_data: Json
+          metadata: Json
+          tags: string[]
+          reviewed_at: string | null
+          reviewed_by: string | null
+        }
+        Insert: Omit<Database['public']['Tables']['content_queue']['Row'], 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Database['public']['Tables']['content_queue']['Insert']>
+      }
+      profiles: {
+        Row: {
+          id: string
+          created_at: string
+          updated_at: string
+          email: string
+          role: string
+          preferences: Json
+        }
+        Insert: Omit<Database['public']['Tables']['profiles']['Row'], 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Database['public']['Tables']['profiles']['Insert']>
+      }
+      search_analytics: {
+        Row: {
+          id: string
+          created_at: string
+          query: string
+          results_count: number
+          response_time: number
+          timestamp: string
+        }
+        Insert: Omit<Database['public']['Tables']['search_analytics']['Row'], 'id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['search_analytics']['Insert']>
+      }
+      social_metrics: {
+        Row: {
+          id: string
+          created_at: string
+          content_url: string
+          content_type: string
+          metrics: Json
+          social_score: number
+          credibility_score: number
+          enriched_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['social_metrics']['Row'], 'id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['social_metrics']['Insert']>
+      }
+      notifications: {
+        Row: {
+          id: string
+          created_at: string
+          type: string
+          title: string
+          message: string
+          metadata: Json
+          read: boolean
+          user_id: string | null
+        }
+        Insert: Omit<Database['public']['Tables']['notifications']['Row'], 'id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['notifications']['Insert']>
+      }
+      test: {
+        Row: {
+          id: string
+          created_at: string
+          [key: string]: any
+        }
+        Insert: any
+        Update: any
+      }
     }
     Views: {
       [_ in never]: never

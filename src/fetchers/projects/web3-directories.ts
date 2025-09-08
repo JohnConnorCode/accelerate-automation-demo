@@ -39,7 +39,7 @@ export class Web3DirectoriesFetcher extends BaseFetcher<any> {
     }
   ];
 
-  protected async fetch(): Promise<any[]> {
+  async fetch(): Promise<any[]> {
     const results: any[] = [];
     
     try {
@@ -194,7 +194,7 @@ export class Web3DirectoriesFetcher extends BaseFetcher<any> {
     }
   }
 
-  protected async transform(data: any[]): Promise<ContentItem[]> {
+  async transform(data: any[]): Promise<ContentItem[]> {
     const items: ContentItem[] = [];
     
     for (const source of data) {
