@@ -116,9 +116,9 @@ export class GitHubWeb3ProjectsFetcher extends BaseFetcher<z.infer<typeof GitHub
           description: repo.description || 'No description provided',
           url: repo.html_url,
           author: repo.owner.login,
-          published: repo.created_at,
           tags: repo.topics || [],
           metadata: {
+            published_at: repo.created_at,
             github_stars: repo.stargazers_count,
             github_forks: repo.forks_count,
             github_issues: repo.open_issues_count,

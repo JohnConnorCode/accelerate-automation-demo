@@ -94,6 +94,9 @@ export class HackerNewsYCJobsFetcher extends BaseFetcher<HNJob[]> {
         const batchYear = batch ? parseInt('20' + batch.substring(1)) : 2024;
         const batchSeason = batch?.charAt(0);
         
+        // ACCELERATE CRITERIA: Skip if before 2024
+        if (batchYear < 2024) continue;
+        
         // Extract position from title
         const positionMatch = job.title?.match(/Is Hiring[:\s–-]+(.+)$/i);
         const position = positionMatch?.[1]?.trim() || 'Multiple Positions';
