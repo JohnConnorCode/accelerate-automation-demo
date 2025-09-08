@@ -40,7 +40,7 @@ interface DappRadarProject {
   volume: number;
 }
 
-export class EcosystemListsFetcher extends BaseFetcher {
+export class EcosystemListsFetcher extends BaseFetcher<any> {
   name = 'Ecosystem Lists';
   
   protected config = {
@@ -416,7 +416,7 @@ export class EcosystemListsFetcher extends BaseFetcher {
 
   private meetsAccelerateCriteria(item: ContentItem): boolean {
     // Must be from 2024 or later
-    const createdYear = new Date(item.created_at).getFullYear();
+    const createdYear = item.created_at ? new Date(item.created_at).getFullYear() : new Date().getFullYear();
     if (createdYear < 2024) return false;
     
     // Skip if appears to be well-funded (high TVL, many stars)

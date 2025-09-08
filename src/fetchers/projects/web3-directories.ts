@@ -7,7 +7,7 @@ import { z } from 'zod';
  * Sources: CryptoRank, CoinMarketCap, CoinGecko, Web3Index
  */
 
-export class Web3DirectoriesFetcher extends BaseFetcher {
+export class Web3DirectoriesFetcher extends BaseFetcher<any> {
   name = 'Web3 Directories';
   
   protected config = {

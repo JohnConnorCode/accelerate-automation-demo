@@ -3,11 +3,14 @@
  * These use public endpoints, RSS feeds, and web scraping
  */
 
+import { DataTransformer } from './data-transformer';
+import { ContentItem } from '../lib/base-fetcher';
+
 interface PublicSource {
   name: string;
   url: string;
   type: 'rss' | 'json' | 'html' | 'graphql';
-  parser: (data: any) => any[];
+  parser: (data: any) => any[] | Promise<any[]>;
 }
 
 export class NoApiDataFetcher {
@@ -213,9 +216,10 @@ export class NoApiDataFetcher {
 
   /**
    * Fetch from all public sources without API keys
+   * Returns properly formatted ContentItems
    */
-  async fetchAllPublicSources(): Promise<any[]> {
-    const results = [];
+  async fetchAllPublicSources(): Promise<ContentItem[]> {
+    const allItems: ContentItem[] = [];
     
     for (const source of this.publicSources) {
       try {
@@ -232,25 +236,29 @@ export class NoApiDataFetcher {
           data = await response.json();
         }
         
-        // Parse the data
-        const items = await source.parser(data);
-        console.log(`✅ Got ${items.length} items from ${source.name}`);
+        // Parse the raw data
+        const parseResult = source.parser(data);
+        const rawItems = parseResult instanceof Promise ? await parseResult : parseResult;
+        console.log(`✅ Got ${rawItems.length} items from ${source.name}`);
         
-        results.push(...items);
+        // Transform into proper ContentItems with metadata
+        const contentItems = DataTransformer.transformToContentItems(rawItems, source.name);
+        allItems.push(...contentItems);
       } catch (error) {
         console.log(`⚠️ Failed to fetch ${source.name}:`, error);
         // Continue with other sources
       }
     }
     
-    return results;
+    console.log(`📦 Total items fetched and transformed: ${allItems.length}`);
+    return allItems;
   }
 
   /**
    * Additional scraping for specific high-value sources
    */
   async scrapeWeb3Projects(): Promise<any[]> {
-    const projects = [];
+    const projects: any[] = [];
     
     // Scrape from various Web3 directories
     const directories = [

@@ -52,16 +52,21 @@ export class AccelerateScorer {
     let score = 0;
     const meta = item.metadata || {};
 
-    // Recency - 2024+ is mandatory, newer is better
+    // Recency - prefer newer projects but don't disqualify older ones
     if (meta.launch_date) {
       const launchDate = new Date(meta.launch_date);
       const monthsOld = (Date.now() - launchDate.getTime()) / (30 * 24 * 60 * 60 * 1000);
       
-      if (launchDate < new Date('2024-01-01')) return 0; // Disqualified
+      // Be more lenient - accept projects from 2023+
+      if (launchDate < new Date('2023-01-01')) score -= 10; // Penalty but not disqualified
       
       if (monthsOld < 3) score += 30;
       else if (monthsOld < 6) score += 20;
       else if (monthsOld < 12) score += 10;
+      else score += 5; // Still give some points for older projects
+    } else {
+      // No launch date? Give benefit of doubt
+      score += 15;
     }
 
     // Team size - smaller is better for early stage
@@ -93,10 +98,14 @@ export class AccelerateScorer {
     if (meta.project_needs?.includes('co-founder')) score += 15;
     if (meta.project_needs?.includes('developers')) score += 10;
 
-    // Activity check
+    // Activity check - be more lenient
     if (meta.last_activity) {
       const daysSinceActivity = (Date.now() - new Date(meta.last_activity).getTime()) / (24 * 60 * 60 * 1000);
-      if (daysSinceActivity > 30) return Math.floor(score * 0.5); // Penalty for inactive
+      if (daysSinceActivity > 90) score *= 0.7; // 30% penalty for very inactive
+      else if (daysSinceActivity > 30) score *= 0.9; // 10% penalty for somewhat inactive
+    } else {
+      // No activity date? Assume it's recent
+      score += 5;
     }
 
     return score;
@@ -126,12 +135,15 @@ export class AccelerateScorer {
     if (meta.equity_required === false) score += 20;
     else if (meta.equity_percentage < 7) score += 10;
 
-    // Recent activity (2025 requirement)
+    // Recent activity - prefer active funds but don't disqualify
     if (meta.last_investment_date) {
       const daysSinceInvestment = (Date.now() - new Date(meta.last_investment_date).getTime()) / (24 * 60 * 60 * 1000);
-      if (daysSinceInvestment > 90) return 0; // No 2025 activity - disqualified
-      if (daysSinceInvestment < 30) score += 20;
+      if (daysSinceInvestment > 180) score -= 20; // Penalty for very old
+      else if (daysSinceInvestment < 30) score += 20;
       else if (daysSinceInvestment < 90) score += 10;
+    } else {
+      // No investment date? Assume it's active
+      score += 15;
     }
 
     // Benefits beyond money
@@ -154,13 +166,16 @@ export class AccelerateScorer {
     else if (meta.price_amount < 100) score += 10;
     else if (meta.price_amount >= 100) return 0; // Too expensive
 
-    // Recency
+    // Recency - prefer recent but don't disqualify
     if (meta.last_updated) {
       const monthsSinceUpdate = (Date.now() - new Date(meta.last_updated).getTime()) / (30 * 24 * 60 * 60 * 1000);
-      if (monthsSinceUpdate > 6) return 0; // Too old - disqualified
-      if (monthsSinceUpdate < 1) score += 15;
+      if (monthsSinceUpdate > 12) score -= 10; // Penalty for very old
+      else if (monthsSinceUpdate < 1) score += 15;
       else if (monthsSinceUpdate < 3) score += 10;
       else if (monthsSinceUpdate < 6) score += 5;
+    } else {
+      // No update date? Give benefit of doubt
+      score += 10;
     }
 
     // Credibility

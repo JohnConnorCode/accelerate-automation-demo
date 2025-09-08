@@ -10,12 +10,12 @@ import type { Database } from '../types/supabase';
 // In browser, use import.meta.env for Vite
 // In Node.js, use process.env
 const supabaseUrl = typeof window !== 'undefined' 
-  ? (import.meta as any).env?.VITE_SUPABASE_URL || 'https://placeholder.supabase.co'
-  : process.env.SUPABASE_URL || 'https://placeholder.supabase.co';
+  ? (import.meta as any).env?.VITE_SUPABASE_URL || 'https://eqpfvmwmdtsgddpsodsr.supabase.co'
+  : process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://eqpfvmwmdtsgddpsodsr.supabase.co';
 
 const supabaseKey = typeof window !== 'undefined'
-  ? (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || 'placeholder-key'
-  : process.env.SUPABASE_ANON_KEY || 'placeholder-key';
+  ? (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcGZ2bXdtZHRzZ2RkcHNvZHNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU4MjE4NzgsImV4cCI6MjA2MTM5Nzg3OH0.HAyBibHx0dqzXEAAr2MYxv1sfs13PLANLXLXM2NIWKI'
+  : process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcGZ2bXdtZHRzZ2RkcHNvZHNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU4MjE4NzgsImV4cCI6MjA2MTM5Nzg3OH0.HAyBibHx0dqzXEAAr2MYxv1sfs13PLANLXLXM2NIWKI';
 
 // Check if properly configured
 export const isSupabaseConfigured = 

@@ -19,9 +19,11 @@ export interface ContentItem {
   description: string;
   url: string;
   author?: string;
-  tags: string[];
+  tags?: string[];
   metadata?: Record<string, any>;
   fetched_at?: Date;
+  created_at?: string;
+  updated_at?: string;
 }
 
 // Base schema for content validation
