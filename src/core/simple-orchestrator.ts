@@ -277,7 +277,34 @@ export class SimpleOrchestrator {
       // Step 4: Store unique approved content (already limited by batch processing)
       if (unique.length > 0) {
         console.log(`💾 Storing ${unique.length} items to database...`);
-        const insertData = unique.map(item => ({
+        // FINAL VALIDATION - NO GARBAGE ALLOWED
+        const validatedData = unique.filter(item => {
+          // Must have essential fields
+          if (!item.title && !item.name) {
+            console.log(`❌ Rejected: No title`);
+            return false;
+          }
+          if (!item.url && !item.html_url) {
+            console.log(`❌ Rejected: No URL`);
+            return false;
+          }
+          // Must have minimum quality score
+          if (item.score < this.minScoreThreshold) {
+            console.log(`❌ Rejected: Score ${item.score} < ${this.minScoreThreshold}`);
+            return false;
+          }
+          // Must have real content
+          const desc = item.description || item.tagline || '';
+          if (desc.length < 20) {
+            console.log(`❌ Rejected: Description too short (${desc.length} chars)`);
+            return false;
+          }
+          return true;
+        });
+        
+        console.log(`✅ Validation: ${validatedData.length}/${unique.length} passed final checks`);
+        
+        const insertData = validatedData.map(item => ({
           title: item.title || item.name || 'Untitled',
           description: item.description || item.tagline || '',
           url: item.url || item.html_url || '',
