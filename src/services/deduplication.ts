@@ -29,21 +29,35 @@ export class DeduplicationService {
    */
   async isDuplicate(content: any): Promise<boolean> {
     try {
-      // Check by URL first (fastest)
+      // Check BOTH queue AND curated tables for duplicates
       if (content.url) {
-        const { data: urlMatch } = await supabase
+        // Check queue first (pending items)
+        const { data: queueMatch } = await supabase
+          .from('content_queue')
+          .select('id')
+          .eq('url', content.url)
+          .limit(1);
+        
+        if (queueMatch && queueMatch.length > 0) {
+          console.log(`🔁 Duplicate in QUEUE: ${content.url}`);
+          logger.debug('Duplicate found in queue', { url: content.url });
+          return true;
+        }
+        
+        // Also check curated (approved items)
+        const { data: curatedMatch } = await supabase
           .from('content_curated')
           .select('id')
           .eq('url', content.url)
           .limit(1);
         
-        if (urlMatch && urlMatch.length > 0) {
-          console.log(`🔁 Duplicate URL found: ${content.url}`);
-          logger.debug('Duplicate found by URL', { url: content.url });
+        if (curatedMatch && curatedMatch.length > 0) {
+          console.log(`🔁 Duplicate in CURATED: ${content.url}`);
+          logger.debug('Duplicate found in curated', { url: content.url });
           return true;
-        } else {
-          console.log(`✨ New URL: ${content.url}`);
         }
+        
+        console.log(`✨ NEW content: ${content.url}`);
       }
 
       // DISABLED: Hash checking is too aggressive, blocking good content

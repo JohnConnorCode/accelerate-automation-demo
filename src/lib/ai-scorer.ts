@@ -1,10 +1,22 @@
 import OpenAI from 'openai';
 import { z } from 'zod';
 
-// Initialize OpenAI client
-const openai = process.env.OPENAI_API_KEY 
-  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-  : null;
+// Lazy initialization - create OpenAI client on first use
+let openai: OpenAI | null | undefined = undefined;
+
+// Initialize on first access
+function getOpenAIClient(): OpenAI | null {
+  if (openai === undefined) {
+    if (process.env.OPENAI_API_KEY) {
+      openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      console.log('✅ OpenAI client initialized with API key');
+    } else {
+      openai = null;
+      console.log('❌ No OpenAI API key found');
+    }
+  }
+  return openai;
+}
 
 // AI Scoring Response Schema
 const AIScoreSchema = z.object({
@@ -37,15 +49,17 @@ export class AIScorer {
   }
 
   async scoreContent(content: any): Promise<AIScore | null> {
-    if (!openai) {
-
+    const client = getOpenAIClient();
+    if (!client) {
+      console.log('⚠️ WARNING: Using MOCK AI scoring - no OpenAI client!');
       return this.getMockScore(content);
     }
 
     try {
       const prompt = this.buildPrompt(content);
+      console.log('🤖 Making REAL OpenAI API call...');
       
-      const response = await openai.chat.completions.create({
+      const response = await client.chat.completions.create({
         model: this.model,
         messages: [
           {

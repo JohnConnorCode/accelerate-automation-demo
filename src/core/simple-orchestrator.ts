@@ -28,6 +28,32 @@ export class SimpleOrchestrator {
   private aiScorer = new AIScorer(); // AI-powered scoring
   
   /**
+   * Get dynamic GitHub search URL to fetch NEW repos each time
+   */
+  private getGitHubSearchUrl(): string {
+    // Get repos created or updated in the last 7 days to ensure NEW content
+    const date = new Date();
+    date.setDate(date.getDate() - 7);
+    const weekAgo = date.toISOString().split('T')[0];
+    
+    // Rotate through different searches to get variety
+    const searches = [
+      `created:>${weekAgo}+stars:>50+language:TypeScript`,  // New TypeScript projects
+      `pushed:>${weekAgo}+stars:>100+topic:web3`,           // Recently updated Web3
+      `created:>${weekAgo}+stars:>30+topic:ai`,             // New AI projects
+      `pushed:>${weekAgo}+stars:>200+topic:blockchain`,     // Active blockchain
+      `created:>${weekAgo}+stars:>20+topic:defi`,           // New DeFi projects
+    ];
+    
+    // Use current minute to rotate through searches
+    const index = new Date().getMinutes() % searches.length;
+    const query = searches[index];
+    
+    console.log(`🔄 GitHub search: ${query}`);
+    return `https://api.github.com/search/repositories?q=${encodeURIComponent(query)}&sort=stars&order=desc&per_page=10`;
+  }
+  
+  /**
    * Configure batch size for processing
    */
   setBatchSize(size: number): void {
@@ -50,15 +76,16 @@ export class SimpleOrchestrator {
       console.warn(`⚠️ Invalid threshold ${threshold}. Must be between 0 and 100.`);
     }
   }
-  private readonly sources = new Map([
-    // HIGH QUALITY: Only repos with 500+ stars, recently updated
-    ['github', 'https://api.github.com/search/repositories?q=stars:>500+pushed:>2024-01-01&sort=stars&order=desc'],
-    ['hackernews', 'https://hn.algolia.com/api/v1/search?tags=story&hitsPerPage=50&numericFilters=points>100'],
-    ['producthunt', 'https://api.producthunt.com/v2/api/graphql'],
-    ['devto', 'https://dev.to/api/articles?per_page=30&tag=webdev,javascript,react&top=7'],
-    // Disabled - fetches 6000+ items which is too many
-    // ['defilama', 'https://api.llama.fi/protocols'],
-  ]);
+  // Dynamic sources - regenerated each run
+  private getSources(): Map<string, string> {
+    return new Map([
+      // DYNAMIC: Get DIFFERENT repos each time
+      ['github', this.getGitHubSearchUrl()],
+      ['hackernews', 'https://hn.algolia.com/api/v1/search?tags=story&hitsPerPage=50&numericFilters=points>100'],
+      ['producthunt', 'https://api.producthunt.com/v2/api/graphql'],
+      ['devto', 'https://dev.to/api/articles?per_page=30&tag=webdev,javascript,react&top=7'],
+    ]);
+  }
 
   /**
    * Run the complete pipeline
@@ -78,18 +105,21 @@ export class SimpleOrchestrator {
       // Initialize API keys from database
       await apiKeyService.initialize();
       
+      // Get fresh sources for this run
+      const sources = this.getSources();
+      
       // Update sources with API keys if available
       const githubKey = apiKeyService.getKey('github');
       if (githubKey) {
         // Add auth to GitHub URL
-        const githubUrl = this.sources.get('github');
+        const githubUrl = sources.get('github');
         if (githubUrl) {
-          this.sources.set('github', githubUrl + '&access_token=' + githubKey);
+          sources.set('github', githubUrl + '&access_token=' + githubKey);
         }
       }
       
       // Step 1a: Fetch from API sources (if keys available)
-      const fetchResults = await fetcher.fetchAll(this.sources);
+      const fetchResults = await fetcher.fetchAll(sources);
       
       // Step 1b: ALSO fetch from public sources (no API keys needed!)
       console.log('🌐 Fetching from public sources (no API keys required)...');
@@ -148,10 +178,8 @@ export class SimpleOrchestrator {
           // Combine basic + AI scores
           const combinedScore = basicScore.score + aiBoost;
           
-          // Log first few scores for debugging
-          if (totalEvaluated <= 5) {
-            console.log(`  📊 Item: ${item.title || item.name || 'Untitled'} - Score: ${basicScore.score} + AI:${aiBoost} = ${combinedScore}`);
-          }
+          // Log ALL scores to see what's happening
+          console.log(`  📊 Item: ${item.title || item.name || 'Untitled'} - Basic:${basicScore.score} + AI:${aiBoost} = ${combinedScore} ${combinedScore >= this.minScoreThreshold ? '✅' : '❌'}`);
           
           // Skip if combined score is too low
           if (combinedScore < this.minScoreThreshold) {
@@ -365,13 +393,31 @@ export class SimpleOrchestrator {
           created_at: new Date().toISOString()
         }));
         
-        console.log(`💾 Inserting into content_curated table...`);
+        // IMPORTANT: Store to QUEUE for approval, not directly to curated!
+        console.log(`💾 Inserting into content_queue for APPROVAL...`);
         console.log(`📝 Sample insert data:`, JSON.stringify(insertData[0], null, 2));
+        console.log(`🔍 Accelerator fields check:`, {
+          hasAISummary: !!insertData[0]?.raw_data?.ai_summary,
+          hasAcceleratorReady: !!insertData[0]?.raw_data?.accelerator_ready,
+          hasAcceleratorPriority: !!insertData[0]?.raw_data?.accelerator_priority,
+          hasAIRecommendation: !!insertData[0]?.raw_data?.ai_recommendation,
+          rawDataKeys: Object.keys(insertData[0]?.raw_data || {}).slice(0, 10)
+        });
+        
+        // Add queue-specific fields
+        const queueData = insertData.map(item => ({
+          ...item,
+          status: 'pending_review',  // Needs approval!
+          ai_recommendation: item.raw_data?.ai_recommendation || 'review',
+          ai_score: item.raw_data?.ai_relevance || 0,
+          queued_at: new Date().toISOString()
+        }));
         
         try {
+          // Store to QUEUE, not curated!
           const { data, error } = await supabase
-            .from('content_curated')
-            .insert(insertData as any);
+            .from('content_queue')  // QUEUE for approval
+            .insert(queueData as any);
 
           if (error) {
             console.error(`❌ Storage error:`, error);
