@@ -23,7 +23,7 @@ interface OrchestrationResult {
 
 export class SimpleOrchestrator {
   private maxItemsPerBatch = 10; // Process max 10 items at a time
-  private minScoreThreshold = 15; // Reasonable threshold
+  private minScoreThreshold = 5; // Lower threshold to accept more items
   
   /**
    * Configure batch size for processing
