@@ -17,6 +17,9 @@ import { AIScorer } from '../lib/ai-scorer';
 import { Web3JobPlatformsFetcher } from '../fetchers/platforms/web3-job-platforms';
 import { WellfoundFetcher } from '../fetchers/platforms/angellist-wellfound';
 import { GitcoinFetcher } from '../fetchers/funding/gitcoin';
+import { ChainSpecificFetcher } from '../fetchers/funding/chain-specific';
+import { EcosystemProgramsFetcher } from '../fetchers/funding/ecosystem-programs';
+import { Web3GrantsFetcher } from '../fetchers/funding/web3-grants';
 import { ProductHuntLaunchesFetcher } from '../fetchers/real-sources/producthunt-launches';
 import { GitHubTrendingFetcher } from '../fetchers/real-sources/github-trending';
 import { DeworkFetcher } from '../fetchers/platforms/dework-fetcher';
@@ -166,9 +169,14 @@ export class SimpleOrchestrator {
         { name: 'HackathonProjects', fetcher: new HackathonProjectsFetcher() },
         { name: 'CryptoJobsList', fetcher: new CryptoJobsListFetcher() },
         
+        // FUNDING PROGRAMS (Critical for ACCELERATE)
+        { name: 'Gitcoin', fetcher: new GitcoinFetcher() },
+        { name: 'ChainGrants', fetcher: new ChainSpecificFetcher() },
+        { name: 'EcosystemPrograms', fetcher: new EcosystemProgramsFetcher() },
+        { name: 'Web3Grants', fetcher: new Web3GrantsFetcher() },
+        
         // SOMETIMES WORK (keep trying)
         { name: 'GitHubTrending', fetcher: new GitHubTrendingFetcher() },
-        { name: 'Gitcoin', fetcher: new GitcoinFetcher() },
         { name: 'Dework', fetcher: new DeworkFetcher() },
         
         // UNRELIABLE (often timeout but keep for completeness)
@@ -536,11 +544,22 @@ export class SimpleOrchestrator {
    * Detect content type based on source and content
    */
   private detectContentType(item: any, source: string): 'project' | 'funding' | 'resource' {
+    // First check if type is already set by the fetcher
+    if (item.type === 'funding') return 'funding';
+    if (item.type === 'project') return 'project';
+    if (item.type === 'resource') return 'resource';
+    
+    // Check contentType field too
+    if (item.contentType === 'funding') return 'funding';
+    if (item.contentType === 'project') return 'project';
+    if (item.contentType === 'resource') return 'resource';
+    
     const text = `${item.title || ''} ${item.description || ''}`.toLowerCase();
     
     // Source-based detection
     if (source === 'producthunt' || source === 'github') return 'project';
     if (source === 'defilama') return 'funding';
+    if (source.toLowerCase().includes('grant') || source.toLowerCase().includes('funding')) return 'funding';
     
     // Content-based detection
     // Check for project indicators
@@ -548,8 +567,10 @@ export class SimpleOrchestrator {
     if (text.includes('startup') || text.includes('founder') || text.includes('building')) return 'project';
     
     // Check for funding indicators
-    if (item.funding_amount || item.deadline || item.application_url) return 'funding';
+    if (item.funding_amount || item.funding_amount_min || item.funding_amount_max) return 'funding';
+    if (item.deadline || item.application_url || item.application_deadline) return 'funding';
     if (text.includes('grant') || text.includes('accelerator') || text.includes('incubator')) return 'funding';
+    if (text.includes('million') && text.includes('fund')) return 'funding';
     
     // Default to resource
     return 'resource';

@@ -64,9 +64,9 @@ export class UnifiedScorer {
       }
     }
     
-    // PRIORITY 2: Funding opportunities (30 points max)
+    // PRIORITY 2: Funding opportunities (50 points max) - CRITICAL FOR ACCELERATE
     if (item.type === 'funding') {
-      score += 20; // Base for being funding
+      score += 35; // Higher base for funding programs (ACCELERATE priority)
       reasons.push('Funding opportunity');
       
       // Check deadline urgency
