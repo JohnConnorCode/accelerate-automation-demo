@@ -1,5 +1,6 @@
 /**
- * Approval API - Moves content from queue to production tables
+ * Approval API with workaround - Uses content_queue for everything
+ * This version works without the accelerate_startups table
  */
 
 import { supabase } from '../lib/supabase-client';
@@ -18,9 +19,10 @@ export interface ApprovalResponse {
   error?: string;
 }
 
-export class ApprovalService {
+export class ApprovalServiceWorkaround {
   /**
    * Process approval/rejection for a queued item
+   * WORKAROUND: Keep approved items in content_queue with approved status
    */
   async processApproval(request: ApprovalRequest): Promise<ApprovalResponse> {
     try {
@@ -66,60 +68,64 @@ export class ApprovalService {
         };
       }
 
-      // 3. Handle approval - move to appropriate production table
-      const targetTable = this.getTargetTable(queueItem.type);
-      const productionData = this.transformForProduction(queueItem, targetTable);
-
-      // 4. Insert into production table
-      const { data: insertedItem, error: insertError } = await supabase
-        .from(targetTable)
-        .insert(productionData)
-        .select()
-        .single();
-
-      if (insertError) {
-        // Check if it's a duplicate
-        if (insertError.code === '23505') {
-          // Update existing item instead
-          const { data: updatedItem, error: updateError } = await supabase
-            .from(targetTable)
-            .update(productionData)
-            .eq('url', productionData.url)
-            .select()
-            .single();
-
-          if (updateError) {
-            return {
-              success: false,
-              message: 'Failed to update existing item',
-              error: updateError.message
-            };
+      // 3. Handle approval - WORKAROUND: Keep in queue with approved status
+      const approvalData = {
+        status: 'approved',
+        approved_at: new Date().toISOString(),
+        approved_by: request.reviewedBy || 'system',
+        reviewed_at: new Date().toISOString(),
+        reviewed_by: request.reviewedBy || 'system',
+        // Add approval metadata
+        metadata: {
+          ...queueItem.metadata,
+          approval: {
+            timestamp: new Date().toISOString(),
+            approver: request.reviewedBy || 'system',
+            notes: request.reviewerNotes
           }
-
-          // Mark as approved in queue
-          await this.markAsApproved(request.itemId, request.reviewedBy);
-
-          return {
-            success: true,
-            message: 'Item updated in production',
-            data: updatedItem
-          };
         }
+      };
 
+      const { data: updatedItems, error: updateError } = await supabase
+        .from('content_queue')
+        .update(approvalData)
+        .eq('id', request.itemId)
+        .select();
+      
+      const updatedItem = updatedItems?.[0];
+
+      if (updateError) {
         return {
           success: false,
-          message: 'Failed to move to production',
-          error: insertError?.message || JSON.stringify(insertError)
+          message: 'Failed to approve item',
+          error: updateError.message
         };
       }
 
-      // 5. Mark as approved in queue
-      await this.markAsApproved(request.itemId, request.reviewedBy);
+      // Try to move to production tables if they exist
+      const targetTable = this.getTargetTable(queueItem.type);
+      if (targetTable !== 'content_queue') {
+        const productionData = this.transformForProduction(queueItem, targetTable);
+        
+        // Attempt insertion but don't fail if table doesn't exist
+        const { error: insertError } = await supabase
+          .from(targetTable)
+          .insert(productionData)
+          .select()
+          .single();
+
+        if (!insertError) {
+          console.log(`✅ Also copied to ${targetTable} table`);
+        } else if (insertError.code !== '42P01') {
+          // Log non-table-missing errors
+          console.log(`⚠️ Could not copy to ${targetTable}:`, insertError.message);
+        }
+      }
 
       return {
         success: true,
-        message: `Item approved and moved to ${targetTable}`,
-        data: insertedItem
+        message: `Item approved successfully (kept in queue with approved status)`,
+        data: updatedItem
       };
 
     } catch (error: any) {
@@ -136,23 +142,17 @@ export class ApprovalService {
    */
   private getTargetTable(type: string): string {
     const tables: Record<string, string> = {
-      'project': 'projects',
+      'project': 'projects',  // Use projects if accelerate_startups doesn't exist
       'projects': 'projects',
       'startup': 'projects',
       'funding': 'funding_programs',
       'grant': 'funding_programs',
-      'accelerator': 'funding_programs',
-      'incubator': 'funding_programs',
-      'vc': 'funding_programs',
       'resource': 'resources',
       'tool': 'resources',
-      'guide': 'resources',
-      'course': 'resources',
-      'community': 'resources',
-      'infrastructure': 'resources'
+      'guide': 'resources'
     };
 
-    return tables[type?.toLowerCase()] || 'projects';
+    return tables[type?.toLowerCase()] || 'content_queue';
   }
 
   /**
@@ -173,17 +173,9 @@ export class ApprovalService {
           name: queueItem.title,
           description: queueItem.description,
           url: queueItem.url,
-          team_size: queueItem.metadata?.team_size,
-          funding_raised: queueItem.metadata?.funding_raised || 0,
-          funding_stage: queueItem.metadata?.funding_stage,
+          source: queueItem.source,
           categories: queueItem.metadata?.categories || [],
-          technologies: queueItem.metadata?.technologies || [],
-          project_needs: queueItem.metadata?.project_needs || [],
-          location: queueItem.metadata?.location,
-          contact_email: queueItem.metadata?.contact_email,
-          social_links: queueItem.metadata?.social_links || {},
-          ai_summary: queueItem.ai_summary,
-          last_activity: queueItem.metadata?.last_activity || new Date().toISOString()
+          technologies: queueItem.metadata?.technologies || []
         };
 
       case 'funding_programs':
@@ -229,22 +221,6 @@ export class ApprovalService {
           url: queueItem.url
         };
     }
-  }
-
-  /**
-   * Mark item as approved in queue
-   */
-  private async markAsApproved(itemId: string, reviewedBy?: string): Promise<void> {
-    await supabase
-      .from('content_queue')
-      .update({
-        status: 'approved',
-        approved_at: new Date().toISOString(),
-        approved_by: reviewedBy || 'system',
-        reviewed_at: new Date().toISOString(),
-        reviewed_by: reviewedBy || 'system'
-      })
-      .eq('id', itemId);
   }
 
   /**
@@ -303,7 +279,26 @@ export class ApprovalService {
       };
     }
   }
+
+  /**
+   * Get approved items (from content_queue with approved status)
+   */
+  async getApprovedItems(limit: number = 100): Promise<any[]> {
+    const { data, error } = await supabase
+      .from('content_queue')
+      .select('*')
+      .eq('status', 'approved')
+      .order('approved_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error('Error fetching approved items:', error);
+      return [];
+    }
+
+    return data || [];
+  }
 }
 
 // Export singleton instance
-export const approvalService = new ApprovalService();
+export const approvalServiceWorkaround = new ApprovalServiceWorkaround();

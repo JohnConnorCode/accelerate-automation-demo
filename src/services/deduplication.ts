@@ -29,32 +29,40 @@ export class DeduplicationService {
    */
   async isDuplicate(content: any): Promise<boolean> {
     try {
-      // Check BOTH queue AND curated tables for duplicates
+      // Check NEW queue tables AND live tables for duplicates
       if (content.url) {
-        // Check queue first (pending items)
-        const { data: queueMatch } = await supabase
-          .from('content_queue')
-          .select('id')
-          .eq('url', content.url)
-          .limit(1);
+        // Check all three queue tables
+        const tables = ['queue_projects', 'queue_news', 'queue_investors'];
         
-        if (queueMatch && queueMatch.length > 0) {
-          console.log(`🔁 Duplicate in QUEUE: ${content.url}`);
-          logger.debug('Duplicate found in queue', { url: content.url });
-          return true;
+        for (const table of tables) {
+          const { data: queueMatch } = await supabase
+            .from(table)
+            .select('id')
+            .or(`url.eq.${content.url},website.eq.${content.url},source_url.eq.${content.url}`)
+            .limit(1);
+          
+          if (queueMatch && queueMatch.length > 0) {
+            console.log(`🔁 Duplicate in ${table}: ${content.url}`);
+            logger.debug(`Duplicate found in ${table}`, { url: content.url });
+            return true;
+          }
         }
         
-        // Also check curated (approved items)
-        const { data: curatedMatch } = await supabase
-          .from('content_curated')
-          .select('id')
-          .eq('url', content.url)
-          .limit(1);
+        // Also check live tables (approved items)
+        const liveTables = ['accelerate_startups', 'accelerate_news', 'accelerate_investors'];
         
-        if (curatedMatch && curatedMatch.length > 0) {
-          console.log(`🔁 Duplicate in CURATED: ${content.url}`);
-          logger.debug('Duplicate found in curated', { url: content.url });
-          return true;
+        for (const table of liveTables) {
+          const { data: liveMatch } = await supabase
+            .from(table)
+            .select('id')
+            .or(`website.eq.${content.url},url.eq.${content.url}`)
+            .limit(1);
+          
+          if (liveMatch && liveMatch.length > 0) {
+            console.log(`🔁 Duplicate in ${table}: ${content.url}`);
+            logger.debug(`Duplicate found in ${table}`, { url: content.url });
+            return true;
+          }
         }
         
         console.log(`✨ NEW content: ${content.url}`);

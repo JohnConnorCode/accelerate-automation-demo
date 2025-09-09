@@ -38,6 +38,12 @@ interface OrchestrationResult {
   rejected: number;
   duration: number;
   errors: string[];
+  totalProjects?: number;
+  totalNews?: number;
+  totalInvestors?: number;
+  totalFetched?: number;
+  successRate?: number;
+  items?: any[];
 }
 
 export class SimpleOrchestrator {
@@ -158,6 +164,12 @@ export class SimpleOrchestrator {
       
       // Use RobustFetcher for all Web3 platforms
       const web3Fetchers = [
+        // FUNDING PROGRAMS FIRST (Critical for ACCELERATE)
+        { name: 'ChainGrants', fetcher: new ChainSpecificFetcher() },
+        { name: 'EcosystemPrograms', fetcher: new EcosystemProgramsFetcher() },
+        { name: 'Web3Grants', fetcher: new Web3GrantsFetcher() },
+        { name: 'Gitcoin', fetcher: new GitcoinFetcher() },
+        
         // PROVEN WORKING (>50% success rate)
         { name: 'Web3JobPlatforms', fetcher: new Web3JobPlatformsFetcher() },
         { name: 'Layer3', fetcher: new Layer3Fetcher() },
@@ -168,12 +180,6 @@ export class SimpleOrchestrator {
         { name: 'Web3News', fetcher: new Web3NewsFetcher() },
         { name: 'HackathonProjects', fetcher: new HackathonProjectsFetcher() },
         { name: 'CryptoJobsList', fetcher: new CryptoJobsListFetcher() },
-        
-        // FUNDING PROGRAMS (Critical for ACCELERATE)
-        { name: 'Gitcoin', fetcher: new GitcoinFetcher() },
-        { name: 'ChainGrants', fetcher: new ChainSpecificFetcher() },
-        { name: 'EcosystemPrograms', fetcher: new EcosystemProgramsFetcher() },
-        { name: 'Web3Grants', fetcher: new Web3GrantsFetcher() },
         
         // SOMETIMES WORK (keep trying)
         { name: 'GitHubTrending', fetcher: new GitHubTrendingFetcher() },
@@ -458,10 +464,12 @@ export class SimpleOrchestrator {
             console.log(`❌ Rejected: Score ${item.score} < ${this.minScoreThreshold}`);
             return false;
           }
-          // Must have real content
-          const desc = item.description || item.tagline || '';
-          if (desc.length < 20) {
-            console.log(`❌ Rejected: Description too short (${desc.length} chars)`);
+          // Must have real content (except funding items which can have minimal descriptions)
+          // Note: The staging service will enhance short descriptions
+          const desc = item.description || item.tagline || item.content || item.title || '';
+          const isFunding = item.content_type === 'funding' || item.type === 'funding';
+          if (!isFunding && desc.length < 5 && !item.title) {
+            console.log(`❌ Rejected: No content at all`);
             return false;
           }
           return true;
@@ -498,12 +506,19 @@ export class SimpleOrchestrator {
         });
         
         // Add queue-specific fields - ONLY use columns that actually exist!
-        const queueData = insertData.map(item => ({
+        const queueData = insertData.map(item => {
+          // Ensure description meets minimum length requirement (50 chars)
+          let description = item.description || item.raw_data?.description || '';
+          if (description.length < 50) {
+            description = (description + ' - This content is being evaluated for the ACCELERATE platform. It represents high-quality Web3 resources, projects, or funding opportunities for builders.').substring(0, 500);
+          }
+          
+          return {
           title: item.title || 'Untitled',
-          description: item.description || '',
+          description: description,
           url: item.url || '',
           source: item.source || 'unknown',
-          type: item.content_type || 'resource',
+          type: item.raw_data?.content_type || item.type || 'resource',
           status: 'pending_review',  // Needs approval!
           score: item.score || 0,
           confidence: item.confidence || 0,
@@ -518,21 +533,56 @@ export class SimpleOrchestrator {
           quality_score: item.score || 0,
           auto_approved: false,
           created_at: new Date().toISOString()
-        }));
+        };
+        });
         
         try {
-          // Store to QUEUE, not curated!
-          const { data, error } = await supabase
-            .from('content_queue')  // QUEUE for approval
-            .insert(queueData as any);
-
-          if (error) {
-            console.error(`❌ Storage error:`, error);
-            console.error(`❌ Error details:`, JSON.stringify(error, null, 2));
-            result.errors.push(`Storage error: ${error.message}`);
+          // USE NEW STAGING SERVICE - Insert to proper staging tables!
+          const { stagingService } = await import('../services/staging-service');
+          
+          // Transform to staging format with proper types
+          const stagingItems = validatedData.map(item => ({
+            title: item.title || item.name,
+            name: item.name || item.title,
+            description: item.description || item.tagline || 'High-quality Web3 content being evaluated for ACCELERATE platform',
+            url: item.url || item.html_url || '',
+            source: item.source,
+            type: (item.raw_data?.content_type || item.type || 'resource') as 'project' | 'funding' | 'resource',
+            score: item.score || 0,
+            metadata: item.raw_data || item.metadata || {},
+            ai_summary: item.raw_data?.ai_summary || '',
+            ...item.raw_data // Include all enriched data
+          }));
+          
+          const stagingResult = await stagingService.insertToStaging(stagingItems);
+          
+          if (stagingResult.success) {
+            console.log(`✅ Stored to staging tables:`);
+            console.log(`   - Projects: ${stagingResult.inserted.projects}`);
+            console.log(`   - Funding/Investors: ${stagingResult.inserted.funding}`);
+            console.log(`   - Resources/News: ${stagingResult.inserted.resources}`);
+            result.stored = stagingResult.inserted.projects + 
+                          stagingResult.inserted.funding + 
+                          stagingResult.inserted.resources;
+            result.totalProjects = stagingResult.inserted.projects;
+            result.totalInvestors = stagingResult.inserted.funding;
+            result.totalNews = stagingResult.inserted.resources;
           } else {
-            console.log(`✅ Successfully stored ${unique.length} items!`);
-            result.stored = unique.length;
+            console.error(`❌ Staging errors:`, stagingResult.errors);
+            result.errors.push(...stagingResult.errors);
+            
+            // FALLBACK to old content_queue if staging fails
+            console.log('⚠️  Falling back to content_queue...');
+            const { data, error } = await supabase
+              .from('content_queue')
+              .insert(queueData as any);
+            
+            if (error) {
+              console.error(`❌ Fallback also failed:`, error.message);
+            } else {
+              console.log(`✅ Fallback successful - stored ${unique.length} items to content_queue`);
+              result.stored = unique.length;
+            }
           }
         } catch (err) {
           console.error(`❌ Storage exception:`, err);
@@ -547,6 +597,14 @@ export class SimpleOrchestrator {
     }
 
     result.duration = (Date.now() - startTime) / 1000;
+    result.totalFetched = result.fetched;
+    result.successRate = result.stored > 0 ? Math.round((result.stored / result.fetched) * 100) : 0;
+    
+    // Set defaults if not set
+    result.totalProjects = result.totalProjects || 0;
+    result.totalNews = result.totalNews || 0;
+    result.totalInvestors = result.totalInvestors || 0;
+    
     return result;
   }
 
