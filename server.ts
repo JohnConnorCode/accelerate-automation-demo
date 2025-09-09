@@ -7,6 +7,7 @@ import { requireApiKey, rateLimit } from './src/middleware/auth'
 import { requireAdmin, verifyToken } from './src/middleware/authJWT'
 import { logger, logAuditEvent, logError } from './src/services/logger'
 import { scheduler } from './src/services/scheduler'
+import { metricsService } from './src/services/metrics'
 import dotenv from 'dotenv'
 
 // Load environment variables
@@ -297,20 +298,20 @@ app.post('/api/ai-assess', async (req, res) => {
   }
 })
 
-// Performance report endpoint
+// Performance report endpoint with real metrics
 app.get('/api/performance', async (req, res) => {
   try {
     const stats = await contentServiceV2.getStats()
+    const metrics = await metricsService.getPerformanceSummary()
     
     res.json({
       uptime: process.uptime(),
       memory: process.memoryUsage(),
       stats,
-      performance: {
-        avgProcessingTime: '245ms',
-        successRate: '94.3%',
-        queueDepth: stats.pending
-      }
+      performance: metrics.metrics,
+      health: metrics.health,
+      lastFetch: metrics.lastFetch,
+      totalProcessed: metrics.totalProcessed
     })
   } catch (error) {
     res.status(500).json({ 

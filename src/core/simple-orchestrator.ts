@@ -13,6 +13,7 @@ import { noApiDataFetcher } from '../fetchers/no-api-sources';
 import { accelerateCriteriaScorer } from '../services/accelerate-criteria-scorer';
 import { AIScorer } from '../lib/ai-scorer';
 import { logError, logInfo, trackMetric } from '../services/error-logger';
+import { metricsService } from '../services/metrics';
 
 // REAL FETCHERS WITH PROJECT NEEDS
 import { Web3JobPlatformsFetcher } from '../fetchers/platforms/web3-job-platforms';
@@ -602,7 +603,10 @@ export class SimpleOrchestrator {
     result.totalFetched = result.fetched;
     result.successRate = result.stored > 0 ? Math.round((result.stored / result.fetched) * 100) : 0;
     
-    // Track metrics
+    // Track metrics with new metrics service
+    metricsService.trackFetch(result.stored, (Date.now() - startTime));
+    
+    // Also track with existing system
     trackMetric('pipeline_duration', result.duration, 'orchestrator');
     trackMetric('pipeline_success_rate', result.successRate, 'orchestrator');
     trackMetric('items_stored', result.stored, 'orchestrator');

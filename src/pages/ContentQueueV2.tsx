@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase-client';
 import { AlertCircle, CheckCircle, XCircle, RefreshCw, Sparkles, Search, Package, DollarSign, BookOpen } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
+import { metricsService } from '../services/metrics';
 
 interface QueueProject {
   id: string;
@@ -181,6 +182,9 @@ export default function ContentQueueV2() {
       
       if (deleteError) throw deleteError;
       
+      // Track approval metric
+      metricsService.trackApproval(true);
+      
       toast.success('Item approved and moved to live data');
       fetchQueueData();
       
@@ -201,6 +205,9 @@ export default function ContentQueueV2() {
         .eq('id', item.id);
       
       if (error) throw error;
+      
+      // Track rejection metric
+      metricsService.trackApproval(false);
       
       toast.success('Item rejected');
       fetchQueueData();
