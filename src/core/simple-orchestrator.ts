@@ -221,16 +221,26 @@ export class SimpleOrchestrator {
       let totalProcessed = 0;
       let totalEvaluated = 0;
       
-      // Process items in batches to avoid overload
+      // CRITICAL FIX: Process ALL sources but limit items PER SOURCE
+      // This ensures funding sources aren't skipped
       for (const fetchResult of fetchResults) {
         console.log(`📊 Processing items from ${fetchResult.source} (${fetchResult.items.length} available)`);
         
+        // Limit items per source to ensure all sources get processed
+        const maxPerSource = Math.min(fetchResult.items.length, 10);
+        let sourceItemCount = 0;
+        
         for (const item of fetchResult.items) {
-          // Stop if we've evaluated enough items
-          if (totalEvaluated >= this.maxItemsPerBatch * 3) {
-            console.log(`🛑 Evaluated ${totalEvaluated} items, stopping to avoid overload`);
+          // Limit per source, not globally
+          if (sourceItemCount >= maxPerSource) {
             break;
           }
+          // Also respect global limit
+          if (totalEvaluated >= this.maxItemsPerBatch * 3) {
+            console.log(`🛑 Evaluated ${totalEvaluated} items total`);
+            break;
+          }
+          sourceItemCount++;
           totalEvaluated++;
           // Use UNIFIED SCORER that prioritizes projects with needs
           const unifiedScore = UnifiedScorer.scoreContent(item);
