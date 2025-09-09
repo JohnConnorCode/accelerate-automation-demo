@@ -12,6 +12,7 @@ import { apiKeyService } from '../services/api-key-service';
 import { noApiDataFetcher } from '../fetchers/no-api-sources';
 import { accelerateCriteriaScorer } from '../services/accelerate-criteria-scorer';
 import { AIScorer } from '../lib/ai-scorer';
+import { logError, logInfo, trackMetric } from '../services/error-logger';
 
 // REAL FETCHERS WITH PROJECT NEEDS
 import { Web3JobPlatformsFetcher } from '../fetchers/platforms/web3-job-platforms';
@@ -594,11 +595,24 @@ export class SimpleOrchestrator {
 
     } catch (error) {
       result.errors.push(`Orchestration error: ${error}`);
+      logError('Orchestration failed', 'orchestrator', error);
     }
 
     result.duration = (Date.now() - startTime) / 1000;
     result.totalFetched = result.fetched;
     result.successRate = result.stored > 0 ? Math.round((result.stored / result.fetched) * 100) : 0;
+    
+    // Track metrics
+    trackMetric('pipeline_duration', result.duration, 'orchestrator');
+    trackMetric('pipeline_success_rate', result.successRate, 'orchestrator');
+    trackMetric('items_stored', result.stored, 'orchestrator');
+    
+    if (result.stored > 0) {
+      logInfo(`Pipeline completed: ${result.stored} items stored`, 'orchestrator', {
+        fetched: result.fetched,
+        successRate: result.successRate
+      });
+    }
     
     // Set defaults if not set
     result.totalProjects = result.totalProjects || 0;
