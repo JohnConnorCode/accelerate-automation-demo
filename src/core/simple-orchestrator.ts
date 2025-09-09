@@ -50,7 +50,7 @@ interface OrchestrationResult {
 
 export class SimpleOrchestrator {
   private maxItemsPerBatch = 100; // Process many more items for better success rate
-  private minScoreThreshold = 10; // LOW THRESHOLD for internal tool - accept more items
+  private minScoreThreshold = 25; // QUALITY threshold - only accept decent items
   private aiScorer = new AIScorer(); // AI-powered scoring
   
   /**
@@ -234,8 +234,8 @@ export class SimpleOrchestrator {
       for (const fetchResult of fetchResults) {
         console.log(`📊 Processing items from ${fetchResult.source} (${fetchResult.items.length} available)`);
         
-        // Process MORE items per source for better success rate
-        const maxPerSource = Math.min(fetchResult.items.length, 50); // Increased from 10
+        // Process MANY items from each source but with reasonable limit
+        const maxPerSource = Math.min(fetchResult.items.length, 100); // Up to 100 per source
         let sourceItemCount = 0;
         
         for (const item of fetchResult.items) {
@@ -243,9 +243,9 @@ export class SimpleOrchestrator {
           if (sourceItemCount >= maxPerSource) {
             break;
           }
-          // Also respect global limit
-          if (totalEvaluated >= this.maxItemsPerBatch * 3) {
-            console.log(`🛑 Evaluated ${totalEvaluated} items total`);
+          // Reasonable global limit to prevent timeout
+          if (totalEvaluated >= 500) {
+            console.log(`🛑 Evaluated ${totalEvaluated} items total (limit reached)`);
             break;
           }
           sourceItemCount++;
@@ -278,13 +278,12 @@ export class SimpleOrchestrator {
           const combinedScore = unifiedScore.score + aiBoost;
           
           
-          // DON'T skip items - let them through for manual review
-          // This is an internal tool, we want to see everything
-          if (unifiedScore.category === 'reject' && unifiedScore.score < 5) {
-            // Only reject REALLY bad items (score < 5)
-            result.rejected++;
-            continue;
-          }
+          // NEVER reject based on category - let score threshold handle it
+          // Manual review will filter bad content
+          // if (unifiedScore.category === 'reject' && unifiedScore.score < 5) {
+          //   result.rejected++;
+          //   continue;
+          // }
           
           // Detect content type using dynamic criteria
           const contentType = this.detectContentType(item, fetchResult.source);
@@ -361,7 +360,9 @@ export class SimpleOrchestrator {
             console.log(`    Final: score=${finalScore}, confidence=${finalConfidence}, recommendation=${finalRecommendation}`);
           }
           
-          if (finalRecommendation !== 'reject') {
+          // ALWAYS process items that made it this far
+          // Score threshold already filtered bad items
+          if (finalScore >= this.minScoreThreshold) {
             totalProcessed++;
             // Don't limit batch size - process everything we can
             // if (totalProcessed >= this.maxItemsPerBatch) {
@@ -453,30 +454,22 @@ export class SimpleOrchestrator {
       // Step 4: Store unique approved content (already limited by batch processing)
       if (unique.length > 0) {
         console.log(`💾 Storing ${unique.length} items to database...`);
-        // FINAL VALIDATION - NO GARBAGE ALLOWED
+        // MINIMAL VALIDATION - items already passed scoring
         const validatedData = unique.filter(item => {
-          // Must have essential fields
-          if (!item.title && !item.name) {
-            console.log(`❌ Rejected: No title`);
+          // Only check for absolute essentials
+          const hasIdentifier = item.title || item.name || item.company_name;
+          const hasUrl = item.url || item.html_url || item.website;
+          
+          if (!hasIdentifier) {
+            console.log(`❌ Rejected: No identifier at all`);
             return false;
           }
-          if (!item.url && !item.html_url) {
-            console.log(`❌ Rejected: No URL`);
+          if (!hasUrl) {
+            console.log(`❌ Rejected: No URL at all`);
             return false;
           }
-          // Must have minimum quality score
-          if (item.score < this.minScoreThreshold) {
-            console.log(`❌ Rejected: Score ${item.score} < ${this.minScoreThreshold}`);
-            return false;
-          }
-          // Must have real content (except funding items which can have minimal descriptions)
-          // Note: The staging service will enhance short descriptions
-          const desc = item.description || item.tagline || item.content || item.title || '';
-          const isFunding = item.content_type === 'funding' || item.type === 'funding';
-          if (!isFunding && desc.length < 5 && !item.title) {
-            console.log(`❌ Rejected: No content at all`);
-            return false;
-          }
+          // DON'T check score again - already filtered
+          // DON'T check content length - let manual review decide
           return true;
         });
         
