@@ -17,6 +17,12 @@ import { IndieHackersProjectsFetcher } from './fetchers/real-sources/indiehacker
 import { YCombinatorStartupsFetcher } from './fetchers/real-sources/ycombinator-startups';
 import { GitHubWeb3ProjectsFetcher } from './fetchers/real-sources/github-web3-projects';
 import { DevToStartupResourcesFetcher } from './fetchers/real-sources/devto-startup-resources';
+import { WellfoundStartupsFetcher } from './fetchers/real-sources/wellfound-startups';
+import { RedditStartupsFetcher } from './fetchers/real-sources/reddit-startups';
+import { RSSAggregatorFetcher } from './fetchers/real-sources/rss-aggregator';
+
+// Import data aggregator for multi-source enrichment
+import { DataAggregator } from './services/data-aggregator';
 
 // Platform fetchers removed - need verification
 // Most platform fetchers either need API keys or don't exist yet
@@ -32,12 +38,14 @@ export class AccelerateOrchestrator {
   private socialEnrichment: SocialEnrichmentService;
   private teamVerification: TeamVerificationService;
   private duplicateDetector: DuplicateDetector;
+  private dataAggregator: DataAggregator;
   private isInitialized = false;
 
   constructor() {
     this.socialEnrichment = new SocialEnrichmentService();
     this.teamVerification = new TeamVerificationService();
     this.duplicateDetector = new DuplicateDetector();
+    this.dataAggregator = new DataAggregator();
     this.initializeFetchers();
   }
 
@@ -45,35 +53,38 @@ export class AccelerateOrchestrator {
    * Initialize QUALITY fetchers from REAL startup sources
    */
   private initializeFetchers(): void {
-    // PRIMARY SOURCES - REAL startups and companies
+    // PRIMARY SOURCES - High-quality startup data
     this.fetchers.push(
-      new HackerNewsYCJobsFetcher(), // #1 - Real YC companies hiring
-      new IndieHackersProjectsFetcher(), // #2 - Real indie projects with revenue
-      new YCombinatorStartupsFetcher(), // #3 - YC companies (limited but real)
+      new YCombinatorStartupsFetcher(), // YC W24/S24/F24 companies via YC OSS API
+      new RSSAggregatorFetcher(), // TechCrunch, VentureBeat, Crunchbase News, etc.
+      new HackerNewsYCJobsFetcher(), // YC companies actively hiring
     );
     
-    // SECONDARY SOURCES - Additional coverage
+    // COMMUNITY SOURCES - Founder launches and discussions
+    this.fetchers.push(
+      new RedditStartupsFetcher(), // Reddit startup launches & founders
+      new IndieHackersProjectsFetcher(), // Bootstrapped indie projects
+      new WellfoundStartupsFetcher(), // AngelList/Wellfound (may not work)
+    );
+    
+    // TECHNICAL SOURCES - Projects and resources
     this.fetchers.push(
       new GitHubWeb3ProjectsFetcher(), // Open source Web3 projects
-      new DevToStartupResourcesFetcher(), // Technical resources and tutorials
+      new DevToStartupResourcesFetcher(), // Technical resources
     );
     
-    // ALL FAKE FETCHERS REMOVED:
-    // ✅ Removed GitcoinGrantsFetcher (API 404)
-    // ✅ Removed EthereumFoundationFetcher (hardcoded mock data)
-    // ✅ Removed AcceleratorsFetcher (hardcoded list)
-    // ✅ Removed ProductHuntLaunchesFetcher (Cloudflare blocks RSS)
-    
-    console.log(`📊 Initialized ${this.fetchers.length} REAL data fetchers`);
+    console.log(`📊 Initialized ${this.fetchers.length} ENHANCED data fetchers (8 sources with RSS)`);
   }
 
   /**
    * Unified enrichment pipeline
    */
   private async enrichContent(items: ContentItem[]): Promise<ContentItem[]> {
-
+    console.log(`🔬 Starting enrichment for ${items.length} items`);
+    
     const enrichedItems: ContentItem[] = [];
-    const batchSize = 10;
+    const batchSize = 5; // Smaller batches for faster processing
+    const maxEnrichTime = 2000; // Max 2 seconds per item
 
     for (let i = 0; i < items.length; i += batchSize) {
       const batch = items.slice(i, i + batchSize);
@@ -81,20 +92,32 @@ export class AccelerateOrchestrator {
       const enrichedBatch = await Promise.all(
         batch.map(async (item) => {
           try {
-            // Step 1: Social enrichment
-            let enriched = await this.socialEnrichment.enrichContent(item);
+            // Set a timeout for each item's enrichment
+            const enrichPromise = (async () => {
+              // Step 1: Social enrichment (if API key available)
+              let enriched = item;
+              if (process.env.TWITTER_BEARER_TOKEN) {
+                enriched = await this.socialEnrichment.enrichContent(item);
+              }
+              
+              // Step 2: Team verification (for projects, if API key available)
+              if (item.type === 'project' && process.env.GITHUB_TOKEN) {
+                enriched = await this.teamVerification.verifyTeam(enriched);
+              }
+              
+              // Step 3: Calculate final credibility
+              enriched = this.calculateFinalCredibility(enriched);
+              
+              return enriched;
+            })();
             
-            // Step 2: Team verification (for projects)
-            if (item.type === 'project') {
-              enriched = await this.teamVerification.verifyTeam(enriched);
-            }
+            const timeoutPromise = new Promise<ContentItem>((resolve) => {
+              setTimeout(() => resolve(item), maxEnrichTime);
+            });
             
-            // Step 3: Calculate final credibility
-            enriched = this.calculateFinalCredibility(enriched);
-            
-            return enriched;
+            return await Promise.race([enrichPromise, timeoutPromise]);
           } catch (error) {
-
+            console.log(`⚠️ Enrichment failed for item: ${error}`);
             return item; // Return original if enrichment fails
           }
         })
@@ -103,11 +126,12 @@ export class AccelerateOrchestrator {
       enrichedItems.push(...enrichedBatch);
       
       // Progress update
-      if ((i + batchSize) % 50 === 0) {
-
+      if ((i + batchSize) % 25 === 0) {
+        console.log(`  Progress: ${Math.min(i + batchSize, items.length)}/${items.length} items enriched`);
       }
     }
 
+    console.log(`✅ Enrichment complete: ${enrichedItems.length} items`);
     return enrichedItems;
   }
 
@@ -155,7 +179,7 @@ export class AccelerateOrchestrator {
     stats: any;
     errors: string[];
   }> {
-    const BATCH_SIZE = options.batchSize || 10; // Default to 10 items
+    const BATCH_SIZE = options.batchSize || 50; // Increase to 50 items
     const errors: string[] = [];
     const allContent: ContentItem[] = [];
 
@@ -237,27 +261,71 @@ export class AccelerateOrchestrator {
       }
 
       // ENRICHMENT PIPELINE with intelligent caching
+      // Skip enrichment if we have too many items to prevent timeout
+      let enrichedContent: ContentItem[] = [];
+      
+      if (unique.length <= 100) {
+        console.log(`\n🔬 Enriching ${unique.length} items...`);
+        const enrichmentCacheKey = `enrichment:batch:${unique.length}`;
+        
+        // Add timeout to enrichment
+        const enrichmentPromise = intelligentCache.get(
+          enrichmentCacheKey,
+          async () => {
+            return await this.enrichContent(unique);
+          },
+          {
+            ttl: 1800000, // 30 minutes - enriched data is expensive to compute
+            tags: ['enrichment'],
+            priority: 'high'
+          }
+        );
+        
+        // Set a 30 second timeout for enrichment
+        const timeoutPromise = new Promise<ContentItem[]>((resolve) => {
+          setTimeout(() => {
+            console.log('⚠️ Enrichment timeout - using unenriched data');
+            resolve(unique);
+          }, 30000);
+        });
+        
+        enrichedContent = (await Promise.race([enrichmentPromise, timeoutPromise])) || unique;
+      } else {
+        console.log(`⚠️ Skipping enrichment for ${unique.length} items (too many)`);
+        enrichedContent = unique;
+      }
 
-      const enrichmentCacheKey = `enrichment:batch:${unique.length}`;
-      const enrichedContent = await intelligentCache.get(
-        enrichmentCacheKey,
-        async () => {
-          return await this.enrichContent(unique);
-        },
-        {
-          ttl: 1800000, // 30 minutes - enriched data is expensive to compute
-          tags: ['enrichment'],
-          priority: 'high'
-        }
-      ) || [];
+      // AGGREGATE AND MERGE DATA FROM MULTIPLE SOURCES
+      console.log(`\n🔄 Aggregating ${enrichedContent.length} items from multiple sources...`);
+      
+      // Add timeout to aggregation as well
+      let aggregatedContent: ContentItem[] = [];
+      try {
+        const aggregationPromise = this.dataAggregator.aggregate(enrichedContent);
+        const aggregationTimeout = new Promise<any>((resolve) => {
+          setTimeout(() => {
+            console.log('⚠️ Aggregation timeout - using unaggregated data');
+            resolve({ items: enrichedContent, average_completeness: 50 });
+          }, 20000); // 20 second timeout
+        });
+        
+        const aggregationResult = await Promise.race([aggregationPromise, aggregationTimeout]);
+        aggregatedContent = aggregationResult.items;
+        
+        console.log(`✅ Aggregated to ${aggregatedContent.length} unique entities`);
+        console.log(`📊 Average data completeness: ${aggregationResult.average_completeness.toFixed(1)}%`);
+      } catch (error) {
+        console.log('⚠️ Aggregation failed, using enriched data as-is:', error);
+        aggregatedContent = enrichedContent;
+      }
+      
+      // Score and rank aggregated content
+      const metrics = AccelerateScorer.getQualityMetrics(aggregatedContent);
 
-      // Score and rank all content
-
-      const metrics = AccelerateScorer.getQualityMetrics(enrichedContent);
-
-      // Filter by credibility
-      const credibleContent = enrichedContent.filter(item => 
+      // Filter by credibility and quality
+      const credibleContent = aggregatedContent.filter(item => 
         (item.metadata?.final_credibility_score || 0) > 20 || // Min credibility
+        (item.metadata?.data_completeness || 0) > 60 || // High completeness
         item.type === 'resource' || // Resources don't need as much verification
         item.type === 'funding' // Funding opportunities are pre-vetted
       );
@@ -267,7 +335,6 @@ export class AccelerateOrchestrator {
       console.log(`🎯 Processing ${limitedContent.length} items (batch size: ${BATCH_SIZE})`);
 
       // Process and insert into database
-
       const pipelineResult = await AccelerateDBPipeline.processContent(limitedContent);
       
       if (pipelineResult.errors.length > 0) {

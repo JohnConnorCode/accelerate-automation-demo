@@ -30,30 +30,172 @@ export class YCombinatorStartupsFetcher extends BaseFetcher<YCCompanySchema[]> {
   protected schema = z.array(YCCompanySchema);
 
   async fetch(): Promise<YCCompanySchema[][]> {
+    const allCompanies: YCCompanySchema[] = [];
+    
     try {
-      // YC companies page loads data dynamically, but we can get the initial batch
-      const response = await fetch(this.config.url, {
-        headers: this.config.headers as HeadersInit,
-      });
+      // Use the YC OSS API - FREE PUBLIC DATA!
+      // https://github.com/yc-oss/api
+      const batches = [
+        { name: 'W24', url: 'https://yc-oss.github.io/api/batches/winter-2024.json' },
+        { name: 'S24', url: 'https://yc-oss.github.io/api/batches/summer-2024.json' },
+        { name: 'F24', url: 'https://yc-oss.github.io/api/batches/fall-2024.json' },
+      ];
+      
+      for (const batch of batches) {
+        try {
+          // Fetch from YC OSS API
+          const response = await fetch(batch.url, {
+            headers: {
+              'Accept': 'application/json',
+              'User-Agent': 'Mozilla/5.0 (compatible; AccelerateBot/1.0)',
+            },
+          });
 
-      if (!response.ok) {
-        console.error('YC fetch failed:', response.status);
-        return [];
+          if (response.ok) {
+            const companies = await response.json();
+            
+            if (Array.isArray(companies)) {
+              for (const company of companies) {
+                // Convert to our schema
+                allCompanies.push({
+                  name: company.name,
+                  description: company.long_description || company.one_liner || '',
+                  url: company.website || company.url,
+                  batch: batch.name,
+                  tags: company.industries || company.tags || [],
+                  location: company.all_locations || company.regions?.[0],
+                  team_size: company.team_size?.toString() || '2',
+                });
+              }
+              console.log(`✅ Found ${companies.length} companies from YC ${batch.name}`);
+            }
+          }
+        } catch (e) {
+          console.log(`Failed to fetch YC batch ${batch.name}:`, e);
+        }
+        
+        // Rate limit between batches
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
+      
+      // If batch fetching didn't work, try winter 2025 batch
+      if (allCompanies.length === 0) {
+        try {
+          const response = await fetch('https://yc-oss.github.io/api/batches/winter-2025.json', {
+            headers: {
+              'Accept': 'application/json',
+              'User-Agent': 'Mozilla/5.0 (compatible; AccelerateBot/1.0)',
+            },
+          });
 
-      const html = await response.text();
+          if (response.ok) {
+            const companies = await response.json();
+            if (Array.isArray(companies)) {
+              for (const company of companies.slice(0, 50)) {
+                allCompanies.push({
+                  name: company.name,
+                  description: company.long_description || company.one_liner || '',
+                  url: company.website || company.url,
+                  batch: 'W25',
+                  tags: company.industries || company.tags || [],
+                  location: company.all_locations || company.regions?.[0],
+                  team_size: company.team_size?.toString() || '2',
+                });
+              }
+              console.log(`✅ Found ${companies.length} companies from YC W25`);
+            }
+          }
+        } catch (e) {
+          console.log('Failed to fetch W25 batch:', e);
+        }
+      }
       
-      // Extract companies from the HTML
-      // YC embeds initial data in script tags
-      const companies = this.extractCompanies(html);
+      // Deduplicate
+      const uniqueCompanies = this.deduplicateCompanies(allCompanies);
+      console.log(`📊 YC Total: Found ${uniqueCompanies.length} unique companies from 2024 batches`);
       
-      return [companies];
+      return [uniqueCompanies];
     } catch (error) {
       console.error('Error fetching YC companies:', error);
-      return [];
+      return [allCompanies];
     }
   }
 
+  private extractCompaniesFromBatch(html: string, batch: string): YCCompanySchema[] {
+    const companies: YCCompanySchema[] = [];
+    
+    try {
+      // Try to extract from embedded JSON first
+      const stateMatch = html.match(/window\.__INITIAL_STATE__\s*=\s*({[\s\S]*?});/s);
+      if (stateMatch) {
+        try {
+          const state = JSON.parse(stateMatch[1]);
+          const companyList = state?.props?.companies || state?.results || state?.companies || [];
+          
+          for (const company of companyList) {
+            if (company.batch === batch) {
+              companies.push({
+                name: company.name,
+                description: company.one_liner || company.description || '',
+                url: company.website || company.url,
+                batch: batch,
+                tags: company.industries || company.verticals || [],
+                location: company.location || company.headquarters,
+                team_size: company.team_size || company.num_founders?.toString(),
+              });
+            }
+          }
+        } catch (e) {
+          // JSON parsing failed, continue to HTML parsing
+        }
+      }
+      
+      // If no JSON, parse HTML structure
+      if (companies.length === 0) {
+        // Look for company cards
+        const cardMatches = html.match(/<div[^>]*class="[^"]*_company_[^"]*"[^>]*>[\s\S]*?<\/div\s*>\s*<\/div>/g) || [];
+        
+        for (const card of cardMatches.slice(0, 100)) {
+          const nameMatch = card.match(/<a[^>]*>([^<]+)<\/a>/);
+          const descMatch = card.match(/<span[^>]*class="[^"]*description[^"]*"[^>]*>([^<]+)<\/span>/);
+          const batchMatch = card.match(/>([WFS]\d{2})</);  
+          
+          if (nameMatch && batchMatch && batchMatch[1] === batch) {
+            companies.push({
+              name: nameMatch[1].trim(),
+              description: descMatch ? descMatch[1].trim() : `YC ${batch} company`,
+              batch: batch,
+              tags: ['startup', 'yc'],
+              url: `https://www.ycombinator.com/companies/${nameMatch[1].toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+            });
+          }
+        }
+        
+        // Alternative pattern for list items
+        const listMatches = html.match(/<a[^>]*href="\/companies\/([^"]+)"[^>]*>([^<]+)<\/a>/g) || [];
+        
+        for (const match of listMatches.slice(0, 100)) {
+          const urlMatch = match.match(/href="\/companies\/([^"]+)"/);
+          const nameMatch = match.match(/>([^<]+)</);
+          
+          if (urlMatch && nameMatch) {
+            companies.push({
+              name: nameMatch[1].trim(),
+              description: `YC ${batch} company`,
+              url: `https://www.ycombinator.com/companies/${urlMatch[1]}`,
+              batch: batch,
+              tags: ['startup', 'yc'],
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error extracting YC companies:', error);
+    }
+    
+    return companies;
+  }
+  
   private extractCompanies(html: string): YCCompanySchema[] {
     const companies: YCCompanySchema[] = [];
     
@@ -154,8 +296,8 @@ export class YCombinatorStartupsFetcher extends BaseFetcher<YCCompanySchema[]> {
           2024;
         const batchSeason = company.batch?.charAt(0); // W or S
         
-        // Only include recent companies (2023+)
-        if (batchYear < 2023) continue;
+        // ACCELERATE CRITERIA: Only include 2024+ companies
+        if (batchYear < 2024) continue;
         
         items.push({
           source: 'YCombinator',
@@ -206,5 +348,15 @@ export class YCombinatorStartupsFetcher extends BaseFetcher<YCCompanySchema[]> {
     }
     
     return items;
+  }
+  
+  private deduplicateCompanies(companies: YCCompanySchema[]): YCCompanySchema[] {
+    const seen = new Set<string>();
+    return companies.filter(company => {
+      const key = company.name.toLowerCase().replace(/\s+/g, '');
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }
 }

@@ -42,10 +42,10 @@ const FarcasterCastSchema = z.object({
 export class FarcasterFetcher extends BaseFetcher<z.infer<typeof FarcasterCastSchema>> {
   protected config: FetcherConfig = {
     name: 'Farcaster',
-    url: 'https://api.neynar.com/v2/farcaster/casts', // Using Neynar API
+    url: 'https://api.warpcast.com/v2', // Using public Warpcast API
     headers: {
       'Accept': 'application/json',
-      'api_key': process.env.NEYNAR_API_KEY || '',
+      'User-Agent': 'AccelerateBot/1.0',
     },
     rateLimit: 2000,
   };

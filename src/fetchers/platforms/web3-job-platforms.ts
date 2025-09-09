@@ -500,7 +500,7 @@ export class Web3JobPlatformsFetcher extends BaseFetcher<any> {
       ],
       metadata: {
         name: job.company.name,
-        short_description: job.company.description.substring(0, 100),
+        short_description: job.company?.description?.substring(0, 100) || '',
         website_url: job.company.website,
         
         // Stage

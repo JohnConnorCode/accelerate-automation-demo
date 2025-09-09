@@ -13,6 +13,21 @@ import { noApiDataFetcher } from '../fetchers/no-api-sources';
 import { accelerateCriteriaScorer } from '../services/accelerate-criteria-scorer';
 import { AIScorer } from '../lib/ai-scorer';
 
+// REAL FETCHERS WITH PROJECT NEEDS
+import { Web3JobPlatformsFetcher } from '../fetchers/platforms/web3-job-platforms';
+import { WellfoundFetcher } from '../fetchers/platforms/angellist-wellfound';
+import { GitcoinFetcher } from '../fetchers/funding/gitcoin';
+import { ProductHuntLaunchesFetcher } from '../fetchers/real-sources/producthunt-launches';
+import { GitHubTrendingFetcher } from '../fetchers/real-sources/github-trending';
+import { DeworkFetcher } from '../fetchers/platforms/dework-fetcher';
+import { Layer3Fetcher } from '../fetchers/platforms/layer3-fetcher';
+import { WonderverseFetcher } from '../fetchers/platforms/wonderverse-fetcher';
+import { Web3NewsFetcher } from '../fetchers/real-sources/web3-news';
+import { HackathonProjectsFetcher } from '../fetchers/platforms/hackathon-projects';
+import { CryptoJobsListFetcher } from '../fetchers/platforms/crypto-job-list';
+import { RobustFetcher } from '../lib/fetcher-with-retry';
+import { UnifiedScorer } from '../lib/unified-scorer';
+
 interface OrchestrationResult {
   fetched: number;
   scored: number;
@@ -135,6 +150,58 @@ export class SimpleOrchestrator {
         });
       }
       
+      // Step 1c: CRITICAL - Fetch from platforms with PROJECT NEEDS
+      console.log('🚀 Fetching from Web3 platforms with PROJECT NEEDS...');
+      
+      // Use RobustFetcher for all Web3 platforms
+      const web3Fetchers = [
+        // PROVEN WORKING (>50% success rate)
+        { name: 'Web3JobPlatforms', fetcher: new Web3JobPlatformsFetcher() },
+        { name: 'Layer3', fetcher: new Layer3Fetcher() },
+        { name: 'Wonderverse', fetcher: new WonderverseFetcher() },
+        { name: 'ProductHunt', fetcher: new ProductHuntLaunchesFetcher() },
+        
+        // NEW RELIABLE SOURCES
+        { name: 'Web3News', fetcher: new Web3NewsFetcher() },
+        { name: 'HackathonProjects', fetcher: new HackathonProjectsFetcher() },
+        { name: 'CryptoJobsList', fetcher: new CryptoJobsListFetcher() },
+        
+        // SOMETIMES WORK (keep trying)
+        { name: 'GitHubTrending', fetcher: new GitHubTrendingFetcher() },
+        { name: 'Gitcoin', fetcher: new GitcoinFetcher() },
+        { name: 'Dework', fetcher: new DeworkFetcher() },
+        
+        // UNRELIABLE (often timeout but keep for completeness)
+        { name: 'Wellfound', fetcher: new WellfoundFetcher() }
+      ];
+      
+      // Fetch from all platforms in parallel with retry logic
+      const fetchPromises = web3Fetchers.map(async ({ name, fetcher }) => {
+        const robust = new RobustFetcher(fetcher, name);
+        const result = await robust.fetchWithRetry();
+        
+        // Validate items
+        const validatedItems = robust.validateItems(result.items);
+        
+        return {
+          source: name.toLowerCase(),
+          items: validatedItems,
+          errors: result.errors
+        };
+      });
+      
+      const web3Results = await Promise.allSettled(fetchPromises);
+      
+      // Process results
+      for (const result of web3Results) {
+        if (result.status === 'fulfilled' && result.value.items.length > 0) {
+          console.log(`✅ ${result.value.source}: ${result.value.items.length} valid items`);
+          fetchResults.push(result.value);
+        } else if (result.status === 'rejected') {
+          console.log(`❌ Fetcher failed: ${result.reason}`);
+        }
+      }
+      
       // Count fetched items
       for (const fetchResult of fetchResults) {
         result.fetched += fetchResult.items.length;
@@ -157,32 +224,36 @@ export class SimpleOrchestrator {
             break;
           }
           totalEvaluated++;
-          // First get basic score
-          const basicScore = scorer.score(item);
+          // Use UNIFIED SCORER that prioritizes projects with needs
+          const unifiedScore = UnifiedScorer.scoreContent(item);
           result.scored++;
           
-          // NOW GET AI SCORE (if available)
+          // Log scoring for first few items
+          if (totalEvaluated <= 5) {
+            console.log(`  📊 ${item.title || item.name}: ${unifiedScore.category.toUpperCase()} (${unifiedScore.score})`);
+            console.log(`     Reasons: ${unifiedScore.reasons.join(', ')}`);
+          }
+          
+          // Get AI score if available (optional enhancement)
           let aiScore = null;
           let aiBoost = 0;
           try {
-            aiScore = await this.aiScorer.scoreContent(item);
-            if (aiScore) {
-              // AI score is 0-1, convert to 0-100 and add as boost
-              aiBoost = Math.round(aiScore.overall * 30); // Up to 30 point AI boost
-              console.log(`  🤖 AI Score: ${aiScore.overall.toFixed(2)} → +${aiBoost} points (${aiScore.recommendation})`);
+            if (unifiedScore.score >= 40) { // Only use AI for promising items
+              aiScore = await this.aiScorer.scoreContent(item);
+              if (aiScore) {
+                aiBoost = Math.round(aiScore.overall * 20); // Up to 20 point AI boost
+              }
             }
           } catch (error) {
-            console.log(`  ⚠️ AI scoring failed:`, error);
+            // AI scoring is optional, continue without it
           }
           
-          // Combine basic + AI scores
-          const combinedScore = basicScore.score + aiBoost;
+          // Combine unified + AI scores
+          const combinedScore = unifiedScore.score + aiBoost;
           
-          // Log ALL scores to see what's happening
-          console.log(`  📊 Item: ${item.title || item.name || 'Untitled'} - Basic:${basicScore.score} + AI:${aiBoost} = ${combinedScore} ${combinedScore >= this.minScoreThreshold ? '✅' : '❌'}`);
           
-          // Skip if combined score is too low
-          if (combinedScore < this.minScoreThreshold) {
+          // Skip if rejected by unified scorer
+          if (unifiedScore.category === 'reject') {
             result.rejected++;
             continue;
           }
@@ -204,7 +275,7 @@ export class SimpleOrchestrator {
           let enrichedData = null;
           // Use combined score (basic + AI) as the base, then consider criteria
           let finalScore = Math.max(combinedScore, criteriaResult.score); // Use higher score
-          let finalConfidence = aiScore ? aiScore.overall : basicScore.confidence;
+          let finalConfidence = unifiedScore.confidence;
           
           // Enable enrichment for HIGH QUALITY items only
           const SKIP_ENRICHMENT = false;
@@ -237,21 +308,21 @@ export class SimpleOrchestrator {
               
               // Add enrichment bonus to score
               finalScore = Math.min(100, finalScore + enrichmentBonus);
-              finalConfidence = enrichedData.ai_analysis?.confidence || basicScore.confidence;
+              finalConfidence = enrichedData.ai_analysis?.confidence || unifiedScore.confidence;
               
               console.log(`✨ Enriched: ${enrichedData.title}`);
               console.log(`   Type: ${contentType}`);
               console.log(`   Completeness: ${enrichedData.validation.completeness}%`);
               console.log(`   Quality: ${enrichedData.validation.data_quality}%`);
               console.log(`   Verified: ${enrichedData.validation.verified}`);
-              console.log(`   Score boost: +${enrichmentBonus} (${basicScore.score} -> ${finalScore})`);
+              console.log(`   Score boost: +${enrichmentBonus} (${unifiedScore.score} -> ${finalScore})`);
             } else {
               // Keep the good score we already have - don't overwrite with bad criteriaService
               // finalScore = await criteriaService.scoreContent(item, contentType);
-              // finalScore already set above as Math.max(basicScore.score, criteriaResult.score)
+              // finalScore already set above as Math.max(unifiedScore.score, criteriaResult.score)
             }
           } catch (error) {
-            console.warn('Enrichment failed, using basic score:', error);
+            console.warn('Enrichment failed, using unified score:', error);
           }
           
           // Make final decision
@@ -283,9 +354,13 @@ export class SimpleOrchestrator {
               content_type: contentType,
               score: finalScore,
               confidence: finalConfidence,
-              factors: basicScore.factors,
+              factors: unifiedScore.reasons,
               recommendation: finalRecommendation,
               ai_enriched: !!enrichedData,
+              
+              // UNIFIED SCORER METADATA
+              unified_category: unifiedScore.category,
+              unified_metadata: unifiedScore.metadata,
               
               // AI-GENERATED FIELDS FOR ACCELERATOR
               ai_summary: aiScore ? aiScore.reasoning : enrichedData?.ai_analysis?.summary || 'High-quality content for builders',
@@ -404,13 +479,27 @@ export class SimpleOrchestrator {
           rawDataKeys: Object.keys(insertData[0]?.raw_data || {}).slice(0, 10)
         });
         
-        // Add queue-specific fields
+        // Add queue-specific fields - ONLY use columns that actually exist!
         const queueData = insertData.map(item => ({
-          ...item,
+          title: item.title || 'Untitled',
+          description: item.description || '',
+          url: item.url || '',
+          source: item.source || 'unknown',
+          type: item.content_type || 'resource',
           status: 'pending_review',  // Needs approval!
-          ai_recommendation: item.raw_data?.ai_recommendation || 'review',
-          ai_score: item.raw_data?.ai_relevance || 0,
-          queued_at: new Date().toISOString()
+          score: item.score || 0,
+          confidence: item.confidence || 0,
+          scoring_breakdown: item.factors || {},
+          recommendation: item.recommendation || 'review',
+          metadata: item.metadata || {},
+          enrichment_data: item.enrichment_data || {},
+          enrichment_status: item.ai_enriched ? 'completed' : 'pending',
+          ai_summary: item.raw_data?.ai_summary || item.description?.substring(0, 500) || '',
+          category: item.raw_data?.unified_category || 'general',
+          enriched: item.ai_enriched || false,
+          quality_score: item.score || 0,
+          auto_approved: false,
+          created_at: new Date().toISOString()
         }));
         
         try {

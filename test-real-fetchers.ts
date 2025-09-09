@@ -1,187 +1,158 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env tsx
+
 /**
- * Test ONLY REAL data fetchers - NO MOCK DATA
- * Verifies actual API connections and real data retrieval
+ * BRUTAL HONESTY TEST - What Actually Works?
  */
 
-import { config } from 'dotenv';
-config();
+import { Web3JobPlatformsFetcher } from './src/fetchers/platforms/web3-job-platforms';
+import { WellfoundFetcher } from './src/fetchers/platforms/angellist-wellfound';
+import { DeworkFetcher } from './src/fetchers/platforms/dework-fetcher';
+import { Layer3Fetcher } from './src/fetchers/platforms/layer3-fetcher';
+import { WonderverseFetcher } from './src/fetchers/platforms/wonderverse-fetcher';
+import { GitcoinFetcher } from './src/fetchers/funding/gitcoin';
+import { ProductHuntLaunchesFetcher } from './src/fetchers/real-sources/producthunt-launches';
+import { GitHubTrendingFetcher } from './src/fetchers/real-sources/github-trending';
 
-// REAL FETCHERS ONLY - Confirmed to use actual APIs
-import { DevToBuilderResourcesFetcher, GitHubBuilderToolsFetcher } from './src/fetchers/accelerate-specific/builder-resources';
-import { EarlyStageProjectsFetcher, ProductHuntEarlyStageFetcher } from './src/fetchers/accelerate-specific/early-stage-projects';
-import { GitHubReposFetcher } from './src/fetchers/projects/github-repos';
-import { DevToFetcher } from './src/fetchers/resources/devto';
-import { ProductHuntFetcher } from './src/fetchers/resources/producthunt';
-import { GitHubToolsFetcher } from './src/fetchers/resources/github-tools';
-import { DefiLlamaFetcher } from './src/fetchers/metrics/defi-llama';
-
-console.log('🔍 TESTING REAL DATA FETCHERS ONLY - NO MOCK DATA');
-console.log('==================================================\n');
-
-interface TestResult {
-  name: string;
-  status: 'success' | 'failed' | 'needs-key';
-  itemsFound: number;
-  sample?: any;
-  error?: string;
-}
-
-const results: TestResult[] = [];
-
-async function testRealFetcher(name: string, fetcher: any): Promise<TestResult> {
-  console.log(`Testing ${name}...`);
-  try {
-    const data = await fetcher.fetch();
-    const items = await fetcher.transform(data);
+async function brutalHonestyTest() {
+  console.log('🔥 BRUTAL HONESTY TEST - NO FAKE DATA ALLOWED');
+  console.log('=' .repeat(60));
+  
+  const fetchers = [
+    { name: 'Web3JobPlatforms', fetcher: new Web3JobPlatformsFetcher() },
+    { name: 'Wellfound', fetcher: new WellfoundFetcher() },
+    { name: 'Dework', fetcher: new DeworkFetcher() },
+    { name: 'Layer3', fetcher: new Layer3Fetcher() },
+    { name: 'Wonderverse', fetcher: new WonderverseFetcher() },
+    { name: 'Gitcoin', fetcher: new GitcoinFetcher() },
+    { name: 'ProductHunt', fetcher: new ProductHuntLaunchesFetcher() },
+    { name: 'GitHub', fetcher: new GitHubTrendingFetcher() }
+  ];
+  
+  const results = {
+    working: [] as string[],
+    broken: [] as string[],
+    fake: [] as string[]
+  };
+  
+  for (const { name, fetcher } of fetchers) {
+    console.log(`\n📡 Testing ${name}...`);
     
-    if (items.length === 0) {
-      return {
-        name,
-        status: 'failed',
-        itemsFound: 0,
-        error: 'No items returned (API may have changed)'
-      };
+    try {
+      // Set a 5 second timeout
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('TIMEOUT')), 5000)
+      );
+      
+      const data = await Promise.race([
+        fetcher.fetch(),
+        timeoutPromise
+      ]) as any[];
+      
+      const items = fetcher.transform(data);
+      
+      // Check if it's real data
+      let isReal = false;
+      let hasFakeData = false;
+      
+      if (items.length > 0) {
+        // Check first item
+        const firstItem = items[0];
+        
+        // Check for fake indicators
+        const fakeWords = ['example', 'test', 'demo', 'sample', 'mock', 'fake'];
+        const title = (firstItem.title || '').toLowerCase();
+        const url = (firstItem.url || '').toLowerCase();
+        
+        for (const word of fakeWords) {
+          if (title.includes(word) || url.includes(word)) {
+            hasFakeData = true;
+            break;
+          }
+        }
+        
+        // Check if URL is valid
+        try {
+          const urlObj = new URL(firstItem.url);
+          if (urlObj.hostname.includes('example.com') || 
+              urlObj.hostname.includes('test.com') ||
+              urlObj.hostname === 'localhost') {
+            hasFakeData = true;
+          } else {
+            isReal = true;
+          }
+        } catch {
+          hasFakeData = true;
+        }
+        
+        // Check for project_needs (critical field)
+        const hasNeeds = firstItem.metadata?.project_needs?.length > 0;
+        
+        console.log(`  ✅ Got ${items.length} items`);
+        console.log(`  📊 First item: ${firstItem.title}`);
+        console.log(`  🔗 URL: ${firstItem.url}`);
+        console.log(`  🎯 Has needs: ${hasNeeds ? 'YES' : 'NO'}`);
+        console.log(`  💯 Real data: ${isReal ? 'YES' : 'NO'}`);
+        
+        if (hasFakeData) {
+          results.fake.push(`${name} (${items.length} fake items)`);
+        } else if (isReal) {
+          results.working.push(`${name} (${items.length} real items)`);
+        } else {
+          results.broken.push(`${name} (questionable data)`);
+        }
+      } else {
+        console.log(`  ❌ No data returned`);
+        results.broken.push(`${name} (no data)`);
+      }
+      
+    } catch (error: any) {
+      if (error.message === 'TIMEOUT') {
+        console.log(`  ⏱️ TIMEOUT after 5 seconds`);
+        results.broken.push(`${name} (timeout)`);
+      } else {
+        console.log(`  ❌ ERROR: ${error.message}`);
+        results.broken.push(`${name} (${error.message})`);
+      }
     }
-    
-    console.log(`  ✅ Found ${items.length} real items`);
-    
-    // Verify this is real data, not mock
-    const firstItem = items[0];
-    const isMock = firstItem.url?.includes('example.com') || 
-                   firstItem.url?.includes('test.com') ||
-                   firstItem.description?.includes('mock') ||
-                   firstItem.description?.includes('example');
-    
-    if (isMock) {
-      console.log(`  ⚠️ WARNING: This appears to be mock data!`);
-      return {
-        name,
-        status: 'failed',
-        itemsFound: items.length,
-        error: 'Detected mock/example data in response'
-      };
-    }
-    
-    // Show sample to prove it's real
-    console.log(`  Sample: "${firstItem.title?.substring(0, 50)}..."`);
-    console.log(`  URL: ${firstItem.url}`);
-    
-    return {
-      name,
-      status: 'success',
-      itemsFound: items.length,
-      sample: firstItem
-    };
-  } catch (error: any) {
-    console.log(`  ❌ Failed: ${error.message}`);
-    
-    if (error.message?.includes('401') || error.message?.includes('403')) {
-      return {
-        name,
-        status: 'needs-key',
-        itemsFound: 0,
-        error: 'API key required'
-      };
-    }
-    
-    return {
-      name,
-      status: 'failed',
-      itemsFound: 0,
-      error: error.message
-    };
   }
-}
-
-async function runTests() {
-  console.log('1️⃣ GITHUB FETCHERS (Real GitHub API)\n');
   
-  // GitHub fetchers - REAL API
-  results.push(await testRealFetcher('GitHub Repos', new GitHubReposFetcher()));
-  results.push(await testRealFetcher('GitHub Tools', new GitHubToolsFetcher()));
-  results.push(await testRealFetcher('GitHub Early Stage', new EarlyStageProjectsFetcher()));
-  
-  console.log('\n2️⃣ DEV.TO FETCHERS (Real Dev.to API)\n');
-  
-  // Dev.to fetchers - REAL API
-  results.push(await testRealFetcher('Dev.to Articles', new DevToFetcher()));
-  results.push(await testRealFetcher('Dev.to Builder Resources', new DevToBuilderResourcesFetcher()));
-  
-  console.log('\n3️⃣ PRODUCTHUNT FETCHERS (Real ProductHunt API)\n');
-  
-  // ProductHunt fetchers - May need API key
-  results.push(await testRealFetcher('ProductHunt', new ProductHuntFetcher()));
-  results.push(await testRealFetcher('ProductHunt Early Stage', new ProductHuntEarlyStageFetcher()));
-  
-  console.log('\n4️⃣ DEFI LLAMA (Real DeFiLlama API - FREE!)\n');
-  
-  // DeFiLlama - REAL FREE API
-  results.push(await testRealFetcher('DeFiLlama TVL Data', new DefiLlamaFetcher()));
-  
-  // Summary
+  // BRUTAL TRUTH
   console.log('\n' + '='.repeat(60));
-  console.log('📊 REAL DATA TEST RESULTS');
-  console.log('='.repeat(60) + '\n');
+  console.log('🔍 BRUTAL TRUTH RESULTS:\n');
   
-  const successful = results.filter(r => r.status === 'success');
-  const failed = results.filter(r => r.status === 'failed');
-  const needsKey = results.filter(r => r.status === 'needs-key');
-  
-  console.log(`✅ Working with REAL data: ${successful.length}`);
-  successful.forEach(r => {
-    console.log(`   - ${r.name}: ${r.itemsFound} items`);
-  });
-  
-  if (needsKey.length > 0) {
-    console.log(`\n🔑 Need API keys: ${needsKey.length}`);
-    needsKey.forEach(r => {
-      console.log(`   - ${r.name}: ${r.error}`);
-    });
+  console.log('✅ ACTUALLY WORKING WITH REAL DATA:');
+  if (results.working.length > 0) {
+    results.working.forEach(r => console.log(`  - ${r}`));
+  } else {
+    console.log('  NONE! Everything is broken or fake!');
   }
   
-  if (failed.length > 0) {
-    console.log(`\n❌ Failed or returning mock: ${failed.length}`);
-    failed.forEach(r => {
-      console.log(`   - ${r.name}: ${r.error}`);
-    });
+  console.log('\n❌ BROKEN/TIMEOUT:');
+  if (results.broken.length > 0) {
+    results.broken.forEach(r => console.log(`  - ${r}`));
+  } else {
+    console.log('  None');
   }
   
-  // Verify we're getting Web3 content
-  console.log('\n' + '='.repeat(60));
-  console.log('🎯 WEB3 CONTENT VERIFICATION');
-  console.log('='.repeat(60) + '\n');
-  
-  const allItems = successful.flatMap(r => [r.sample]).filter(Boolean);
-  const web3Items = allItems.filter(item => {
-    const text = `${item.title} ${item.description} ${item.tags?.join(' ')}`.toLowerCase();
-    return text.includes('web3') || text.includes('blockchain') || 
-           text.includes('defi') || text.includes('nft') || 
-           text.includes('crypto') || text.includes('ethereum') ||
-           text.includes('solidity') || text.includes('smart contract');
-  });
-  
-  console.log(`Found ${web3Items.length}/${allItems.length} items related to Web3`);
-  
-  if (web3Items.length > 0) {
-    console.log('\nSample Web3 content found:');
-    web3Items.slice(0, 3).forEach(item => {
-      console.log(`  • ${item.title}`);
-      console.log(`    ${item.url}`);
-    });
+  console.log('\n🚫 RETURNING FAKE DATA:');
+  if (results.fake.length > 0) {
+    results.fake.forEach(r => console.log(`  - ${r}`));
+  } else {
+    console.log('  None');
   }
   
   // Final verdict
+  const workingPercentage = (results.working.length / fetchers.length) * 100;
   console.log('\n' + '='.repeat(60));
-  if (successful.length >= 3) {
-    console.log('✅ VERDICT: System is fetching REAL data from REAL APIs');
-    console.log('✅ At least 3 fetchers are working with actual internet data');
+  console.log(`📊 SYSTEM STATUS: ${Math.round(workingPercentage)}% FUNCTIONAL`);
+  
+  if (workingPercentage >= 75) {
+    console.log('✅ System is ACTUALLY working');
+  } else if (workingPercentage >= 50) {
+    console.log('🟡 System is PARTIALLY working');
   } else {
-    console.log('⚠️ WARNING: Less than 3 real data sources working');
-    console.log('⚠️ Need to fix fetchers or add API keys');
+    console.log('🔴 System is MOSTLY BROKEN - needs major fixes');
   }
-  console.log('='.repeat(60));
 }
 
-// Run all tests
-runTests().catch(console.error);
+brutalHonestyTest().catch(console.error);
