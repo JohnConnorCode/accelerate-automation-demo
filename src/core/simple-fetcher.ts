@@ -1,7 +1,9 @@
 /**
  * Simple, robust content fetcher with built-in rate limiting
+ * Now enhanced with retry logic and circuit breakers
  */
 import { supabase } from '../lib/supabase-client';
+import { retryFetcher } from '../lib/retry-fetcher';
 
 interface FetchResult {
   source: string;
@@ -39,18 +41,16 @@ class SimpleFetcher {
         return result;
       }
 
-      // Simple fetch with timeout
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 10000);
-      
-      const response = await fetch(url, {
-        signal: controller.signal,
+      // Use retry fetcher with exponential backoff
+      const response = await retryFetcher.fetchWithRetry(url, {
         headers: {
           'User-Agent': 'Accelerate-Content-Bot/1.0'
         }
+      }, {
+        maxRetries: 3,
+        initialDelay: 1000,
+        timeout: 10000
       });
-      
-      clearTimeout(timeout);
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
