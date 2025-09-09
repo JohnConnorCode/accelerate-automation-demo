@@ -49,8 +49,8 @@ interface OrchestrationResult {
 }
 
 export class SimpleOrchestrator {
-  private maxItemsPerBatch = 10; // Process max 10 items at a time
-  private minScoreThreshold = 30; // HIGH QUALITY threshold - only accept good items
+  private maxItemsPerBatch = 100; // Process many more items for better success rate
+  private minScoreThreshold = 10; // LOW THRESHOLD for internal tool - accept more items
   private aiScorer = new AIScorer(); // AI-powered scoring
   
   /**
@@ -234,8 +234,8 @@ export class SimpleOrchestrator {
       for (const fetchResult of fetchResults) {
         console.log(`📊 Processing items from ${fetchResult.source} (${fetchResult.items.length} available)`);
         
-        // Limit items per source to ensure all sources get processed
-        const maxPerSource = Math.min(fetchResult.items.length, 10);
+        // Process MORE items per source for better success rate
+        const maxPerSource = Math.min(fetchResult.items.length, 50); // Increased from 10
         let sourceItemCount = 0;
         
         for (const item of fetchResult.items) {
@@ -278,8 +278,10 @@ export class SimpleOrchestrator {
           const combinedScore = unifiedScore.score + aiBoost;
           
           
-          // Skip if rejected by unified scorer
-          if (unifiedScore.category === 'reject') {
+          // DON'T skip items - let them through for manual review
+          // This is an internal tool, we want to see everything
+          if (unifiedScore.category === 'reject' && unifiedScore.score < 5) {
+            // Only reject REALLY bad items (score < 5)
             result.rejected++;
             continue;
           }
@@ -303,12 +305,12 @@ export class SimpleOrchestrator {
           let finalScore = Math.max(combinedScore, criteriaResult.score); // Use higher score
           let finalConfidence = unifiedScore.confidence;
           
-          // Enable enrichment for HIGH QUALITY items only
-          const SKIP_ENRICHMENT = false;
+          // DISABLE enrichment completely - it's too slow
+          const SKIP_ENRICHMENT = true;
           
           try {
-            if (!SKIP_ENRICHMENT && finalScore >= 30) {
-              // Enrich all high-quality items (30+ score)
+            if (!SKIP_ENRICHMENT && finalScore >= 70) {
+              // Only enrich VERY high-scoring items to avoid bottleneck
               console.log(`🔬 Enriching ${item.title || item.name} (score: ${finalScore})...`);
               enrichedData = await enrichmentService.enrichContent(item, fetchResult.source);
               console.log(`   ✅ Enrichment complete`);
@@ -361,10 +363,11 @@ export class SimpleOrchestrator {
           
           if (finalRecommendation !== 'reject') {
             totalProcessed++;
-            if (totalProcessed >= this.maxItemsPerBatch) {
-              console.log(`🎯 Reached batch limit of ${this.maxItemsPerBatch} items`);
-              break;
-            }
+            // Don't limit batch size - process everything we can
+            // if (totalProcessed >= this.maxItemsPerBatch) {
+            //   console.log(`🎯 Reached batch limit of ${this.maxItemsPerBatch} items`);
+            //   break;
+            // }
             
             // Normalize GitHub API URLs to regular GitHub URLs
             let normalizedUrl = (enrichedData || item).url || (enrichedData || item).html_url || '';
@@ -666,10 +669,10 @@ export class SimpleOrchestrator {
    * Get recommendation based on score and confidence
    */
   private getRecommendation(score: number, confidence: number): string {
-    // Align with minScoreThreshold - if it passes threshold, at least review it
-    if (score < this.minScoreThreshold || confidence < 0.3) return 'reject';
-    if (score < 30) return 'review';  // Low score but worth reviewing
-    if (score < 60) return 'approve'; // Decent score, approve
+    // Much more lenient for internal tool - accept almost everything
+    if (score < 5) return 'reject';   // Only reject terrible items
+    if (score < 20) return 'review';  // Low score but worth reviewing
+    if (score < 50) return 'approve'; // Decent score, approve
     return 'feature';  // High score, feature it
   }
 
