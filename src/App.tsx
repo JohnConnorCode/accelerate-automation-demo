@@ -4,7 +4,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
-import ContentQueue from './pages/ContentQueue'
+import ContentQueueV2 from './pages/ContentQueueV2'
 import Settings from './pages/Settings'
 import Analytics from './pages/Analytics'
 import SystemTest from './pages/SystemTest'
@@ -48,7 +48,7 @@ function App() {
       }>
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="api-config" element={<ApiConfig />} />
-        <Route path="queue" element={<ContentQueue />} />
+        <Route path="queue" element={<ContentQueueV2 />} />
         <Route path="settings" element={<Settings />} />
         <Route path="analytics" element={<Analytics />} />
         <Route path="test" element={<SystemTest />} />
