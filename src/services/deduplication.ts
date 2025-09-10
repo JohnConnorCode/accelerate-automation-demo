@@ -58,10 +58,15 @@ export class DeduplicationService {
         if (table === 'queue_projects') {
           urlColumns = ['website', 'source_url'];
         } else if (table === 'queue_investors') {
-          urlColumns = ['url', 'source_url'];
+          // queue_investors uses 'application_url' not 'url'
+          urlColumns = ['application_url'];
         } else if (table === 'queue_news') {
           urlColumns = ['url', 'source_url'];
         }
+        
+        // Filter out empty columns
+        urlColumns = urlColumns.filter(col => col);
+        if (urlColumns.length === 0) continue;
         
         const orConditions = urlColumns.map(col => `${col}.eq.${safeUrl}`).join(',');
         
@@ -72,7 +77,8 @@ export class DeduplicationService {
           .limit(1);
         
         if (error) {
-          logger.error(`Error checking ${table} for duplicates`, error);
+          // Log but don't fail - column might not exist
+          logger.debug(`Skipping ${table} dedup check: ${error.message}`);
           continue;
         }
         

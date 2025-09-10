@@ -17,7 +17,7 @@ import { logger } from '../services/logger';
 import { metricsService } from '../services/metrics';
 import { ErrorHandler, ErrorSeverity, AppError } from '../utils/error-handler';
 import { AccelerateValidator } from '../validators/accelerate-validator';
-import { MetadataExtractor } from '../services/metadata-extractor';
+import { ComprehensiveExtractor } from '../services/comprehensive-extractor';
 import { aiScorer } from '../services/ai-scorer';
 
 export interface OrchestratorResult {
@@ -192,11 +192,11 @@ export class UnifiedOrchestrator {
   }
 
   /**
-   * Get MULTIPLE data sources - not just 2!
+   * Get MULTIPLE data sources - expanded to include more diverse sources
    */
   private getSources() {
     return [
-      // Original sources
+      // === PROJECTS (Startups, GitHub repos, launches) ===
       {
         name: 'HackerNews Show HN',
         url: 'https://hn.algolia.com/api/v1/search?tags=show_hn&hitsPerPage=20',
@@ -204,30 +204,48 @@ export class UnifiedOrchestrator {
       },
       {
         name: 'GitHub Trending',
-        url: 'https://api.github.com/search/repositories?q=created:>2024-01-01&sort=stars&order=desc&per_page=20',
+        url: 'https://api.github.com/search/repositories?q=created:>2024-01-01&sort=stars&order=desc&per_page=15',
         parser: (data: any) => data.items || []
       },
-      // Add more diverse sources
       {
         name: 'GitHub Web3',
-        url: 'https://api.github.com/search/repositories?q=web3+OR+blockchain+OR+defi+created:>2024-01-01&sort=updated&per_page=20',
+        url: 'https://api.github.com/search/repositories?q=web3+OR+blockchain+OR+defi+created:>2024-01-01&sort=updated&per_page=15',
         parser: (data: any) => data.items || []
       },
       {
         name: 'GitHub AI Startups',
-        url: 'https://api.github.com/search/repositories?q=ai+OR+ml+OR+gpt+created:>2024-01-01&sort=stars&per_page=20',
+        url: 'https://api.github.com/search/repositories?q=ai+OR+ml+OR+llm+created:>2024-01-01&sort=stars&per_page=15',
         parser: (data: any) => data.items || []
       },
       {
-        name: 'HackerNews Ask HN',
-        url: 'https://hn.algolia.com/api/v1/search?tags=ask_hn&query=startup&hitsPerPage=10',
+        name: 'Reddit Startups',
+        url: 'https://www.reddit.com/r/startups/top.json?limit=10',
+        parser: (data: any) => data?.data?.children?.map((p: any) => p.data) || []
+      },
+      {
+        name: 'Reddit SideProject',
+        url: 'https://www.reddit.com/r/SideProject/hot.json?limit=10',
+        parser: (data: any) => data?.data?.children?.map((p: any) => p.data) || []
+      },
+      
+      // === FUNDING (Grants, VCs, Accelerators) ===
+      {
+        name: 'HackerNews Jobs',
+        url: 'https://hn.algolia.com/api/v1/search?tags=job&query=startup+OR+founding+OR+YC&hitsPerPage=15',
         parser: (data: any) => data.hits || []
       },
       {
-        name: 'HackerNews Jobs',
-        url: 'https://hn.algolia.com/api/v1/search?tags=job&query=startup+OR+founding&hitsPerPage=10',
+        name: 'HackerNews Funding',
+        url: 'https://hn.algolia.com/api/v1/search?query=grant+OR+accelerator+OR+incubator&hitsPerPage=10',
         parser: (data: any) => data.hits || []
       },
+      {
+        name: 'GitHub Grants',
+        url: 'https://api.github.com/search/repositories?q=grants+OR+funding+OR+accelerator&sort=updated&per_page=10',
+        parser: (data: any) => data.items || []
+      },
+      
+      // === RESOURCES (Tools, Tutorials, Courses) ===
       {
         name: 'DevTo Startups',
         url: 'https://dev.to/api/articles?tag=startup&per_page=10',
@@ -237,6 +255,26 @@ export class UnifiedOrchestrator {
         name: 'DevTo Web3',
         url: 'https://dev.to/api/articles?tag=web3&per_page=10',
         parser: (data: any) => data || []
+      },
+      {
+        name: 'DevTo Tutorial',
+        url: 'https://dev.to/api/articles?tag=tutorial&per_page=10',
+        parser: (data: any) => data || []
+      },
+      {
+        name: 'HackerNews Ask HN',
+        url: 'https://hn.algolia.com/api/v1/search?tags=ask_hn&query=how+to+OR+tutorial+OR+guide&hitsPerPage=10',
+        parser: (data: any) => data.hits || []
+      },
+      {
+        name: 'GitHub Awesome Lists',
+        url: 'https://api.github.com/search/repositories?q=awesome+in:name+stars:>100&sort=updated&per_page=10',
+        parser: (data: any) => data.items || []
+      },
+      {
+        name: 'Reddit Learn Programming',
+        url: 'https://www.reddit.com/r/learnprogramming/hot.json?limit=5',
+        parser: (data: any) => data?.data?.children?.map((p: any) => p.data) || []
       }
     ];
   }
@@ -267,10 +305,10 @@ export class UnifiedOrchestrator {
               const data = await response.json();
               const items = source.parser(data);
               
-              // Transform to ContentItem format with metadata extraction
+              // Transform to ContentItem format with comprehensive extraction
               const contentItems = items.map((item: any) => {
-                // Use MetadataExtractor for proper extraction
-                return MetadataExtractor.extract(item, source.name);
+                // Use ComprehensiveExtractor for proper extraction
+                return ComprehensiveExtractor.extract(item, source.name);
               });
               
               console.log(`   ✓ ${source.name}: ${contentItems.length} items`);

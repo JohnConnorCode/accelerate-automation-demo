@@ -268,7 +268,7 @@ export class StagingService {
       program_location: item.program_location || item.metadata?.location,
       remote_friendly: item.remote_friendly !== undefined ? item.remote_friendly : true,
       cohort_size: item.cohort_size,
-      acceptance_rate: item.acceptance_rate,
+      // acceptance_rate removed - column doesn't exist in DB
       
       // Benefits and Support (REQUIRED)
       benefits: item.benefits || item.metadata?.benefits || ['Funding', 'Mentorship', 'Network access'],
@@ -286,7 +286,7 @@ export class StagingService {
       // Recent Activity (REQUIRED)
       last_investment_date: item.last_investment_date || item.metadata?.last_investment_date || now.toISOString().split('T')[0],
       recent_investments: item.recent_investments || item.metadata?.recent_investments || ['Recent investment activity'],
-      active_status: item.active_status !== undefined ? item.active_status : true,
+      // active_status removed - column doesn't exist in DB
       
       // Contact Information
       contact_email: item.contact_email,
@@ -303,7 +303,7 @@ export class StagingService {
       source: item.source,
       fetched_at: now.toISOString(),
       score: toNumber(item.score, 50),
-      ai_analysis: item.ai_analysis || item.metadata?.ai_analysis || {},
+      // ai_analysis removed - column doesn't exist in DB
       
       // Review Status
       status: 'pending_review',
