@@ -11,8 +11,6 @@
  */
 
 import { ContentItem } from '../types';
-// Import the no-API sources that actually work
-import { getNoApiSources } from '../fetchers/no-api-sources';
 import { deduplicationService } from '../services/deduplication';
 import { stagingService } from '../services/staging-service';
 import { logger } from '../services/logger';
@@ -31,12 +29,8 @@ export interface OrchestratorResult {
 }
 
 export class UnifiedOrchestrator {
-  private fetchers: any[] = [];
-
   constructor() {
-    // Initialize ONLY working fetchers from no-API sources
-    this.fetchers = getNoApiSources();
-    console.log(`📊 Initialized ${this.fetchers.length} data fetchers (no API keys required)`);
+    console.log(`📊 Unified Orchestrator initialized`);
   }
 
   /**
@@ -162,11 +156,30 @@ export class UnifiedOrchestrator {
   }
 
   /**
+   * Get data sources (simplified - no external dependencies)
+   */
+  private getSources() {
+    return [
+      {
+        name: 'HackerNews Show HN',
+        url: 'https://hn.algolia.com/api/v1/search?tags=show_hn&hitsPerPage=30',
+        parser: (data: any) => data.hits || []
+      },
+      {
+        name: 'GitHub Trending',
+        url: 'https://api.github.com/search/repositories?q=created:>2024-01-01&sort=stars&order=desc',
+        parser: (data: any) => data.items || []
+      }
+    ];
+  }
+
+  /**
    * Fetch from all sources in parallel
    */
   private async fetchFromSources(): Promise<ContentItem[]> {
+    const sources = this.getSources();
     const results = await Promise.allSettled(
-      this.fetchers.map(async source => {
+      sources.map(async source => {
         return await ErrorHandler.wrap(
           async () => {
             console.log(`   Fetching from ${source.name}...`);
@@ -186,12 +199,49 @@ export class UnifiedOrchestrator {
               const data = await response.json();
               const items = source.parser(data);
               
-              // Transform to ContentItem format
-              const contentItems = items.map((item: any) => ({
-                ...item,
-                type: source.type || this.inferType(item),
-                source: source.name
-              }));
+              // Transform to ContentItem format with proper structure
+              const contentItems = items.map((item: any) => {
+                // Extract relevant fields based on source
+                if (source.name.includes('HackerNews')) {
+                  return {
+                    title: item.title,
+                    url: item.url,
+                    description: item.title || '',
+                    type: 'project' as const,
+                    source: source.name,
+                    created_at: item.created_at,
+                    metadata: {
+                      launch_date: item.created_at,
+                      author: item.author,
+                      points: item.points,
+                      comments: item.num_comments
+                    }
+                  };
+                } else if (source.name.includes('GitHub')) {
+                  return {
+                    title: item.name,
+                    name: item.name,
+                    url: item.html_url,
+                    description: item.description || '',
+                    type: 'project' as const,
+                    source: source.name,
+                    created_at: item.created_at,
+                    metadata: {
+                      launch_date: item.created_at,
+                      stars: item.stargazers_count,
+                      language: item.language,
+                      owner: item.owner?.login
+                    }
+                  };
+                }
+                
+                // Default transformation
+                return {
+                  ...item,
+                  type: this.inferType(item),
+                  source: source.name
+                };
+              });
               
               console.log(`   ✓ ${source.name}: ${contentItems.length} items`);
               return contentItems;
