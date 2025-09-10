@@ -26,7 +26,43 @@ export class ApprovalService {
    * Process approval/rejection for a queued item
    */
   async processApproval(request: ApprovalRequest): Promise<ApprovalResponse> {
+    // Input validation
+    if (!request || typeof request !== 'object') {
+      return {
+        success: false,
+        message: 'Invalid request',
+        error: 'Request must be an object'
+      };
+    }
+    
     const { id, type, action, reviewerNotes, reviewedBy = 'admin' } = request;
+    
+    // Validate required fields
+    if (!id || !type || !action) {
+      return {
+        success: false,
+        message: 'Missing required fields',
+        error: 'id, type, and action are required'
+      };
+    }
+    
+    // Validate type
+    if (!['projects', 'investors', 'news'].includes(type)) {
+      return {
+        success: false,
+        message: 'Invalid type',
+        error: 'Type must be projects, investors, or news'
+      };
+    }
+    
+    // Validate action
+    if (!['approve', 'reject'].includes(action)) {
+      return {
+        success: false,
+        message: 'Invalid action',
+        error: 'Action must be approve or reject'
+      };
+    }
     
     // Determine source and target tables
     const queueTable = `queue_${type}`;
@@ -37,31 +73,51 @@ export class ApprovalService {
       : 'accelerate_startups';
     
     try {
-      // 1. Get item from queue
+      // 1. Get item from queue with error handling
       const { data: queueItem, error: fetchError } = await supabase
         .from(queueTable)
         .select('*')
         .eq('id', id)
         .single();
       
-      if (fetchError || !queueItem) {
+      if (fetchError) {
+        logger.error('Failed to fetch queue item', { error: fetchError, id, type });
         return {
           success: false,
-          message: `Item not found in ${queueTable}`,
-          error: fetchError?.message
+          message: `Failed to fetch item from ${queueTable}`,
+          error: fetchError.message || 'Database error'
         };
       }
       
-      // 2. Handle rejection
+      if (!queueItem) {
+        // Check if already in production (duplicate approval attempt)
+        const { data: existingItem } = await supabase
+          .from(productionTable)
+          .select('id, name')
+          .eq('source_queue_id', id)
+          .single();
+        
+        if (existingItem) {
+          return {
+            success: false,
+            message: `Item already approved`,
+            error: `This item was already approved and exists in production`,
+            data: existingItem
+          };
+        }
+        
+        return {
+          success: false,
+          message: `Item not found in ${queueTable}`,
+          error: `No item with id ${id} exists in queue`
+        };
+      }
+      
+      // 2. Handle rejection - just delete from queue
       if (action === 'reject') {
         const { error: rejectError } = await supabase
           .from(queueTable)
-          .update({
-            status: 'rejected',
-            reviewer_notes: reviewerNotes,
-            reviewed_by: reviewedBy,
-            reviewed_at: new Date().toISOString()
-          })
+          .delete()
           .eq('id', id);
         
         if (rejectError) {
@@ -72,38 +128,52 @@ export class ApprovalService {
           };
         }
         
-        logger.info(`Item rejected`, { id, type, reviewedBy });
+        logger.info(`Item rejected and removed from queue`, { id, type, reviewedBy });
         return {
           success: true,
-          message: 'Item rejected successfully'
+          message: 'Item rejected and removed from queue'
         };
       }
       
-      // 3. Handle approval - keep in queue with approved status for now
-      const { error: updateError } = await supabase
-        .from(queueTable)
-        .update({
-          status: 'approved',
-          reviewer_notes: reviewerNotes,
-          reviewed_by: reviewedBy,
-          reviewed_at: new Date().toISOString()
-        })
-        .eq('id', id);
+      // 3. Handle approval - move to production and delete from queue
+      const productionItem = this.transformForProduction(queueItem, type);
       
-      if (updateError) {
+      // Insert into production table
+      const { data: insertedItem, error: insertError } = await supabase
+        .from(productionTable)
+        .insert(productionItem)
+        .select()
+        .single();
+      
+      if (insertError) {
         return {
           success: false,
-          message: 'Failed to approve item',
-          error: updateError.message
+          message: `Failed to insert into ${productionTable}`,
+          error: insertError.message
         };
       }
       
-      logger.info(`Item approved`, { id, type, reviewedBy });
+      // Delete from queue after successful production insert
+      const { error: deleteError } = await supabase
+        .from(queueTable)
+        .delete()
+        .eq('id', id);
+      
+      if (deleteError) {
+        logger.warn('Failed to delete from queue after approval', { error: deleteError });
+      }
+      
+      logger.info(`Item approved and moved to production`, { 
+        id, 
+        type, 
+        productionId: insertedItem.id,
+        reviewedBy 
+      });
       
       return {
         success: true,
-        message: `Item approved successfully`,
-        data: { id, type }
+        message: `Item approved and moved to ${productionTable}`,
+        data: insertedItem
       };
       
     } catch (error) {
@@ -114,6 +184,73 @@ export class ApprovalService {
         error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
+  }
+  
+  /**
+   * Transform queue item for production table with validation
+   */
+  private transformForProduction(queueItem: any, type: string): any {
+    if (!queueItem || typeof queueItem !== 'object') {
+      throw new Error('Invalid queue item');
+    }
+    
+    const now = new Date().toISOString();
+    
+    if (type === 'projects') {
+      // Validate required fields
+      if (!queueItem.company_name) {
+        throw new Error('Missing required field: company_name');
+      }
+      
+      // Transform queue_projects to accelerate_startups
+      return {
+        // Core fields - NOTE: accelerate_startups uses 'name' not 'company_name'
+        name: queueItem.company_name,  // CRITICAL: column is 'name' not 'company_name'
+        description: queueItem.description || '',
+        website: queueItem.website || null,
+        source_queue_id: queueItem.id,  // Track original queue ID for duplicate detection
+        
+        // Team & Location
+        founders: queueItem.founders || [],
+        team_size: queueItem.team_size,
+        location: queueItem.location,
+        country: queueItem.country,
+        
+        // Funding
+        funding_amount: queueItem.funding_amount,
+        funding_round: queueItem.funding_round,
+        funding_investors: queueItem.funding_investors || [],
+        
+        // Technology
+        technology_stack: queueItem.technology_stack || [],
+        industry_tags: queueItem.industry_tags || [],
+        
+        // Metadata
+        source: queueItem.source,
+        source_url: queueItem.source_url,
+        
+        // ACCELERATE fields
+        accelerate_fit: true,
+        accelerate_reason: queueItem.accelerate_reason,
+        accelerate_score: queueItem.accelerate_score,
+        
+        // Timestamps
+        created_at: now,
+        updated_at: now,
+        approved_at: now,
+        approved_by: 'admin'
+        
+        // Note: accelerate_startups doesn't have status, verified, or featured columns
+      };
+    }
+    
+    // Default fallback - pass through with timestamps
+    return {
+      ...queueItem,
+      created_at: now,
+      updated_at: now,
+      status: 'active'
+    };
   }
   
   /**
@@ -132,12 +269,11 @@ export class ApprovalService {
       total: 0
     };
     
-    // Get pending projects
+    // Get ALL items from queue (since no status column exists)
     if (!type || type === 'projects') {
       const { data: projects } = await supabase
         .from('queue_projects')
         .select('*')
-        .eq('status', 'pending_review')
         .order('created_at', { ascending: false })
         .limit(10);
       
@@ -149,7 +285,6 @@ export class ApprovalService {
       const { data: investors } = await supabase
         .from('queue_investors')
         .select('*')
-        .eq('status', 'pending_review')
         .order('created_at', { ascending: false })
         .limit(10);
       
@@ -161,7 +296,6 @@ export class ApprovalService {
       const { data: news } = await supabase
         .from('queue_news')
         .select('*')
-        .eq('status', 'pending_review')
         .order('created_at', { ascending: false })
         .limit(10);
       
