@@ -169,13 +169,18 @@ export default function ContentQueueEnhanced() {
   // Handle batch approval
   const handleBatchApprove = async () => {
     if (selectedItems.size === 0) {
-      toast.error('No items selected');
+      toast.error('No items selected', {
+        description: 'Please select at least one item to approve'
+      });
       return;
     }
 
-    const confirmed = window.confirm(`Approve ${selectedItems.size} items?`);
+    const confirmed = window.confirm(
+      `Are you sure you want to approve ${selectedItems.size} item${selectedItems.size > 1 ? 's' : ''}?\n\nThis will move them to production.`
+    );
     if (!confirmed) return;
 
+    toast.loading(`Approving ${selectedItems.size} items...`);
     let succeeded = 0;
     let failed = 0;
 
@@ -202,7 +207,20 @@ export default function ContentQueueEnhanced() {
       }
     }
 
-    toast.success(`Approved ${succeeded} items${failed > 0 ? `, ${failed} failed` : ''}`);
+    toast.dismiss();
+    if (succeeded > 0 && failed === 0) {
+      toast.success(`Successfully approved ${succeeded} item${succeeded > 1 ? 's' : ''}`, {
+        description: 'Items have been moved to production'
+      });
+    } else if (succeeded > 0 && failed > 0) {
+      toast.warning(`Approved ${succeeded} items, ${failed} failed`, {
+        description: 'Some items could not be approved'
+      });
+    } else {
+      toast.error('Failed to approve items', {
+        description: 'Please try again or check the logs'
+      });
+    }
     setSelectedItems(new Set());
     await fetchItems();
   };
@@ -327,6 +345,49 @@ export default function ContentQueueEnhanced() {
   useEffect(() => {
     applyFilters(items);
   }, [filters, items, applyFilters]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Ctrl/Cmd + A to select all
+      if ((e.ctrlKey || e.metaKey) && e.key === 'a' && !e.shiftKey) {
+        e.preventDefault();
+        if (filteredItems.length > 0) {
+          setSelectedItems(new Set(filteredItems.map(item => item.id)));
+          toast.info(`Selected all ${filteredItems.length} items`);
+        }
+      }
+      
+      // Escape to clear selection
+      if (e.key === 'Escape') {
+        if (selectedItems.size > 0) {
+          setSelectedItems(new Set());
+          toast.info('Selection cleared');
+        }
+        if (showDetailModal) {
+          setShowDetailModal(false);
+        }
+      }
+      
+      // Ctrl/Cmd + E to export
+      if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+        e.preventDefault();
+        handleExport();
+      }
+      
+      // F to toggle filters
+      if (e.key === 'f' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const activeElement = document.activeElement as HTMLElement;
+        if (activeElement.tagName !== 'INPUT' && activeElement.tagName !== 'TEXTAREA') {
+          e.preventDefault();
+          setShowFilters(!showFilters);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [filteredItems, selectedItems, showDetailModal, showFilters]);
 
   const getItemName = (item: QueueItem) => {
     return item.company_name || item.title || item.name || 'Unnamed';
@@ -532,13 +593,39 @@ export default function ContentQueueEnhanced() {
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 py-6">
         {loading ? (
-          <div className="flex justify-center py-12">
-            <RefreshCw className="w-8 h-8 animate-spin text-blue-600" />
+          <div className="flex flex-col items-center justify-center py-16 bg-white rounded-lg">
+            <RefreshCw className="w-10 h-10 animate-spin text-blue-600 mb-4" />
+            <p className="text-gray-600 font-medium">Loading queue items...</p>
+            <p className="text-sm text-gray-500 mt-2">Fetching the latest content for review</p>
           </div>
         ) : filteredItems.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-lg">
-            <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">No items match your filters</p>
+          <div className="text-center py-16 bg-white rounded-lg border-2 border-dashed border-gray-300">
+            <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No items found</h3>
+            <p className="text-gray-600 mb-6">
+              {filters.searchTerm 
+                ? `No items match "${filters.searchTerm}"`
+                : items.length === 0 
+                  ? 'The queue is empty. Fetch new content to get started.'
+                  : 'Try adjusting your filters to see more items.'}
+            </p>
+            {items.length === 0 && (
+              <button
+                onClick={fetchItems}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 inline-flex items-center gap-2"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Fetch New Content
+              </button>
+            )}
+            {filters.searchTerm && (
+              <button
+                onClick={() => setFilters({...filters, searchTerm: ''})}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 inline-flex items-center gap-2"
+              >
+                Clear Search
+              </button>
+            )}
           </div>
         ) : (
           <div className="space-y-3">

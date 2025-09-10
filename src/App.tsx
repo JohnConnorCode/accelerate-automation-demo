@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
+import LayoutEnhanced from './components/LayoutEnhanced'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import ContentQueueV2 from './pages/ContentQueueV2'
@@ -44,7 +45,7 @@ function App() {
       {/* Protected routes (logged in users) */}
       <Route element={
         <ProtectedRoute adminOnly={false}>
-          <Layout />
+          <LayoutEnhanced />
         </ProtectedRoute>
       }>
         <Route path="dashboard" element={<Dashboard />} />
