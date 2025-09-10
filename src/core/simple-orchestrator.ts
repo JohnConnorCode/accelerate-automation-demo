@@ -50,7 +50,7 @@ interface OrchestrationResult {
 
 export class SimpleOrchestrator {
   private maxItemsPerBatch = 100; // Process many more items for better success rate
-  private minScoreThreshold = 25; // QUALITY threshold - only accept decent items
+  private minScoreThreshold = 15; // REALISTIC threshold - accept average quality items
   private aiScorer = new AIScorer(); // AI-powered scoring
   
   /**

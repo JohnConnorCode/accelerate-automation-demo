@@ -10,7 +10,7 @@ import { supabase } from './supabase-client';
  */
 
 export class AccelerateDBPipeline {
-  private static readonly MIN_SCORE_THRESHOLD = 30; // Minimum score to qualify
+  private static readonly MIN_SCORE_THRESHOLD = 15; // Lowered to match realistic scoring
   private static readonly BATCH_SIZE = 50; // Process in batches
   private static aiScorer = new AIScorer(); // AI scoring integration
   
@@ -240,8 +240,8 @@ export class AccelerateDBPipeline {
     const meta = item.metadata || {};
     
     const fundingData = {
-      // Core fields
-      name: meta.name || item.title,
+      // Core fields - CRITICAL: funding_programs table uses 'program_name' not 'name'
+      program_name: meta.name || item.title,
       organization: meta.organization || item.author,
       description: item.description,
       
@@ -298,7 +298,7 @@ export class AccelerateDBPipeline {
     if (error) throw error;
 
     // Log in content_sources
-    await this.logContentSource(item, 'funding_programs', fundingData.name);
+    await this.logContentSource(item, 'funding_programs', fundingData.program_name);
   }
 
   /**

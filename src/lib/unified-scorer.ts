@@ -161,18 +161,19 @@ export class UnifiedScorer {
     // Calculate final confidence
     confidence = Math.min(1, confidence);
     
-    // Determine category
+    // Determine category - ADJUSTED for realistic scoring
+    // Average items score ~40, so we need more reasonable thresholds
     let category: ScoringResult['category'];
-    if (score < 20) {
-      category = 'reject';
-    } else if (score < 40) {
-      category = 'low';
-    } else if (score < 60) {
-      category = 'medium';
-    } else if (score < 80) {
-      category = 'high';
+    if (score < 10) {
+      category = 'reject';  // Only truly bad items
+    } else if (score < 25) {
+      category = 'low';     // Below average but acceptable
+    } else if (score < 45) {
+      category = 'medium';  // Average items (most content)
+    } else if (score < 65) {
+      category = 'high';    // Good quality items
     } else {
-      category = 'urgent';
+      category = 'urgent';  // Exceptional items
     }
     
     // Special case: If has needs but low score, upgrade to at least medium
