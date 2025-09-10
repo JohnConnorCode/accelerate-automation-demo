@@ -139,18 +139,24 @@ export class StagingService {
    * Transform to project format
    */
   private transformToProject(item: any) {
+    // Helper to ensure numeric values
+    const toNumber = (val: any, defaultVal: number = 0): number => {
+      const num = Number(val);
+      return isNaN(num) ? defaultVal : num;
+    };
+
     return {
       // Core Fields
       company_name: item.title || item.name || 'Untitled Project',
       description: item.description,
       website: item.website_url || item.url,
-      founded_year: item.founded_year || item.metadata?.founded_year || new Date().getFullYear(),
+      founded_year: toNumber(item.founded_year || item.metadata?.founded_year, new Date().getFullYear()),
       
       // ACCELERATE Fields (Required)
       accelerate_fit: item.accelerate_fit || false,
       accelerate_reason: item.accelerate_reason || '',
-      accelerate_score: Math.min(9.99, (item.accelerate_score || item.score || 0) / 10),
-      confidence_score: Math.min(9.99, item.confidence_score || 0.5),
+      accelerate_score: Math.min(9.99, toNumber(item.accelerate_score || item.score, 0) / 10),
+      confidence_score: Math.min(9.99, toNumber(item.confidence_score, 0.5)),
       
       // Location & Team
       location: item.location || item.metadata?.location,
@@ -158,17 +164,17 @@ export class StagingService {
       region: item.region || item.metadata?.region,
       city: item.city || item.metadata?.city,
       founders: item.founders || item.metadata?.founders || [],
-      team_size: item.team_size || item.metadata?.team_size,
-      employee_count: item.employee_count || item.team_size,
+      team_size: toNumber(item.team_size || item.metadata?.team_size),
+      employee_count: toNumber(item.employee_count || item.team_size),
       
       // Funding & Business
-      funding_amount: item.funding_raised || item.metadata?.funding_raised || 0,
+      funding_amount: toNumber(item.funding_raised || item.metadata?.funding_raised),
       funding_round: item.funding_round || item.metadata?.funding_round,
       funding_investors: item.funding_investors || item.metadata?.investors || [],
       last_funding_date: item.last_funding_date || item.metadata?.last_funding_date,
-      total_funding: item.total_funding || item.funding_raised || 0,
-      valuation: item.valuation || item.metadata?.valuation,
-      revenue: item.revenue || item.metadata?.revenue,
+      total_funding: toNumber(item.total_funding || item.funding_raised),
+      valuation: toNumber(item.valuation || item.metadata?.valuation),
+      revenue: toNumber(item.revenue || item.metadata?.revenue),
       business_model: item.business_model || item.metadata?.business_model,
       
       // Technology & Industry
@@ -203,6 +209,12 @@ export class StagingService {
    * Transform to investor format (was funding)
    */
   private transformToFunding(item: any) {
+    // Helper to ensure numeric values
+    const toNumber = (val: any, defaultVal: number = 0): number => {
+      const num = Number(val);
+      return isNaN(num) ? defaultVal : num;
+    };
+
     return {
       // Core Fields
       name: item.title || item.name || 'Untitled Investor',
@@ -213,15 +225,15 @@ export class StagingService {
       // ACCELERATE Fields
       accelerate_fit: item.accelerate_fit || false,
       accelerate_reason: item.accelerate_reason || '',
-      accelerate_score: Math.min(9.99, (item.accelerate_score || item.score || 0) / 10),
-      confidence_score: Math.min(9.99, item.confidence_score || 0.5),
+      accelerate_score: Math.min(9.99, toNumber(item.accelerate_score || item.score, 0) / 10),
+      confidence_score: Math.min(9.99, toNumber(item.confidence_score, 0.5)),
       
       // Investment Profile
       investment_stage: item.investment_stage || item.metadata?.stage_preferences || [],
-      investment_size_min: item.min_amount || item.metadata?.min_amount || 0,
-      investment_size_max: item.max_amount || item.metadata?.max_amount || 0,
-      total_investments: item.total_investments || 0,
-      total_portfolio_value: item.portfolio_value || 0,
+      investment_size_min: toNumber(item.min_amount || item.metadata?.min_amount),
+      investment_size_max: toNumber(item.max_amount || item.metadata?.max_amount),
+      total_investments: toNumber(item.total_investments),
+      total_portfolio_value: toNumber(item.portfolio_value),
       
       // Focus Areas
       industry_focus: item.industry_focus || item.metadata?.sector_focus || [],
@@ -243,7 +255,7 @@ export class StagingService {
       // Activity
       last_investment_date: item.last_investment_date || item.metadata?.last_investment_date,
       recent_portfolio: item.recent_portfolio || item.metadata?.recent_portfolio || [],
-      total_deployed_2025: item.total_deployed_2025 || item.metadata?.total_deployed_2025,
+      total_deployed_2025: toNumber(item.total_deployed_2025 || item.metadata?.total_deployed_2025),
       
       // Source & Enrichment
       source: item.source,
@@ -267,6 +279,12 @@ export class StagingService {
    * Transform to news format (was resource)
    */
   private transformToResource(item: any) {
+    // Helper to ensure numeric values
+    const toNumber = (val: any, defaultVal: number = 0): number => {
+      const num = Number(val);
+      return isNaN(num) ? defaultVal : num;
+    };
+
     return {
       // Core Fields
       title: item.title || item.name || 'Untitled News',
@@ -277,8 +295,8 @@ export class StagingService {
       // ACCELERATE Fields
       accelerate_fit: item.accelerate_fit || false,
       accelerate_reason: item.accelerate_reason || '',
-      accelerate_score: Math.min(9.99, (item.accelerate_score || item.score || 0) / 10),
-      confidence_score: Math.min(9.99, item.confidence_score || 0.5),
+      accelerate_score: Math.min(9.99, toNumber(item.accelerate_score || item.score, 0) / 10),
+      confidence_score: Math.min(9.99, toNumber(item.confidence_score, 0.5)),
       
       // Article Details
       author: item.author || item.metadata?.author,
@@ -297,14 +315,14 @@ export class StagingService {
       summary: item.summary || item.ai_summary || '',
       key_points: item.key_points || item.metadata?.key_points || [],
       sentiment: item.sentiment || 'neutral',
-      sentiment_score: Math.min(9.99, item.sentiment_score || 0),
-      relevance_score: Math.min(9.99, (item.relevance_score || item.score || 0) / 10),
+      sentiment_score: Math.min(9.99, toNumber(item.sentiment_score)),
+      relevance_score: Math.min(9.99, toNumber(item.relevance_score || item.score, 0) / 10),
       
       // Engagement Metrics
-      views: item.views || 0,
-      shares: item.shares || 0,
-      comments: item.comments || 0,
-      engagement_score: item.engagement_score || 0,
+      views: toNumber(item.views),
+      shares: toNumber(item.shares),
+      comments: toNumber(item.comments),
+      engagement_score: toNumber(item.engagement_score),
       
       // Source & Enrichment
       source: item.source,
