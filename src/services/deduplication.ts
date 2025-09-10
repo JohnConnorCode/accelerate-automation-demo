@@ -29,48 +29,66 @@ export class DeduplicationService {
    */
   async isDuplicate(content: any): Promise<boolean> {
     try {
-      // Check NEW queue tables AND live tables for duplicates
-      if (content.url) {
-        // Check all three queue tables
-        const tables = ['queue_projects', 'queue_news', 'queue_investors'];
-        
-        for (const table of tables) {
-          const { data: queueMatch } = await supabase
-            .from(table)
-            .select('id')
-            .or(`url.eq.${content.url},website.eq.${content.url},source_url.eq.${content.url}`)
-            .limit(1);
-          
-          if (queueMatch && queueMatch.length > 0) {
-            console.log(`🔁 Duplicate in ${table}: ${content.url}`);
-            logger.debug(`Duplicate found in ${table}`, { url: content.url });
-            return true;
-          }
-        }
-        
-        // Also check live tables (approved items)
-        const liveTables = ['accelerate_startups', 'accelerate_news', 'accelerate_investors'];
-        
-        for (const table of liveTables) {
-          const { data: liveMatch } = await supabase
-            .from(table)
-            .select('id')
-            .or(`website.eq.${content.url},url.eq.${content.url}`)
-            .limit(1);
-          
-          if (liveMatch && liveMatch.length > 0) {
-            console.log(`🔁 Duplicate in ${table}: ${content.url}`);
-            logger.debug(`Duplicate found in ${table}`, { url: content.url });
-            return true;
-          }
-        }
-        
-        console.log(`✨ NEW content: ${content.url}`);
+      if (!content.url) {
+        return false; // Can't check duplicates without URL
       }
 
-      // DISABLED: Hash checking is too aggressive, blocking good content
-      // Only URL matching is needed to prevent true duplicates
-      // Also disabling fuzzy title matching - it's too aggressive
+      // Sanitize URL to prevent SQL injection
+      const safeUrl = content.url.replace(/'/g, "''");
+      
+      // Check queue tables based on content type
+      let tablesToCheck: string[] = [];
+      
+      if (content.type === 'project') {
+        tablesToCheck = ['queue_projects'];
+      } else if (content.type === 'funding') {
+        tablesToCheck = ['queue_investors'];
+      } else if (content.type === 'resource') {
+        tablesToCheck = ['queue_news'];
+      } else {
+        // Check all if type unknown
+        tablesToCheck = ['queue_projects', 'queue_news', 'queue_investors'];
+      }
+      
+      // Check queue tables with correct column names
+      for (const table of tablesToCheck) {
+        // Different tables have different column names
+        let urlColumns: string[] = [];
+        
+        if (table === 'queue_projects') {
+          urlColumns = ['website', 'source_url'];
+        } else if (table === 'queue_investors') {
+          urlColumns = ['url', 'source_url'];
+        } else if (table === 'queue_news') {
+          urlColumns = ['url', 'source_url'];
+        }
+        
+        const orConditions = urlColumns.map(col => `${col}.eq.${safeUrl}`).join(',');
+        
+        const { data, error } = await supabase
+          .from(table)
+          .select('id, created_at')
+          .or(orConditions)
+          .limit(1);
+        
+        if (error) {
+          logger.error(`Error checking ${table} for duplicates`, error);
+          continue;
+        }
+        
+        if (data && data.length > 0) {
+          const age = Date.now() - new Date(data[0].created_at).getTime();
+          const ageHours = Math.round(age / (1000 * 60 * 60));
+          logger.debug(`Duplicate found in ${table}`, { 
+            url: content.url,
+            existingId: data[0].id,
+            ageHours 
+          });
+          return true;
+        }
+      }
+      
+      // URL is unique
       return false;
       
       /* DISABLED - TOO STRICT
