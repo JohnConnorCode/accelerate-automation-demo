@@ -13,9 +13,29 @@ const supabaseUrl = typeof window !== 'undefined'
   ? (import.meta as any).env?.VITE_SUPABASE_URL || 'https://eqpfvmwmdtsgddpsodsr.supabase.co'
   : process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://eqpfvmwmdtsgddpsodsr.supabase.co';
 
+// In browser: use VITE_SUPABASE_ANON_KEY
+// In Node.js: prefer SERVICE_KEY for write operations, fallback to ANON_KEY
 const supabaseKey = typeof window !== 'undefined'
   ? (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcGZ2bXdtZHRzZ2RkcHNvZHNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU4MjE4NzgsImV4cCI6MjA2MTM5Nzg3OH0.HAyBibHx0dqzXEAAr2MYxv1sfs13PLANLXLXM2NIWKI'
-  : process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcGZ2bXdtZHRzZ2RkcHNvZHNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU4MjE4NzgsImV4cCI6MjA2MTM5Nzg3OH0.HAyBibHx0dqzXEAAr2MYxv1sfs13PLANLXLXM2NIWKI';
+  : (() => {
+      // Check if SERVICE_KEY is valid (should start with 'eyJ' like JWT tokens)
+      const serviceKey = process.env.SUPABASE_SERVICE_KEY;
+      if (serviceKey && serviceKey.startsWith('eyJ')) {
+        console.log('✅ Using Supabase service key for full access');
+        return serviceKey;
+      }
+      
+      // Fallback to anon key
+      const anonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+      if (anonKey) {
+        console.log('⚠️ Using Supabase anon key (limited write access)');
+        return anonKey;
+      }
+      
+      // Last resort: hardcoded anon key for the project
+      console.log('⚠️ Using default Supabase anon key - configure .env for production!');
+      return 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcGZ2bXdtZHRzZ2RkcHNvZHNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU4MjE4NzgsImV4cCI6MjA2MTM5Nzg3OH0.HAyBibHx0dqzXEAAr2MYxv1sfs13PLANLXLXM2NIWKI';
+    })();
 
 // Check if properly configured
 export const isSupabaseConfigured = 
