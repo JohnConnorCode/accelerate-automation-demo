@@ -27,6 +27,9 @@ export class StagingService {
     inserted: { projects: number; funding: number; resources: number };
     errors: string[];
   }> {
+    console.log(`\n🔍 StagingService.insertToStaging called with ${items.length} items`);
+    console.log(`   Item types:`, items.map(i => i.type).join(', '));
+    
     const result = {
       success: true,
       inserted: { projects: 0, funding: 0, resources: 0 },
@@ -35,6 +38,7 @@ export class StagingService {
 
     // Group items by type
     const grouped = this.groupByType(items);
+    console.log(`   Grouped: ${grouped.projects.length} projects, ${grouped.funding.length} funding, ${grouped.resources.length} resources`);
 
     // Insert projects
     if (grouped.projects.length > 0) {
@@ -155,8 +159,8 @@ export class StagingService {
       // ACCELERATE Fields (Required)
       accelerate_fit: item.accelerate_fit || false,
       accelerate_reason: item.accelerate_reason || '',
-      accelerate_score: Math.min(9.99, toNumber(item.accelerate_score || item.score, 0) / 10),
-      confidence_score: Math.min(9.99, toNumber(item.confidence_score, 0.5)),
+      accelerate_score: Math.min(9.99, toNumber(item.accelerate_score || item.score, 0)),
+      confidence_score: Math.min(9.99, toNumber(item.confidence_score || 0.7, 0.7)),
       
       // Location & Team
       location: item.location || item.metadata?.location,
@@ -330,8 +334,8 @@ export class StagingService {
       // ACCELERATE Fields
       accelerate_fit: item.accelerate_fit || false,
       accelerate_reason: item.accelerate_reason || '',
-      accelerate_score: Math.min(9.99, toNumber(item.accelerate_score || item.score, 0) / 10),
-      confidence_score: Math.min(9.99, toNumber(item.confidence_score, 0.5)),
+      accelerate_score: Math.min(9.99, toNumber(item.accelerate_score || item.score, 0)),
+      confidence_score: Math.min(9.99, toNumber(item.confidence_score || 0.7, 0.7)),
       
       // Article Details
       author: item.author || item.metadata?.author,
@@ -351,7 +355,7 @@ export class StagingService {
       key_points: item.key_points || item.metadata?.key_points || [],
       sentiment: item.sentiment || 'neutral',
       sentiment_score: Math.min(9.99, toNumber(item.sentiment_score)),
-      relevance_score: Math.min(9.99, toNumber(item.relevance_score || item.score, 0) / 10),
+      relevance_score: Math.min(9.99, toNumber(item.relevance_score || item.score, 0)),
       
       // Engagement Metrics
       views: toNumber(item.views),
@@ -384,7 +388,8 @@ export class StagingService {
    */
   private async insertProjects(items: any[]): Promise<{ count: number; error?: string }> {
     try {
-      console.log(`📝 Inserting ${items.length} projects...`);
+      console.log(`\n📝 Inserting ${items.length} projects to queue_projects...`);
+      console.log(`   Sample item:`, JSON.stringify(items[0], null, 2).substring(0, 500));
       
       const { data, error } = await supabase
         .from('queue_projects')

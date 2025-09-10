@@ -14,7 +14,7 @@ import dotenv from 'dotenv'
 dotenv.config({ path: process.env.NODE_ENV === 'production' ? '.env.production' : '.env' })
 
 const app = express()
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 3002
 
 // Initialize scheduler
 scheduler.initialize()
