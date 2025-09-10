@@ -32,6 +32,8 @@ import { HackathonProjectsFetcher } from '../fetchers/platforms/hackathon-projec
 import { CryptoJobsListFetcher } from '../fetchers/platforms/crypto-job-list';
 import { RobustFetcher } from '../lib/fetcher-with-retry';
 import { UnifiedScorer } from '../lib/unified-scorer';
+import { StartupMetadataExtractor } from '../extractors/startup-metadata-extractor';
+import { FundingProgramExtractor } from '../extractors/funding-program-extractor';
 
 interface OrchestrationResult {
   fetched: number;
@@ -50,7 +52,7 @@ interface OrchestrationResult {
 
 export class SimpleOrchestrator {
   private maxItemsPerBatch = 100; // Process many more items for better success rate
-  private minScoreThreshold = 15; // REALISTIC threshold - accept average quality items
+  private minScoreThreshold = 40; // HIGH QUALITY threshold - only accept good content
   private aiScorer = new AIScorer(); // AI-powered scoring
   
   /**
@@ -250,14 +252,50 @@ export class SimpleOrchestrator {
           }
           sourceItemCount++;
           totalEvaluated++;
+          
+          // CRITICAL: Extract metadata BEFORE scoring
+          let enrichedItem = item;
+          
+          // Apply source-specific extraction
+          if (item.type === 'funding' || fetchResult.source.includes('grant') || fetchResult.source.includes('funding')) {
+            // Extract funding program metadata
+            const fundingMeta = FundingProgramExtractor.extractFromContent(item);
+            enrichedItem = {
+              ...item,
+              metadata: {
+                ...item.metadata,
+                ...fundingMeta
+              }
+            };
+            
+            // Validate funding program quality
+            if (!FundingProgramExtractor.isHighQualityProgram(fundingMeta)) {
+              result.rejected++;
+              continue;
+            }
+          } else {
+            // Extract startup/project metadata
+            enrichedItem = StartupMetadataExtractor.enrichContentItem(item);
+            
+            // Validate ACCELERATE criteria AFTER extraction
+            if (!StartupMetadataExtractor.meetsAccelerateCriteria(enrichedItem)) {
+              // Skip items that don't meet basic criteria
+              result.rejected++;
+              continue;
+            }
+          }
+          
           // Use UNIFIED SCORER that prioritizes projects with needs
-          const unifiedScore = UnifiedScorer.scoreContent(item);
+          const unifiedScore = UnifiedScorer.scoreContent(enrichedItem);
           result.scored++;
           
           // Log scoring for first few items
           if (totalEvaluated <= 5) {
-            console.log(`  📊 ${item.title || item.name}: ${unifiedScore.category.toUpperCase()} (${unifiedScore.score})`);
+            console.log(`  📊 ${enrichedItem.title || enrichedItem.name}: ${unifiedScore.category.toUpperCase()} (${unifiedScore.score})`);
             console.log(`     Reasons: ${unifiedScore.reasons.join(', ')}`);
+            if (enrichedItem.metadata?.launch_year) {
+              console.log(`     Launch: ${enrichedItem.metadata.launch_year}, Funding: $${enrichedItem.metadata.funding_raised || 0}, Team: ${enrichedItem.metadata.team_size || 'unknown'}`);
+            }
           }
           
           // Get AI score if available (optional enhancement)
@@ -265,7 +303,7 @@ export class SimpleOrchestrator {
           let aiBoost = 0;
           try {
             if (unifiedScore.score >= 40) { // Only use AI for promising items
-              aiScore = await this.aiScorer.scoreContent(item);
+              aiScore = await this.aiScorer.scoreContent(enrichedItem);
               if (aiScore) {
                 aiBoost = Math.round(aiScore.overall * 20); // Up to 20 point AI boost
               }
@@ -286,14 +324,14 @@ export class SimpleOrchestrator {
           // }
           
           // Detect content type using dynamic criteria
-          const contentType = this.detectContentType(item, fetchResult.source);
+          const contentType = this.detectContentType(enrichedItem, fetchResult.source);
           // Don't log every single item - it's too much
           
           // ACCELERATE criteria scoring - now with warnings instead of rejections
-          const criteriaResult = accelerateCriteriaScorer.score(item, contentType as any);
+          const criteriaResult = accelerateCriteriaScorer.score(enrichedItem, contentType as any);
           if (!criteriaResult.eligible) {
             // Log warning but don't reject - let manual review decide
-            console.log(`⚠️ ACCELERATE criteria warning for ${item.title || item.name}: ${criteriaResult.reasons.join(', ')}`);
+            console.log(`⚠️ ACCELERATE criteria warning for ${enrichedItem.title || enrichedItem.name}: ${criteriaResult.reasons.join(', ')}`);
             // Still use the score but mark for review
             criteriaResult.score = Math.max(criteriaResult.score, 10); // Ensure minimum score
           }
@@ -310,8 +348,8 @@ export class SimpleOrchestrator {
           try {
             if (!SKIP_ENRICHMENT && finalScore >= 70) {
               // Only enrich VERY high-scoring items to avoid bottleneck
-              console.log(`🔬 Enriching ${item.title || item.name} (score: ${finalScore})...`);
-              enrichedData = await enrichmentService.enrichContent(item, fetchResult.source);
+              console.log(`🔬 Enriching ${enrichedItem.title || enrichedItem.name} (score: ${finalScore})...`);
+              enrichedData = await enrichmentService.enrichContent(enrichedItem, fetchResult.source);
               console.log(`   ✅ Enrichment complete`);
               if (enrichedData) {
                 console.log(`   📊 Enriched data validation:`, enrichedData.validation);
@@ -371,14 +409,14 @@ export class SimpleOrchestrator {
             // }
             
             // Normalize GitHub API URLs to regular GitHub URLs
-            let normalizedUrl = (enrichedData || item).url || (enrichedData || item).html_url || '';
+            let normalizedUrl = (enrichedData || enrichedItem).url || (enrichedData || enrichedItem).html_url || '';
             if (normalizedUrl.includes('api.github.com/repos/')) {
               normalizedUrl = normalizedUrl.replace('api.github.com/repos/', 'github.com/');
             }
             
             // AI-FORMATTED FINAL DATA
             const aiFormattedItem = {
-              ...(enrichedData || item),
+              ...(enrichedData || enrichedItem),
               url: normalizedUrl, // Use normalized URL
               source: fetchResult.source,
               content_type: contentType,

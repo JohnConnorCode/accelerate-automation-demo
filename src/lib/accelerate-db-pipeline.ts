@@ -10,7 +10,7 @@ import { supabase } from './supabase-client';
  */
 
 export class AccelerateDBPipeline {
-  private static readonly MIN_SCORE_THRESHOLD = 15; // Lowered to match realistic scoring
+  private static readonly MIN_SCORE_THRESHOLD = 40; // HIGH QUALITY - only good content
   private static readonly BATCH_SIZE = 50; // Process in batches
   private static aiScorer = new AIScorer(); // AI scoring integration
   

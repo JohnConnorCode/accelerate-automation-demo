@@ -18,20 +18,18 @@ export class NoApiDataFetcher {
    * Sources that work without any API key
    */
   private publicSources: PublicSource[] = [
-    // 1. HACKER NEWS - Public API
+    // 1. HACKER NEWS - Show HN posts (REAL PROJECTS)
     {
-      name: 'hackernews-top',
-      url: 'https://hacker-news.firebaseio.com/v0/topstories.json',
+      name: 'hackernews-showhn',
+      url: 'https://hn.algolia.com/api/v1/search?tags=show_hn&hitsPerPage=50',
       type: 'json',
-      parser: async (storyIds: number[]) => {
-        // Fetch top 30 stories
-        const stories = await Promise.all(
-          storyIds.slice(0, 30).map(id => 
-            fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`)
-              .then(r => r.json())
-          )
-        );
-        return stories.filter(s => s && s.url);
+      parser: (data: any) => {
+        // Filter for recent Show HN posts (actual launches)
+        const hits = data.hits || [];
+        return hits.filter((hit: any) => {
+          const date = new Date(hit.created_at);
+          return date.getFullYear() >= 2024; // Only 2024+ projects
+        });
       }
     },
 

@@ -24,6 +24,10 @@ import { RSSAggregatorFetcher } from './fetchers/real-sources/rss-aggregator';
 // Import data aggregator for multi-source enrichment
 import { DataAggregator } from './services/data-aggregator';
 
+// Import metadata extractors for ACCELERATE criteria
+import { StartupMetadataExtractor } from './extractors/startup-metadata-extractor';
+import { FundingProgramExtractor } from './extractors/funding-program-extractor';
+
 // Platform fetchers removed - need verification
 // Most platform fetchers either need API keys or don't exist yet
 
@@ -82,12 +86,43 @@ export class AccelerateOrchestrator {
   private async enrichContent(items: ContentItem[]): Promise<ContentItem[]> {
     console.log(`🔬 Starting enrichment for ${items.length} items`);
     
+    // CRITICAL: Extract metadata BEFORE enrichment
+    console.log(`📊 Extracting ACCELERATE metadata...`);
+    const itemsWithMetadata = items.map((item) => {
+      // Apply metadata extraction based on content type
+      if (item.type === 'funding' || item.source?.includes('grant') || item.source?.includes('funding')) {
+        const fundingMeta = FundingProgramExtractor.extractFromContent(item);
+        return {
+          ...item,
+          metadata: {
+            ...item.metadata,
+            ...fundingMeta
+          }
+        };
+      } else {
+        // Extract startup/project metadata
+        return StartupMetadataExtractor.enrichContentItem(item);
+      }
+    });
+    
+    // Filter out items that don't meet ACCELERATE criteria
+    const qualifiedItems = itemsWithMetadata.filter((item) => {
+      if (item.type === 'funding') {
+        const meta = item.metadata as any;
+        return FundingProgramExtractor.isHighQualityProgram(meta);
+      } else {
+        return StartupMetadataExtractor.meetsAccelerateCriteria(item);
+      }
+    });
+    
+    console.log(`✅ Qualified ${qualifiedItems.length}/${items.length} items after ACCELERATE criteria`);
+    
     const enrichedItems: ContentItem[] = [];
     const batchSize = 5; // Smaller batches for faster processing
     const maxEnrichTime = 2000; // Max 2 seconds per item
 
-    for (let i = 0; i < items.length; i += batchSize) {
-      const batch = items.slice(i, i + batchSize);
+    for (let i = 0; i < qualifiedItems.length; i += batchSize) {
+      const batch = qualifiedItems.slice(i, i + batchSize);
       
       const enrichedBatch = await Promise.all(
         batch.map(async (item) => {
@@ -127,7 +162,7 @@ export class AccelerateOrchestrator {
       
       // Progress update
       if ((i + batchSize) % 25 === 0) {
-        console.log(`  Progress: ${Math.min(i + batchSize, items.length)}/${items.length} items enriched`);
+        console.log(`  Progress: ${Math.min(i + batchSize, qualifiedItems.length)}/${qualifiedItems.length} items enriched`);
       }
     }
 
