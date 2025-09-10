@@ -17,6 +17,7 @@ import { deduplicationService } from '../services/deduplication';
 import { stagingService } from '../services/staging-service';
 import { logger } from '../services/logger';
 import { metricsService } from '../services/metrics';
+import { ErrorHandler, ErrorSeverity, AppError } from '../utils/error-handler';
 
 export interface OrchestratorResult {
   success: boolean;
@@ -159,25 +160,41 @@ export class UnifiedOrchestrator {
   private async fetchFromSources(): Promise<ContentItem[]> {
     const results = await Promise.allSettled(
       this.fetchers.map(async source => {
-        try {
-          console.log(`   Fetching from ${source.name}...`);
-          const response = await fetch(source.url);
-          const data = await response.json();
-          const items = source.parser(data);
-          
-          // Transform to ContentItem format
-          const contentItems = items.map((item: any) => ({
-            ...item,
-            type: source.type || this.inferType(item),
-            source: source.name
-          }));
-          
-          console.log(`   ✓ ${source.name}: ${contentItems.length} items`);
-          return contentItems;
-        } catch (error) {
-          console.log(`   ✗ ${source.name}: Failed`);
-          return [];
-        }
+        return await ErrorHandler.wrap(
+          async () => {
+            console.log(`   Fetching from ${source.name}...`);
+            
+            // Fetch with timeout
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
+            
+            try {
+              const response = await fetch(source.url, { signal: controller.signal });
+              clearTimeout(timeout);
+              
+              if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+              }
+              
+              const data = await response.json();
+              const items = source.parser(data);
+              
+              // Transform to ContentItem format
+              const contentItems = items.map((item: any) => ({
+                ...item,
+                type: source.type || this.inferType(item),
+                source: source.name
+              }));
+              
+              console.log(`   ✓ ${source.name}: ${contentItems.length} items`);
+              return contentItems;
+            } finally {
+              clearTimeout(timeout);
+            }
+          },
+          `Fetching from ${source.name}`,
+          ErrorSeverity.LOW // Individual source failures are low severity
+        ) || [];
       })
     );
 
