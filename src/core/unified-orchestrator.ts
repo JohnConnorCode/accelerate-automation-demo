@@ -18,6 +18,7 @@ import { metricsService } from '../services/metrics';
 import { ErrorHandler, ErrorSeverity, AppError } from '../utils/error-handler';
 import { AccelerateValidator } from '../validators/accelerate-validator';
 import { MetadataExtractor } from '../services/metadata-extractor';
+import { aiScorer } from '../services/ai-scorer';
 
 export interface OrchestratorResult {
   success: boolean;
@@ -99,15 +100,39 @@ export class UnifiedOrchestrator {
         };
       }
       
-      // Ensure items have the proper structure with scores
-      const enrichedItems = unique.map(item => ({
-        ...item,
-        accelerate_fit: true,
-        accelerate_score: item.score || 7.0,
-        accelerate_reason: 'Meets ACCELERATE criteria: early-stage, low funding, small team',
-        confidence_score: 0.8
+      // Step 3.5: REAL AI SCORING - No more fake scores!
+      console.log('\n🤖 Step 3.5: AI Scoring...');
+      const scoringResults = await aiScorer.scoreBatch(unique);
+      
+      // Apply real scores to items
+      const enrichedItems = unique.map(item => {
+        const itemId = item.id || item.url || item.title || 'unknown';
+        const scoring = scoringResults.get(itemId) || {
+          score: 5,
+          accelerate_fit: false,
+          reasoning: 'Unable to score',
+          confidence: 0.5,
+          criteria_met: {}
+        };
+        
+        return {
+          ...item,
+          accelerate_fit: scoring.accelerate_fit,
+          accelerate_score: scoring.score,
+          accelerate_reason: scoring.reasoning,
+          confidence_score: scoring.confidence,
+          criteria_met: scoring.criteria_met
+        };
+      });
+      
+      // Log some real scores
+      const sampleScores = enrichedItems.slice(0, 3).map(item => ({
+        name: item.title || item.company_name || item.name,
+        score: item.accelerate_score,
+        fit: item.accelerate_fit,
+        reason: item.accelerate_reason
       }));
-      console.log(`   Sample enriched item:`, JSON.stringify(enrichedItems[0], null, 2).substring(0, 300));
+      console.log('   Sample scores:', JSON.stringify(sampleScores, null, 2));
 
       // Step 4: Insert to queue tables
       console.log('\n💾 Step 4: Inserting to queue tables...');
@@ -167,19 +192,51 @@ export class UnifiedOrchestrator {
   }
 
   /**
-   * Get data sources (simplified - no external dependencies)
+   * Get MULTIPLE data sources - not just 2!
    */
   private getSources() {
     return [
+      // Original sources
       {
         name: 'HackerNews Show HN',
-        url: 'https://hn.algolia.com/api/v1/search?tags=show_hn&hitsPerPage=30',
+        url: 'https://hn.algolia.com/api/v1/search?tags=show_hn&hitsPerPage=20',
         parser: (data: any) => data.hits || []
       },
       {
         name: 'GitHub Trending',
-        url: 'https://api.github.com/search/repositories?q=created:>2024-01-01&sort=stars&order=desc',
+        url: 'https://api.github.com/search/repositories?q=created:>2024-01-01&sort=stars&order=desc&per_page=20',
         parser: (data: any) => data.items || []
+      },
+      // Add more diverse sources
+      {
+        name: 'GitHub Web3',
+        url: 'https://api.github.com/search/repositories?q=web3+OR+blockchain+OR+defi+created:>2024-01-01&sort=updated&per_page=20',
+        parser: (data: any) => data.items || []
+      },
+      {
+        name: 'GitHub AI Startups',
+        url: 'https://api.github.com/search/repositories?q=ai+OR+ml+OR+gpt+created:>2024-01-01&sort=stars&per_page=20',
+        parser: (data: any) => data.items || []
+      },
+      {
+        name: 'HackerNews Ask HN',
+        url: 'https://hn.algolia.com/api/v1/search?tags=ask_hn&query=startup&hitsPerPage=10',
+        parser: (data: any) => data.hits || []
+      },
+      {
+        name: 'HackerNews Jobs',
+        url: 'https://hn.algolia.com/api/v1/search?tags=job&query=startup+OR+founding&hitsPerPage=10',
+        parser: (data: any) => data.hits || []
+      },
+      {
+        name: 'DevTo Startups',
+        url: 'https://dev.to/api/articles?tag=startup&per_page=10',
+        parser: (data: any) => data || []
+      },
+      {
+        name: 'DevTo Web3',
+        url: 'https://dev.to/api/articles?tag=web3&per_page=10',
+        parser: (data: any) => data || []
       }
     ];
   }
