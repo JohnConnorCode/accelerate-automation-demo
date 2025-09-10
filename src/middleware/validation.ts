@@ -1,204 +1,153 @@
-import { Request, Response, NextFunction } from 'express'
-import validator from 'validator'
-import DOMPurify from 'isomorphic-dompurify'
-
 /**
- * Sanitize and validate input data
+ * Input validation middleware to prevent crashes
  */
-export const sanitizeInput = (data: any): any => {
-  if (typeof data === 'string') {
-    // Remove any HTML/script tags
-    data = DOMPurify.sanitize(data, { ALLOWED_TAGS: [] })
-    // Trim whitespace
-    data = data.trim()
-    // Escape special characters
-    data = validator.escape(data)
-  } else if (Array.isArray(data)) {
-    data = data.map(item => sanitizeInput(item))
-  } else if (data && typeof data === 'object') {
-    for (const key in data) {
-      data[key] = sanitizeInput(data[key])
-    }
-  }
-  return data
-}
 
-/**
- * Validate email format
- */
-export const validateEmail = (email: string): boolean => {
-  return validator.isEmail(email)
-}
+import { Request, Response, NextFunction } from 'express';
+import { z } from 'zod';
 
-/**
- * Validate URL format
- */
-export const validateURL = (url: string): boolean => {
-  return validator.isURL(url, {
-    protocols: ['http', 'https'],
-    require_protocol: true
-  })
-}
+// Schema for manual fetch request
+const ManualFetchSchema = z.object({
+  sources: z.array(z.string()).optional(),
+  limit: z.number().int().positive().max(1000).optional()
+});
 
-/**
- * Validate UUID format
- */
-export const validateUUID = (uuid: string): boolean => {
-  return validator.isUUID(uuid)
-}
+// Schema for approval request
+const ApprovalSchema = z.object({
+  id: z.string().uuid(),
+  action: z.enum(['approve', 'reject']),
+  feedback: z.string().optional()
+});
 
-/**
- * Input validation middleware
- */
-export const validateInput = (rules: {
-  body?: any,
-  query?: any,
-  params?: any
-}) => {
-  return (req: Request, res: Response, next: NextFunction) => {
-    const errors: string[] = []
+// Schema for API key configuration
+const ApiKeySchema = z.object({
+  apiKeyType: z.string(),
+  apiKey: z.string().min(1)
+});
 
-    // Validate body
-    if (rules.body) {
-      for (const field in rules.body) {
-        const rule = rules.body[field]
-        const value = req.body[field]
-
-        if (rule.required && !value) {
-          errors.push(`${field} is required`)
-        }
-
-        if (value && rule.type) {
-          switch (rule.type) {
-            case 'email':
-              if (!validateEmail(value)) {
-                errors.push(`${field} must be a valid email`)
-              }
-              break
-            case 'url':
-              if (!validateURL(value)) {
-                errors.push(`${field} must be a valid URL`)
-              }
-              break
-            case 'uuid':
-              if (!validateUUID(value)) {
-                errors.push(`${field} must be a valid UUID`)
-              }
-              break
-            case 'number':
-              if (isNaN(Number(value))) {
-                errors.push(`${field} must be a number`)
-              }
-              break
-            case 'boolean':
-              if (typeof value !== 'boolean') {
-                errors.push(`${field} must be a boolean`)
-              }
-              break
-            case 'array':
-              if (!Array.isArray(value)) {
-                errors.push(`${field} must be an array`)
-              }
-              break
-          }
-        }
-
-        if (value && rule.min !== undefined) {
-          if (typeof value === 'string' && value.length < rule.min) {
-            errors.push(`${field} must be at least ${rule.min} characters`)
-          }
-          if (typeof value === 'number' && value < rule.min) {
-            errors.push(`${field} must be at least ${rule.min}`)
-          }
-        }
-
-        if (value && rule.max !== undefined) {
-          if (typeof value === 'string' && value.length > rule.max) {
-            errors.push(`${field} must be at most ${rule.max} characters`)
-          }
-          if (typeof value === 'number' && value > rule.max) {
-            errors.push(`${field} must be at most ${rule.max}`)
-          }
-        }
-
-        if (value && rule.pattern) {
-          const regex = new RegExp(rule.pattern)
-          if (!regex.test(value)) {
-            errors.push(`${field} format is invalid`)
-          }
-        }
+// Generic validation middleware factory
+export function validateRequest(schema: z.ZodSchema) {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // Parse and validate request body
+      const validated = await schema.parseAsync(req.body);
+      req.body = validated;
+      next();
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          error: 'Validation failed',
+          details: error.errors.map(e => ({
+            path: e.path.join('.'),
+            message: e.message
+          }))
+        });
       }
+      
+      return res.status(500).json({
+        error: 'Internal validation error'
+      });
     }
-
-    // Similar validation for query and params...
-
-    if (errors.length > 0) {
-      return res.status(400).json({ 
-        error: 'Validation failed',
-        errors 
-      })
-    }
-
-    // Sanitize all input
-    req.body = sanitizeInput(req.body)
-    req.query = sanitizeInput(req.query)
-    req.params = sanitizeInput(req.params)
-
-    next()
-  }
+  };
 }
 
-/**
- * Prevent SQL injection by validating database queries
- */
-export const validateDatabaseInput = (input: string): boolean => {
-  // Check for common SQL injection patterns
-  const sqlPatterns = [
-    /(\bDROP\b|\bDELETE\b|\bINSERT\b|\bUPDATE\b|\bSELECT\b)/i,
-    /(\-\-|\/\*|\*\/|xp_|sp_|0x)/i,
-    /(UNION|EXEC|EXECUTE|DECLARE|CREATE|ALTER)/i
-  ]
+// Specific validators
+export const validateManualFetch = validateRequest(ManualFetchSchema);
+export const validateApproval = validateRequest(ApprovalSchema);
+export const validateApiKey = validateRequest(ApiKeySchema);
 
-  for (const pattern of sqlPatterns) {
-    if (pattern.test(input)) {
-      return false
+// Query parameter validation
+export function validateQueryParams(schema: z.ZodSchema) {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const validated = await schema.parseAsync(req.query);
+      req.query = validated as any;
+      next();
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          error: 'Invalid query parameters',
+          details: error.errors.map(e => ({
+            path: e.path.join('.'),
+            message: e.message
+          }))
+        });
+      }
+      
+      return res.status(500).json({
+        error: 'Query validation error'
+      });
     }
-  }
-
-  return true
+  };
 }
 
-/**
- * Rate limiting per user
- */
-export const userRateLimit = (maxRequests: number = 50, windowMs: number = 60000) => {
-  const userRequests = new Map<string, { count: number, resetTime: number }>()
+// Sanitize user input to prevent injection
+export function sanitizeInput(input: any): any {
+  if (typeof input === 'string') {
+    // Remove potential SQL injection attempts
+    return input
+      .replace(/[';\\]/g, '')
+      .replace(/--/g, '')
+      .trim()
+      .slice(0, 10000); // Limit string length
+  }
+  
+  if (Array.isArray(input)) {
+    return input.map(sanitizeInput);
+  }
+  
+  if (input && typeof input === 'object') {
+    const sanitized: any = {};
+    for (const [key, value] of Object.entries(input)) {
+      // Skip suspicious keys
+      if (!key.match(/^[a-zA-Z0-9_-]+$/)) continue;
+      sanitized[key] = sanitizeInput(value);
+    }
+    return sanitized;
+  }
+  
+  return input;
+}
 
+// Rate limiting helper
+const requestCounts = new Map<string, { count: number; resetTime: number }>();
+
+export function rateLimit(maxRequests: number = 100, windowMs: number = 60000) {
   return (req: Request, res: Response, next: NextFunction) => {
-    if (!req.user) {
-      return next()
-    }
-
-    const userId = req.user.id
-    const now = Date.now()
-    const userLimit = userRequests.get(userId)
-
-    if (!userLimit || now > userLimit.resetTime) {
-      userRequests.set(userId, {
+    const key = req.ip || 'unknown';
+    const now = Date.now();
+    
+    const record = requestCounts.get(key);
+    
+    if (!record || record.resetTime < now) {
+      requestCounts.set(key, {
         count: 1,
         resetTime: now + windowMs
-      })
-      return next()
+      });
+      return next();
     }
-
-    if (userLimit.count >= maxRequests) {
+    
+    if (record.count >= maxRequests) {
       return res.status(429).json({
         error: 'Too many requests',
-        retryAfter: Math.ceil((userLimit.resetTime - now) / 1000)
-      })
+        retryAfter: Math.ceil((record.resetTime - now) / 1000)
+      });
     }
+    
+    record.count++;
+    next();
+  };
+}
 
-    userLimit.count++
-    next()
-  }
+// Error boundary middleware
+export function errorHandler(err: Error, req: Request, res: Response, next: NextFunction) {
+  console.error('Unhandled error:', err);
+  
+  // Don't leak error details in production
+  const isDev = process.env.NODE_ENV === 'development';
+  
+  res.status(500).json({
+    error: 'Internal server error',
+    message: isDev ? err.message : 'An unexpected error occurred',
+    ...(isDev && { stack: err.stack })
+  });
 }

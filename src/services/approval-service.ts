@@ -90,26 +90,10 @@ export class ApprovalService {
       }
       
       if (!queueItem) {
-        // Check if already in production (duplicate approval attempt)
-        const { data: existingItem } = await supabase
-          .from(productionTable)
-          .select('id, name')
-          .eq('source_queue_id', id)
-          .single();
-        
-        if (existingItem) {
-          return {
-            success: false,
-            message: `Item already approved`,
-            error: `This item was already approved and exists in production`,
-            data: existingItem
-          };
-        }
-        
         return {
           success: false,
           message: `Item not found in ${queueTable}`,
-          error: `No item with id ${id} exists in queue`
+          error: `No item with id ${id} exists in queue. It may have already been processed.`
         };
       }
       
@@ -208,7 +192,6 @@ export class ApprovalService {
         name: queueItem.company_name,  // CRITICAL: column is 'name' not 'company_name'
         description: queueItem.description || '',
         website: queueItem.website || null,
-        source_queue_id: queueItem.id,  // Track original queue ID for duplicate detection
         
         // Team & Location
         founders: queueItem.founders || [],
