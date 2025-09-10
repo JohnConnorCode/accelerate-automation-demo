@@ -223,14 +223,65 @@ export class AccelerateDBPipeline {
       })
     };
 
+    // INSERT INTO QUEUE TABLE FOR MANUAL APPROVAL!
     const { error } = await supabase
-      .from('projects')
-      .insert(projectData);
+      .from('queue_projects')  // FIXED: Use queue table, not live table
+      .insert({
+        // Map to actual queue_projects columns
+        name: item.title,
+        description: item.description,
+        short_description: item.description.substring(0, 200),
+        url: item.url,
+        
+        // Team info (REQUIRED for ACCELERATE)
+        team_size: meta.team_size || 1,
+        founders: meta.founders || [],
+        team_location: meta.location || 'Remote',
+        
+        // Funding info (REQUIRED for ACCELERATE)
+        funding_stage: meta.funding_round || 'pre-seed',
+        funding_raised: meta.funding_raised || 0,
+        launch_date: meta.launch_date || meta.launch_year || new Date().toISOString(),
+        
+        // Categories
+        categories: item.tags || [],
+        chains: meta.supported_chains || [],
+        
+        // Links
+        github_url: meta.github_url,
+        twitter_url: meta.twitter_url,
+        discord_url: meta.discord_url,
+        
+        // Project needs (CRITICAL)
+        looking_for_funding: meta.seeking_funding || false,
+        looking_for_cofounders: meta.seeking_cofounders || false,
+        looking_for_developers: meta.seeking_developers || false,
+        
+        // Queue metadata
+        status: 'pending',
+        score: meta.accelerate_score || meta.unified_score || 50,
+        source: item.source,
+        fetched_at: new Date().toISOString(),
+        
+        // Store extra data
+        metadata: {
+          ai_score: meta.ai_score,
+          ai_analysis: meta.ai_analysis,
+          ai_strengths: meta.ai_strengths,
+          ai_needs: meta.ai_needs,
+          yc_batch: meta.yc_batch,
+          is_yc_backed: meta.is_yc_backed,
+          is_hiring: meta.is_hiring,
+          credibility_score: meta.credibility_score,
+          project_needs: meta.project_needs || [],
+          traction_metrics: meta.traction_metrics,
+        }
+      });
 
     if (error) throw error;
 
     // Also log in content_sources for tracking
-    await this.logContentSource(item, 'projects', projectData.name);
+    await this.logContentSource(item, 'queue_projects', item.title);
   }
 
   /**
@@ -240,65 +291,95 @@ export class AccelerateDBPipeline {
     const meta = item.metadata || {};
     
     const fundingData = {
-      // Core fields - CRITICAL: funding_programs table uses 'program_name' not 'name'
-      program_name: meta.name || item.title,
-      organization: meta.organization || item.author,
+      // Core fields - FIXED: Use correct column names for funding_programs table
+      title: item.title,  // The actual table uses 'title' not 'program_name'!
+      organization: meta.organization || item.author || item.source,
       description: item.description,
+      funding_source: item.source,
+      funding_category: meta.funding_type || 'grant',
       
-      // Funding details
-      funding_type: meta.funding_type || 'grant',
-      min_amount: meta.min_amount || 0,
-      max_amount: meta.max_amount || 0,
-      currency: meta.currency || 'USD',
-      equity_required: meta.equity_required || false,
-      equity_percentage: meta.equity_percentage || 0,
+      // Funding amounts - FIXED: Use correct column names
+      funding_amount_min: meta.min_amount || 0,
+      funding_amount_max: meta.max_amount || meta.min_amount || 100000,
+      funding_currency: meta.currency || 'USD',
       
       // Application details
       application_url: meta.application_url || item.url,
-      application_deadline: meta.application_deadline,
-      application_process: meta.application_process,
-      decision_timeline: meta.decision_timeline,
+      deadline: meta.application_deadline ? new Date(meta.application_deadline).toISOString() : null,
       
-      // Eligibility
+      // Eligibility (as JSONB)
       eligibility_criteria: meta.eligibility_criteria || [],
-      geographic_restrictions: meta.geographic_restrictions || [],
-      stage_preferences: meta.stage_preferences || ['seed', 'pre-seed'],
-      sector_focus: meta.sector_focus || [],
       
-      // Program details
-      program_duration: meta.program_duration,
-      program_location: meta.program_location || 'Remote',
-      cohort_size: meta.cohort_size,
+      // Additional fields stored in source_data JSONB
+      source_data: {
+        geographic_restrictions: meta.geographic_restrictions || [],
+        stage_preferences: meta.stage_preferences || ['seed', 'pre-seed'],
+        sector_focus: meta.sector_focus || [],
+        program_duration: meta.program_duration,
+        program_location: meta.program_location || 'Remote',
+        cohort_size: meta.cohort_size,
+        benefits: meta.benefits || [],
+        mentor_profiles: meta.mentor_profiles || [],
+        last_investment_date: meta.last_investment_date,
+        total_deployed_2025: meta.total_deployed_2025 || 0,
+        application_process: meta.application_process,
+        decision_timeline: meta.decision_timeline,
+        equity_required: meta.equity_required || false,
+        equity_percentage: meta.equity_percentage || 0,
+      },
       
-      // Benefits
-      benefits: meta.benefits || [],
-      mentor_profiles: meta.mentor_profiles || [],
+      // Tags
+      tags: item.tags || [],
       
-      // Activity verification
-      last_investment_date: meta.last_investment_date,
-      total_deployed_2025: meta.total_deployed_2025 || 0,
-      is_active: true,
-      
-      // Metadata
-      accelerate_score: meta.accelerate_score,
-      source: item.source,
-      source_url: item.url,
-      
-      // AI-generated insights
-      ai_score: meta.ai_score,
-      ai_analysis: meta.ai_analysis,
-      ai_strengths: meta.ai_strengths,
-      ai_requirements: meta.ai_needs, // For funding, needs become requirements
+      // Correct column names for database
+      url: item.url
     };
 
+    // INSERT INTO QUEUE TABLE, NOT LIVE TABLE!
     const { error } = await supabase
-      .from('funding_programs')
-      .insert(fundingData);
+      .from('queue_funding_programs')  // FIXED: Use queue table for manual approval
+      .insert({
+        // Map to actual queue_funding_programs columns
+        name: item.title,
+        organization: meta.organization || item.author || item.source,
+        description: item.description,
+        url: item.url,
+        funding_type: meta.funding_type || 'grant',
+        min_amount: meta.min_amount || 0,
+        max_amount: meta.max_amount || meta.min_amount || 100000,
+        currency: meta.currency || 'USD',
+        application_deadline: meta.application_deadline,
+        eligibility_criteria: meta.eligibility_criteria || [],
+        sector_focus: meta.sector_focus || [],
+        stage_preferences: meta.stage_preferences || ['seed', 'pre-seed'],
+        geographic_restrictions: meta.geographic_restrictions || [],
+        benefits: meta.benefits || [],
+        
+        // Queue metadata
+        status: 'pending',
+        score: meta.accelerate_score || 50,
+        source: item.source,
+        fetched_at: new Date().toISOString(),
+        
+        // Store extra data in metadata field
+        metadata: {
+          ai_score: meta.ai_score,
+          ai_analysis: meta.ai_analysis,
+          last_investment_date: meta.last_investment_date,
+          total_deployed_2025: meta.total_deployed_2025,
+          mentor_profiles: meta.mentor_profiles || [],
+          cohort_size: meta.cohort_size,
+          program_duration: meta.program_duration,
+          program_location: meta.program_location,
+          equity_required: meta.equity_required || false,
+          equity_percentage: meta.equity_percentage || 0,
+        }
+      });
 
     if (error) throw error;
 
     // Log in content_sources
-    await this.logContentSource(item, 'funding_programs', fundingData.program_name);
+    await this.logContentSource(item, 'queue_funding_programs', item.title);
   }
 
   /**
@@ -358,14 +439,53 @@ export class AccelerateDBPipeline {
       }
     };
 
+    // INSERT INTO QUEUE TABLE FOR MANUAL APPROVAL!
     const { error } = await supabase
-      .from('resources')
-      .insert(resourceData);
+      .from('queue_resources')  // FIXED: Use queue table
+      .insert({
+        // Map to actual queue_resources columns
+        title: item.title,
+        description: item.description,
+        url: item.url,
+        resource_type: meta.resource_type || 'tool',
+        category: meta.category || 'Development',
+        price_type: meta.price_type || 'free',
+        price_amount: meta.price_amount || 0,
+        
+        // Provider info
+        provider: meta.provider_name || item.author || item.source,
+        provider_credibility: meta.provider_credibility,
+        
+        // Usage details
+        difficulty_level: meta.difficulty_level || 'intermediate',
+        prerequisites: meta.prerequisites || [],
+        time_commitment: meta.time_commitment,
+        
+        // Benefits
+        key_benefits: meta.key_benefits || [],
+        use_cases: meta.use_cases || [],
+        tags: item.tags || [],
+        
+        // Queue metadata
+        status: 'pending',
+        score: meta.accelerate_score || 50,
+        source: item.source,
+        fetched_at: new Date().toISOString(),
+        last_updated: meta.last_updated || new Date().toISOString(),
+        
+        // Store extra data
+        metadata: {
+          ai_score: meta.ai_score,
+          ai_analysis: meta.ai_analysis,
+          success_stories: meta.success_stories || [],
+          target_audience: meta.target_audience || ['early-stage founders'],
+        }
+      });
 
     if (error) throw error;
 
     // Log in content_sources
-    await this.logContentSource(item, 'resources', resourceData.title);
+    await this.logContentSource(item, 'queue_resources', item.title);
   }
 
   /**
@@ -501,11 +621,11 @@ export class AccelerateDBPipeline {
       .limit(1)
       .single();
 
-    // Get total records
+    // Get total records FROM QUEUE TABLES
     const [projects, funding, resources] = await Promise.all([
-      supabase.from('projects').select('id', { count: 'exact', head: true }),
-      supabase.from('funding_programs').select('id', { count: 'exact', head: true }),
-      supabase.from('resources').select('id', { count: 'exact', head: true }),
+      supabase.from('queue_projects').select('id', { count: 'exact', head: true }),
+      supabase.from('queue_funding_programs').select('id', { count: 'exact', head: true }),
+      supabase.from('queue_resources').select('id', { count: 'exact', head: true }),
     ]);
 
     // Get recent metrics

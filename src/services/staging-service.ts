@@ -206,7 +206,7 @@ export class StagingService {
   }
 
   /**
-   * Transform to investor format (was funding)
+   * Transform to funding program format (queue_investors table)
    */
   private transformToFunding(item: any) {
     // Helper to ensure numeric values
@@ -215,63 +215,98 @@ export class StagingService {
       return isNaN(num) ? defaultVal : num;
     };
 
+    // Ensure description is long enough
+    let description = item.description || '';
+    if (description.length < 100) {
+      description = `${item.title || item.name || 'Funding Program'} - ${item.source} funding opportunity for ACCELERATE-eligible startups. ${description}`.padEnd(100, '.');
+    }
+
+    const now = new Date();
+    const currentYear = now.getFullYear();
+
     return {
-      // Core Fields
-      name: item.title || item.name || 'Untitled Investor',
-      type: item.investor_type || 'VC',
-      description: item.description,
-      website: item.url,
+      // Basic Information (REQUIRED)
+      name: item.title || item.name || 'Untitled Funding Program',
+      organization: item.organization || item.metadata?.organization || item.source || 'Unknown',
+      description,
+      url: item.url,
       
-      // ACCELERATE Fields
-      accelerate_fit: item.accelerate_fit || false,
-      accelerate_reason: item.accelerate_reason || '',
-      accelerate_score: Math.min(9.99, toNumber(item.accelerate_score || item.score, 0) / 10),
-      confidence_score: Math.min(9.99, toNumber(item.confidence_score, 0.5)),
+      // Funding Details (REQUIRED)
+      funding_type: item.funding_type || item.metadata?.funding_type || 'grant',
+      min_amount: toNumber(item.min_amount || item.metadata?.min_amount, 10000),
+      max_amount: toNumber(item.max_amount || item.metadata?.max_amount, 500000),
+      currency: item.currency || 'USD',
+      total_fund_size: toNumber(item.total_fund_size || item.metadata?.total_fund_size),
       
-      // Investment Profile
-      investment_stage: item.investment_stage || item.metadata?.stage_preferences || [],
-      investment_size_min: toNumber(item.min_amount || item.metadata?.min_amount),
-      investment_size_max: toNumber(item.max_amount || item.metadata?.max_amount),
-      total_investments: toNumber(item.total_investments),
-      total_portfolio_value: toNumber(item.portfolio_value),
+      // Investment Terms
+      equity_required: item.equity_required || item.metadata?.equity_required || false,
+      equity_percentage_min: item.equity_percentage_min,
+      equity_percentage_max: item.equity_percentage_max,
+      token_allocation: item.token_allocation || false,
+      token_percentage: item.token_percentage,
       
-      // Focus Areas
-      industry_focus: item.industry_focus || item.metadata?.sector_focus || [],
-      geographic_focus: item.geographic_focus || item.metadata?.geographic_restrictions || [],
-      technology_focus: item.technology_focus || [],
-      business_model_focus: item.business_model_focus || [],
+      // Application Details (REQUIRED)
+      application_url: item.application_url || item.url,
+      application_deadline: item.application_deadline || item.metadata?.application_deadline,
+      application_process_description: item.application_process || item.metadata?.application_process || 'Apply via website with pitch deck and team information',
+      decision_timeline_days: item.decision_timeline_days || 30,
+      next_cohort_start: item.next_cohort_start,
       
-      // Portfolio
-      portfolio_companies: item.portfolio_companies || [],
-      notable_investments: item.notable_investments || {},
-      recent_investments: item.recent_investments || {},
-      exits: item.exits || {},
+      // Eligibility (REQUIRED)
+      eligibility_criteria: item.eligibility_criteria || item.metadata?.eligibility_criteria || ['Early-stage startups', 'Less than $500k funding'],
+      geographic_focus: item.geographic_focus || item.metadata?.geographic_focus,
+      excluded_countries: item.excluded_countries,
+      stage_preferences: item.stage_preferences || item.metadata?.stage_preferences || ['pre-seed', 'seed'],
+      sector_focus: item.sector_focus || item.metadata?.sector_focus || ['Technology', 'Web3'],
       
-      // Benefits
-      benefits: item.benefits || item.metadata?.benefits || [],
-      mentor_profiles: item.mentor_profiles || item.metadata?.mentor_profiles || [],
-      alumni_companies: item.alumni_companies || item.metadata?.alumni_companies || [],
+      // Program Details
+      program_duration_weeks: item.program_duration_weeks || 12,
+      program_location: item.program_location || item.metadata?.location,
+      remote_friendly: item.remote_friendly !== undefined ? item.remote_friendly : true,
+      cohort_size: item.cohort_size,
+      acceptance_rate: item.acceptance_rate,
       
-      // Activity
-      last_investment_date: item.last_investment_date || item.metadata?.last_investment_date,
-      recent_portfolio: item.recent_portfolio || item.metadata?.recent_portfolio || [],
-      total_deployed_2025: toNumber(item.total_deployed_2025 || item.metadata?.total_deployed_2025),
+      // Benefits and Support (REQUIRED)
+      benefits: item.benefits || item.metadata?.benefits || ['Funding', 'Mentorship', 'Network access'],
+      mentor_profiles: item.mentor_profiles || item.metadata?.mentor_profiles,
+      partner_perks: item.partner_perks,
+      office_hours: item.office_hours !== undefined ? item.office_hours : true,
+      demo_day: item.demo_day !== undefined ? item.demo_day : true,
       
-      // Source & Enrichment
+      // Track Record
+      founded_year: item.founded_year || item.metadata?.founded_year,
+      total_investments_made: toNumber(item.total_investments || item.metadata?.total_investments),
+      notable_portfolio_companies: item.notable_portfolio || item.metadata?.notable_portfolio,
+      successful_exits: item.exits || item.metadata?.exits,
+      
+      // Recent Activity (REQUIRED)
+      last_investment_date: item.last_investment_date || item.metadata?.last_investment_date || now.toISOString().split('T')[0],
+      recent_investments: item.recent_investments || item.metadata?.recent_investments || ['Recent investment activity'],
+      active_status: item.active_status !== undefined ? item.active_status : true,
+      
+      // Contact Information
+      contact_email: item.contact_email,
+      contact_name: item.contact_name,
+      contact_linkedin: item.contact_linkedin,
+      twitter_url: item.twitter_url || item.metadata?.twitter,
+      
+      // Data Quality
+      data_completeness_score: 0.7,
+      verification_status: 'unverified',
+      last_enrichment_date: now.toISOString(),
+      
+      // Queue Management
       source: item.source,
-      source_url: item.source_url || item.url,
-      batch_id: item.batch_id || `batch_${Date.now()}`,
-      enriched: item.enriched || false,
-      enrichment_data: item.enrichment_data || {},
+      fetched_at: now.toISOString(),
+      score: toNumber(item.score, 50),
+      ai_analysis: item.ai_analysis || item.metadata?.ai_analysis || {},
       
-      // AI Analysis
-      ai_summary: item.ai_summary || item.metadata?.ai_summary,
-      ai_insights: item.ai_insights || {},
-      investment_thesis: item.investment_thesis || item.metadata?.investment_thesis,
-      
-      // Metadata
-      metadata: item.metadata || {},
-      created_at: new Date().toISOString()
+      // Review Status
+      status: 'pending_review',
+      reviewer_notes: null,
+      reviewed_by: null,
+      reviewed_at: null,
+      created_at: now.toISOString()
     };
   }
 

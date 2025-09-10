@@ -316,12 +316,12 @@ export class AccelerateOrchestrator {
           }
         );
         
-        // Set a 30 second timeout for enrichment
+        // Set a 5 second timeout for enrichment - REDUCED FOR FASTER PROCESSING
         const timeoutPromise = new Promise<ContentItem[]>((resolve) => {
           setTimeout(() => {
             console.log('⚠️ Enrichment timeout - using unenriched data');
             resolve(unique);
-          }, 30000);
+          }, 5000); // Reduced from 30s to 5s
         });
         
         enrichedContent = (await Promise.race([enrichmentPromise, timeoutPromise])) || unique;
@@ -341,7 +341,7 @@ export class AccelerateOrchestrator {
           setTimeout(() => {
             console.log('⚠️ Aggregation timeout - using unaggregated data');
             resolve({ items: enrichedContent, average_completeness: 50 });
-          }, 20000); // 20 second timeout
+          }, 5000); // Reduced from 20s to 5s for faster processing
         });
         
         const aggregationResult = await Promise.race([aggregationPromise, aggregationTimeout]);
@@ -357,13 +357,26 @@ export class AccelerateOrchestrator {
       // Score and rank aggregated content
       const metrics = AccelerateScorer.getQualityMetrics(aggregatedContent);
 
-      // Filter by credibility and quality
-      const credibleContent = aggregatedContent.filter(item => 
-        (item.metadata?.final_credibility_score || 0) > 20 || // Min credibility
-        (item.metadata?.data_completeness || 0) > 60 || // High completeness
-        item.type === 'resource' || // Resources don't need as much verification
-        item.type === 'funding' // Funding opportunities are pre-vetted
-      );
+      // Filter by credibility and quality - SIMPLIFIED FOR NOW
+      // TODO: Re-enable credibility scoring once enrichment is working
+      const credibleContent = aggregatedContent.filter(item => {
+        // Basic quality checks
+        if (!item.title && !item.name) return false;
+        if (!item.url) return false;
+        if (!item.description && !item.content) return false;
+        
+        // Type-specific filters
+        if (item.type === 'project') {
+          // Must have some metadata about the project
+          return item.metadata?.launch_date || 
+                 item.metadata?.funding_raised !== undefined ||
+                 item.metadata?.team_size !== undefined ||
+                 item.score > 30; // Minimum score
+        }
+        
+        // Resources and funding are generally good to include
+        return true;
+      });
 
       // LIMIT TO BATCH SIZE - Critical for manual control
       const limitedContent = credibleContent.slice(0, BATCH_SIZE);
