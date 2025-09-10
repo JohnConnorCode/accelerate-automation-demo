@@ -378,6 +378,41 @@ app.post('/api/scheduler/run', async (req, res) => {
   }
 });
 
+// Approval endpoint
+app.post('/api/approve', async (req, res) => {
+  try {
+    const { approvalService } = await import('./src/services/approval-service');
+    const result = await approvalService.processApproval(req.body);
+    
+    if (result.success) {
+      res.json(result);
+    } else {
+      res.status(400).json(result);
+    }
+  } catch (error) {
+    logger.error('Approval failed', { error });
+    res.status(500).json({ 
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    });
+  }
+});
+
+// Get pending items for review
+app.get('/api/pending', async (req, res) => {
+  try {
+    const { approvalService } = await import('./src/services/approval-service');
+    const { type } = req.query;
+    const pending = await approvalService.getPendingItems(type as string);
+    res.json(pending);
+  } catch (error) {
+    logger.error('Failed to get pending items', { error });
+    res.status(500).json({ 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`API server running on http://localhost:${PORT}`)
   console.log('Available endpoints:')
