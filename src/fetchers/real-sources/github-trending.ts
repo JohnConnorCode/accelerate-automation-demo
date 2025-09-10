@@ -27,7 +27,7 @@ export class GitHubTrendingFetcher extends BaseFetcher<typeof RepoSchema> {
 
   protected schema = RepoSchema;
 
-  async fetch(): Promise<any[]> {
+  async fetch(): Promise<{ items: ContentItem[]; errors: string[] }> {
     const repos: any[] = [];
     
     try {
@@ -91,36 +91,16 @@ export class GitHubTrendingFetcher extends BaseFetcher<typeof RepoSchema> {
       const finalRepos = Array.from(uniqueRepos.values());
       console.log(`📊 GitHub: Total unique repos found: ${finalRepos.length}`);
       
-      return [finalRepos];
+      // Transform to ContentItems
+      const items = this.transform([finalRepos]);
+      
+      return { items, errors: [] };
       
     } catch (error) {
-      console.log('GitHub API failed, using fallback data...');
+      console.log('GitHub API failed:', error);
       
-      // Fallback: Some known 2024 repos
-      return [[
-        {
-          name: 'gpt-pilot',
-          owner: 'Pythagora-io',
-          description: 'Dev tool that writes scalable apps from scratch',
-          url: 'https://github.com/Pythagora-io/gpt-pilot',
-          stars: 15000,
-          forks: 1200,
-          language: 'Python',
-          createdAt: '2024-01-01',
-          topics: ['ai', 'developer-tools']
-        },
-        {
-          name: 'screenshot-to-code',
-          owner: 'abi',
-          description: 'Drop in a screenshot and convert it to clean code',
-          url: 'https://github.com/abi/screenshot-to-code',
-          stars: 12000,
-          forks: 900,
-          language: 'TypeScript',
-          createdAt: '2024-01-15',
-          topics: ['ai', 'web']
-        }
-      ]];
+      // Return empty results on error (NO FAKE DATA)
+      return { items: [], errors: [String(error)] };
     }
   }
 
