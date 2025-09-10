@@ -5,6 +5,10 @@
 
 import OpenAI from 'openai';
 import { logger } from './logger';
+import { config } from 'dotenv';
+
+// Ensure env vars are loaded
+config();
 
 interface ScoringResult {
   score: number;           // 0-10
