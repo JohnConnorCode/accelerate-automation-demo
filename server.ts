@@ -30,6 +30,18 @@ const corsOptions = {
 app.use(cors(corsOptions))
 app.use(express.json())
 
+// Error handler for malformed JSON
+app.use((err: any, req: Request, res: Response, next: Function) => {
+  if (err instanceof SyntaxError && 'body' in err) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid JSON',
+      error: 'Request body must be valid JSON'
+    });
+  }
+  next();
+})
+
 // Apply rate limiting to all routes
 app.use(rateLimit(100, 60000)) // 100 requests per minute
 
@@ -381,8 +393,26 @@ app.post('/api/scheduler/run', async (req, res) => {
 // Approval endpoint
 app.post('/api/approve', async (req, res) => {
   try {
+    // Input sanitization - prevent crashes from malformed data
+    if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid request format',
+        error: 'Request body must be a JSON object'
+      });
+    }
+    
+    // Sanitize string fields to prevent injection
+    const sanitizedBody = {
+      id: req.body.id,
+      type: typeof req.body.type === 'string' ? req.body.type.replace(/[^a-z_]/gi, '') : req.body.type,
+      action: typeof req.body.action === 'string' ? req.body.action.replace(/[^a-z]/gi, '') : req.body.action,
+      reviewerNotes: typeof req.body.reviewerNotes === 'string' ? req.body.reviewerNotes : undefined,
+      reviewedBy: typeof req.body.reviewedBy === 'string' ? req.body.reviewedBy : undefined
+    };
+    
     const { approvalService } = await import('./src/services/approval-service');
-    const result = await approvalService.processApproval(req.body);
+    const result = await approvalService.processApproval(sanitizedBody);
     
     if (result.success) {
       res.json(result);
@@ -407,6 +437,64 @@ app.get('/api/pending', async (req, res) => {
     res.json(pending);
   } catch (error) {
     logger.error('Failed to get pending items', { error });
+    res.status(500).json({ 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    });
+  }
+});
+
+// Get available data sources
+app.get('/api/sources', async (req, res) => {
+  try {
+    const sources = [
+      { name: 'GitHub Trending', active: true, type: 'projects' },
+      { name: 'HackerNews', active: true, type: 'news' },
+      { name: 'Product Hunt', active: false, type: 'projects', note: 'API key required' },
+      { name: 'CrunchBase', active: false, type: 'projects', note: 'API key required' },
+      { name: 'AngelList', active: false, type: 'investors', note: 'API key required' },
+      { name: 'RSS Feeds', active: true, type: 'news' },
+      { name: 'Manual Entry', active: true, type: 'all' }
+    ];
+    
+    res.json({
+      sources,
+      total: sources.length,
+      active: sources.filter(s => s.active).length,
+      inactive: sources.filter(s => !s.active).length
+    });
+  } catch (error) {
+    logger.error('Failed to get sources', { error });
+    res.status(500).json({ 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    });
+  }
+});
+
+// Get queue items by type
+app.get('/api/queue/:type', async (req, res) => {
+  try {
+    const { type } = req.params;
+    const validTypes = ['projects', 'investors', 'news'];
+    
+    if (!validTypes.includes(type)) {
+      return res.status(400).json({ 
+        error: `Invalid type. Must be one of: ${validTypes.join(', ')}` 
+      });
+    }
+    
+    const { data, error } = await supabase
+      .from(`queue_${type}`)
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(100);
+    
+    if (error) {
+      throw error;
+    }
+    
+    res.json(data || []);
+  } catch (error) {
+    logger.error('Failed to get queue items', { error });
     res.status(500).json({ 
       error: error instanceof Error ? error.message : 'Unknown error' 
     });
