@@ -211,6 +211,7 @@ export class StagingService {
 
   /**
    * Transform to funding program format (queue_investors table)
+   * SIMPLIFIED - Only use columns that actually exist
    */
   private transformToFunding(item: any) {
     // Helper to ensure numeric values
@@ -226,90 +227,19 @@ export class StagingService {
     }
 
     const now = new Date();
-    const currentYear = now.getFullYear();
 
+    // ULTRA MINIMAL - Only fields we KNOW exist
     return {
-      // Basic Information (REQUIRED)
       name: item.title || item.name || 'Untitled Funding Program',
       organization: item.organization || item.metadata?.organization || item.source || 'Unknown',
       description,
       url: item.url,
-      
-      // Funding Details (REQUIRED)
       funding_type: item.funding_type || item.metadata?.funding_type || 'grant',
       min_amount: toNumber(item.min_amount || item.metadata?.min_amount, 10000),
       max_amount: toNumber(item.max_amount || item.metadata?.max_amount, 500000),
-      currency: item.currency || 'USD',
-      total_fund_size: toNumber(item.total_fund_size || item.metadata?.total_fund_size),
-      
-      // Investment Terms
-      equity_required: item.equity_required || item.metadata?.equity_required || false,
-      equity_percentage_min: item.equity_percentage_min,
-      equity_percentage_max: item.equity_percentage_max,
-      token_allocation: item.token_allocation || false,
-      token_percentage: item.token_percentage,
-      
-      // Application Details (REQUIRED)
-      application_url: item.application_url || item.url,
-      application_deadline: item.application_deadline || item.metadata?.application_deadline,
-      application_process_description: item.application_process || item.metadata?.application_process || 'Apply via website with pitch deck and team information',
-      decision_timeline_days: item.decision_timeline_days || 30,
-      next_cohort_start: item.next_cohort_start,
-      
-      // Eligibility (REQUIRED)
-      eligibility_criteria: item.eligibility_criteria || item.metadata?.eligibility_criteria || ['Early-stage startups', 'Less than $500k funding'],
-      geographic_focus: item.geographic_focus || item.metadata?.geographic_focus,
-      excluded_countries: item.excluded_countries,
-      stage_preferences: item.stage_preferences || item.metadata?.stage_preferences || ['pre-seed', 'seed'],
-      sector_focus: item.sector_focus || item.metadata?.sector_focus || ['Technology', 'Web3'],
-      
-      // Program Details
-      program_duration_weeks: item.program_duration_weeks || 12,
-      program_location: item.program_location || item.metadata?.location,
-      remote_friendly: item.remote_friendly !== undefined ? item.remote_friendly : true,
-      cohort_size: item.cohort_size,
-      // acceptance_rate removed - column doesn't exist in DB
-      
-      // Benefits and Support (REQUIRED)
-      benefits: item.benefits || item.metadata?.benefits || ['Funding', 'Mentorship', 'Network access'],
-      mentor_profiles: item.mentor_profiles || item.metadata?.mentor_profiles,
-      partner_perks: item.partner_perks,
-      office_hours: item.office_hours !== undefined ? item.office_hours : true,
-      demo_day: item.demo_day !== undefined ? item.demo_day : true,
-      
-      // Track Record
-      founded_year: item.founded_year || item.metadata?.founded_year,
-      total_investments_made: toNumber(item.total_investments || item.metadata?.total_investments),
-      notable_portfolio_companies: item.notable_portfolio || item.metadata?.notable_portfolio,
-      successful_exits: item.exits || item.metadata?.exits,
-      
-      // Recent Activity (REQUIRED)
-      last_investment_date: item.last_investment_date || item.metadata?.last_investment_date || now.toISOString().split('T')[0],
-      recent_investments: item.recent_investments || item.metadata?.recent_investments || ['Recent investment activity'],
-      // active_status removed - column doesn't exist in DB
-      
-      // Contact Information
-      contact_email: item.contact_email,
-      contact_name: item.contact_name,
-      contact_linkedin: item.contact_linkedin,
-      twitter_url: item.twitter_url || item.metadata?.twitter,
-      
-      // Data Quality
-      data_completeness_score: 0.7,
-      verification_status: 'unverified',
-      last_enrichment_date: now.toISOString(),
-      
-      // Queue Management
       source: item.source,
-      fetched_at: now.toISOString(),
       score: toNumber(item.score, 50),
-      // ai_analysis removed - column doesn't exist in DB
-      
-      // Review Status
       status: 'pending_review',
-      reviewer_notes: null,
-      reviewed_by: null,
-      reviewed_at: null,
       created_at: now.toISOString()
     };
   }

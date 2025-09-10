@@ -17,7 +17,7 @@ import { logger } from '../services/logger';
 import { metricsService } from '../services/metrics';
 import { ErrorHandler, ErrorSeverity, AppError } from '../utils/error-handler';
 import { AccelerateValidator } from '../validators/accelerate-validator';
-import { ComprehensiveExtractor } from '../services/comprehensive-extractor';
+import { aiExtractor } from '../services/ai-extractor';
 import { aiScorer } from '../services/ai-scorer';
 
 export interface OrchestratorResult {
@@ -305,11 +305,9 @@ export class UnifiedOrchestrator {
               const data = await response.json();
               const items = source.parser(data);
               
-              // Transform to ContentItem format with comprehensive extraction
-              const contentItems = items.map((item: any) => {
-                // Use ComprehensiveExtractor for proper extraction
-                return ComprehensiveExtractor.extract(item, source.name);
-              });
+              // Transform to ContentItem format with AI extraction
+              // Use AI to extract REAL data, not regex guesses
+              const contentItems = await aiExtractor.extractBatch(items, source.name);
               
               console.log(`   ✓ ${source.name}: ${contentItems.length} items`);
               return contentItems;
