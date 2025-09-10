@@ -18,6 +18,7 @@ import { stagingService } from '../services/staging-service';
 import { logger } from '../services/logger';
 import { metricsService } from '../services/metrics';
 import { ErrorHandler, ErrorSeverity, AppError } from '../utils/error-handler';
+import { AccelerateValidator } from '../validators/accelerate-validator';
 
 export interface OrchestratorResult {
   success: boolean;
@@ -65,8 +66,14 @@ export class UnifiedOrchestrator {
 
       // Step 2: Validate ACCELERATE criteria
       console.log('\n✅ Step 2: Validating ACCELERATE criteria...');
-      const validated = this.validateAccelerateCriteria(allContent);
+      const validationResult = AccelerateValidator.validateBatch(allContent);
+      const validated = validationResult.valid;
+      
       console.log(`✅ ${validated.length} items meet ACCELERATE criteria`);
+      console.log(`   Perfect: ${validationResult.stats.byCategory.perfect}`);
+      console.log(`   Good: ${validationResult.stats.byCategory.good}`);
+      console.log(`   Maybe: ${validationResult.stats.byCategory.maybe}`);
+      console.log(`   Rejected: ${validationResult.stats.byCategory.rejected}`);
 
       if (validated.length === 0) {
         return {
@@ -213,48 +220,6 @@ export class UnifiedOrchestrator {
     return 'resource';
   }
 
-  /**
-   * Validate items against ACCELERATE criteria
-   */
-  private validateAccelerateCriteria(items: ContentItem[]): ContentItem[] {
-    return items.filter(item => {
-      // Basic validation - must have essential fields
-      if (!item.url) return false;
-      if (!item.title && !item.name) return false;
-      if (!item.type) return false;
-
-      // Type-specific ACCELERATE criteria
-      if (item.type === 'project') {
-        const metadata = item.metadata || {};
-        
-        // Must be from 2024 or later
-        if (metadata.launch_date) {
-          const year = new Date(metadata.launch_date).getFullYear();
-          if (year < 2024) return false;
-        }
-        
-        // Must have less than $500k funding
-        if (metadata.funding_raised && metadata.funding_raised > 500000) {
-          return false;
-        }
-        
-        // Must have small team (1-10 people)
-        if (metadata.team_size && metadata.team_size > 10) {
-          return false;
-        }
-
-        // If we have a score, it should be decent
-        if (item.score && item.score < 30) {
-          return false;
-        }
-
-        return true;
-      }
-
-      // Funding and resources are generally good
-      return item.type === 'funding' || item.type === 'resource';
-    });
-  }
 
   /**
    * Get current pipeline status
