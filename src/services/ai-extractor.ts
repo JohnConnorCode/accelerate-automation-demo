@@ -6,6 +6,7 @@
 import OpenAI from 'openai';
 import { logger } from './logger';
 import { config } from 'dotenv';
+import { monitoringService } from './monitoring-service';
 
 // Load environment variables
 config();
@@ -64,6 +65,8 @@ export class AIExtractor {
    * Extract data using AI instead of regex guessing
    */
   async extract(item: any, source: string): Promise<any> {
+    const startTime = Date.now();
+    
     // Determine content type first
     const contentType = this.determineType(item, source);
     
@@ -97,11 +100,23 @@ export class AIExtractor {
 
       const extracted = JSON.parse(completion.choices[0].message.content || '{}');
       
+      // Track successful AI extraction
+      monitoringService.trackAiExtraction(Date.now() - startTime, true);
+      
       // Combine with original data
       return this.formatOutput(item, source, contentType, extracted);
       
     } catch (error) {
       logger.error('AI extraction failed', { error, item: item.title || item.name });
+      
+      // Track failed AI extraction
+      monitoringService.trackAiExtraction(Date.now() - startTime, false);
+      monitoringService.trackError(
+        `AI extraction failed for ${source}`,
+        { source, error: error.message || error },
+        'low'
+      );
+      
       return this.basicExtraction(item, source, contentType);
     }
   }

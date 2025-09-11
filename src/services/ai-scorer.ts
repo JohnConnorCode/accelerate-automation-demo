@@ -6,6 +6,7 @@
 import OpenAI from 'openai';
 import { logger } from './logger';
 import { config } from 'dotenv';
+import { monitoringService } from './monitoring-service';
 
 // Ensure env vars are loaded
 config();
@@ -43,6 +44,8 @@ export class AIScorer {
    * Score a single item using AI
    */
   async scoreItem(item: any): Promise<ScoringResult> {
+    const startTime = Date.now();
+    
     if (!this.enabled) {
       // Fallback to basic heuristic scoring if no AI
       return this.heuristicScore(item);
@@ -88,6 +91,9 @@ Return a JSON object with: score (number), accelerate_fit (boolean), reasoning (
       
       const result = JSON.parse(response);
       
+      // Track successful AI scoring
+      monitoringService.trackAiScoring(Date.now() - startTime, true);
+      
       // Validate and normalize the response
       return {
         score: Math.min(10, Math.max(0, result.score || 0)),
@@ -104,6 +110,15 @@ Return a JSON object with: score (number), accelerate_fit (boolean), reasoning (
       
     } catch (error) {
       logger.error('AI scoring failed', { error, item: item.title || item.name });
+      
+      // Track failed AI scoring
+      monitoringService.trackAiScoring(Date.now() - startTime, false);
+      monitoringService.trackError(
+        'AI scoring failed',
+        { item: item.title || item.name, error: error.message || error },
+        'low'
+      );
+      
       // Fallback to heuristic scoring
       return this.heuristicScore(item);
     }

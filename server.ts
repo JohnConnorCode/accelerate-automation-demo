@@ -8,6 +8,7 @@ import { requireAdmin, verifyToken } from './src/middleware/authJWT'
 import { logger, logAuditEvent, logError } from './src/services/logger'
 import { scheduler } from './src/services/scheduler'
 import { metricsService } from './src/services/metrics'
+import { monitoringService } from './src/services/monitoring-service'
 import dotenv from 'dotenv'
 
 // Load environment variables
@@ -52,6 +53,33 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
     service: 'content-automation-api'
   })
+})
+
+// Monitoring dashboard endpoint
+app.get('/api/monitoring', async (req, res) => {
+  try {
+    const dashboard = await monitoringService.getDashboard();
+    res.json(dashboard);
+  } catch (error) {
+    logger.error('Failed to get monitoring dashboard', error);
+    res.status(500).json({ 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    });
+  }
+})
+
+// System health endpoint
+app.get('/api/monitoring/health', async (req, res) => {
+  try {
+    const health = await monitoringService.getSystemHealth();
+    const statusCode = health.status === 'healthy' ? 200 : 
+                       health.status === 'degraded' ? 503 : 500;
+    res.status(statusCode).json(health);
+  } catch (error) {
+    res.status(500).json({ 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    });
+  }
 })
 
 // Status endpoint
@@ -505,6 +533,8 @@ app.listen(PORT, () => {
   console.log(`API server running on http://localhost:${PORT}`)
   console.log('Available endpoints:')
   console.log('  GET  /api/health')
+  console.log('  GET  /api/monitoring')
+  console.log('  GET  /api/monitoring/health')
   console.log('  GET  /api/status')
   console.log('  GET  /api/dashboard')
   console.log('  GET  /api/analytics')

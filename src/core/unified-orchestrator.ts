@@ -20,6 +20,7 @@ import { aiExtractor } from '../services/ai-extractor';
 import { aiScorer } from '../services/ai-scorer';
 import { RobustErrorHandler, ErrorSeverity } from '../utils/robust-error-handler';
 import { cacheService } from '../services/cache-service';
+import { monitoringService } from '../services/monitoring-service';
 
 export interface OrchestratorResult {
   success: boolean;
@@ -44,10 +45,15 @@ export class UnifiedOrchestrator {
     const errors: string[] = [];
     
     try {
+      // Track fetch start
+      const fetchStart = Date.now();
       // Step 1: Fetch from all sources
       console.log('\n🔍 Step 1: Fetching from sources...');
       const allContent = await this.fetchFromSources();
       console.log(`✅ Fetched ${allContent.length} items`);
+      
+      // Track fetch duration
+      monitoringService.trackFetchDuration(Date.now() - fetchStart);
       
       if (allContent.length === 0) {
         return {
@@ -71,6 +77,15 @@ export class UnifiedOrchestrator {
       console.log(`   Good: ${validationResult.stats.byCategory.good}`);
       console.log(`   Maybe: ${validationResult.stats.byCategory.maybe}`);
       console.log(`   Rejected: ${validationResult.stats.byCategory.rejected}`);
+      
+      // Track ACCELERATE stats
+      monitoringService.trackPipeline({
+        fetched: allContent.length,
+        validated: validated.length,
+        unique: 0,
+        inserted: 0,
+        accelerateStats: validationResult.stats.byCategory
+      });
 
       if (validated.length === 0) {
         return {
@@ -156,6 +171,19 @@ export class UnifiedOrchestrator {
       // Track metrics
       const duration = Date.now() - startTime;
       metricsService.trackFetch(totalInserted, duration);
+      
+      // Track comprehensive monitoring
+      monitoringService.trackPipeline({
+        fetched: allContent.length,
+        validated: validated.length,
+        unique: unique.length,
+        inserted: totalInserted,
+        byCategory: {
+          projects: insertResult.inserted.projects,
+          resources: insertResult.inserted.resources,
+          funding: insertResult.inserted.funding
+        }
+      });
 
       // Calculate success
       const successRate = allContent.length > 0 
@@ -179,6 +207,13 @@ export class UnifiedOrchestrator {
     } catch (error) {
       logger.error('Pipeline failed', error);
       errors.push(`Fatal error: ${error}`);
+      
+      // Track critical error
+      monitoringService.trackError(
+        `Pipeline failed: ${error}`,
+        { error, startTime },
+        'critical'
+      );
       
       return {
         success: false,
@@ -294,8 +329,13 @@ export class UnifiedOrchestrator {
           
           if (cached && Array.isArray(cached) && cached.length > 0) {
             console.log(`   ✓ ${source.name}: ${cached.length} items (cached)`);
+            monitoringService.trackCacheHit();
+            monitoringService.trackSource(source.name, cached.length, true);
             return cached;
           }
+          
+          // Track cache miss
+          monitoringService.trackCacheMiss();
           
           // Use robust error handler with retry logic
           const fetchedData = await RobustErrorHandler.withRetry(
@@ -330,6 +370,7 @@ export class UnifiedOrchestrator {
               cacheService.set(cacheKey, contentItems);
               
               console.log(`   ✓ ${source.name}: ${contentItems.length} items`);
+              monitoringService.trackSource(source.name, contentItems.length, true);
               return contentItems;
             } finally {
               clearTimeout(timeout);
@@ -344,6 +385,12 @@ export class UnifiedOrchestrator {
           return fetchedData || [];
         } catch (error) {
           console.error(`   ✗ Failed to fetch from ${source.name}:`, error.message || error);
+          monitoringService.trackSource(source.name, 0, false);
+          monitoringService.trackError(
+            `Failed to fetch from ${source.name}`,
+            { source: source.name, error: error.message },
+            'medium'
+          );
           return [];
         }
       })
