@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { criteriaService } from '../services/criteriaService';
-import { orchestratorService } from '../services/orchestratorService';
+import { UnifiedOrchestrator } from '../core/unified-orchestrator';
 import { supabase } from '../lib/supabase';
+
+const orchestratorService = new UnifiedOrchestrator();
 
 interface TestResult {
   name: string;
