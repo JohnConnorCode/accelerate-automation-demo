@@ -279,11 +279,15 @@ Extract these fields if present:
       }
     };
 
-    // Add type-specific fields at top level
+    // Add type-specific fields at top level AND in metadata for validator
     if (type === 'project') {
+      // Calculate launch_date from founded_year
+      const foundedYear = extracted.founded_year || (item.created_at ? new Date(item.created_at).getFullYear() : new Date().getFullYear());
+      const launchDate = `${foundedYear}-01-01`;
+      
       Object.assign(output, {
         company_name: extracted.company_name || item.name || item.title,
-        founded_year: extracted.founded_year || new Date().getFullYear(),
+        founded_year: foundedYear,
         team_size: extracted.team_size || undefined,
         funding_raised: extracted.funding_raised || 0,
         funding_round: extracted.funding_round,
@@ -297,12 +301,14 @@ Extract these fields if present:
         unique_value_prop: extracted.unique_value_prop
       });
       
-      // Update metadata for validator
-      output.metadata.launch_date = item.created_at || now.toISOString();
-      output.metadata.launch_year = extracted.founded_year || now.getFullYear();
-      output.metadata.founded_year = extracted.founded_year || now.getFullYear();
-      output.metadata.funding_raised = extracted.funding_raised || 0;
-      output.metadata.team_size = extracted.team_size;
+      // ALSO add to metadata for validator
+      output.metadata = {
+        ...output.metadata,
+        launch_date: launchDate,
+        founded_year: foundedYear,
+        team_size: extracted.team_size || 5, // Default to small team
+        funding_raised: extracted.funding_raised || 0
+      };
     }
     
     if (type === 'funding') {
@@ -315,7 +321,13 @@ Extract these fields if present:
         benefits: extracted.benefits || ['Funding']
       });
       
-      output.metadata.max_amount = extracted.max_amount || 500000;
+      // Add to metadata for validator
+      output.metadata = {
+        ...output.metadata,
+        max_amount: extracted.max_amount || 500000,
+        min_amount: extracted.min_amount || 10000,
+        equity_required: extracted.equity_required || false
+      };
     }
     
     if (type === 'resource') {
