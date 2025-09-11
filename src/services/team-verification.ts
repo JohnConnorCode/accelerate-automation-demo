@@ -250,21 +250,13 @@ export class TeamVerificationService {
   }
 
   /**
-   * Verify LinkedIn profile (mock implementation)
+   * Verify LinkedIn profile (currently unavailable without API)
    */
   private async verifyLinkedIn(url: string): Promise<any> {
     // LinkedIn doesn't provide public API for profile data
-    // Would need to use a service like Proxycurl or implement scraping
-    
-    // Mock response structure
-    return {
-      credibility: 30,
-      experience_years: 5,
-      companies: ['Previous Startup', 'Tech Company'],
-      skills: ['Blockchain', 'Smart Contracts', 'JavaScript'],
-      education: 'Computer Science',
-      has_web3_experience: true,
-    };
+    // Would need LinkedIn API key or service like Proxycurl
+    // Return null to indicate no verification available
+    return null;
   }
 
   /**
@@ -299,15 +291,9 @@ export class TeamVerificationService {
    */
   private async verifyOnChain(address: string): Promise<any> {
     // Would integrate with Etherscan, Alchemy, or similar
-    // Mock implementation
-    return {
-      credibility: 20,
-      transaction_count: 100,
-      first_transaction: '2022-01-01',
-      contract_deployments: 2,
-      nft_holdings: 5,
-      defi_interactions: 10,
-    };
+    // Currently unavailable without API keys
+    // Return null to indicate no verification available
+    return null;
   }
 
   /**
