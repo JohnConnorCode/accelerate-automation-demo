@@ -228,18 +228,12 @@ export class StagingService {
 
     const now = new Date();
 
-    // ULTRA MINIMAL - Only fields we KNOW exist
+    // BARE MINIMUM - Only fields that MUST exist based on errors
+    // queue_investors is clearly different from other tables
     return {
       name: item.title || item.name || 'Untitled Funding Program',
-      organization: item.organization || item.metadata?.organization || item.source || 'Unknown',
       description,
-      url: item.url,
-      funding_type: item.funding_type || item.metadata?.funding_type || 'grant',
-      min_amount: toNumber(item.min_amount || item.metadata?.min_amount, 10000),
-      max_amount: toNumber(item.max_amount || item.metadata?.max_amount, 500000),
-      source: item.source,
-      score: toNumber(item.score, 50),
-      status: 'pending_review',
+      source: item.source, // REQUIRED - not-null constraint
       created_at: now.toISOString()
     };
   }
