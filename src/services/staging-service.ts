@@ -362,7 +362,7 @@ export class StagingService {
       // Other error - return it
       return { count: 0, error: batchError.message };
     } catch (err: any) {
-      console.error('❌ Project insertion exception:', err);
+      logger.error('Project insertion exception', err);
       return { count: 0, error: err.message };
     }
   }
@@ -421,7 +421,7 @@ export class StagingService {
       // Other error - return it
       return { count: 0, error: batchError.message };
     } catch (err: any) {
-      console.error('❌ Funding insertion exception:', err);
+      logger.error('Funding insertion exception', err);
       return { count: 0, error: err.message };
     }
   }
@@ -480,7 +480,7 @@ export class StagingService {
       // Other error - return it
       return { count: 0, error: batchError.message };
     } catch (err: any) {
-      console.error('❌ Resource insertion exception:', err);
+      logger.error('Resource insertion exception', err);
       return { count: 0, error: err.message };
     }
   }
