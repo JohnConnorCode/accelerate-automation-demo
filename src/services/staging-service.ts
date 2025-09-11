@@ -315,32 +315,52 @@ export class StagingService {
       console.log(`\n📝 Inserting ${items.length} projects to queue_projects...`);
       console.log(`   Sample item:`, JSON.stringify(items[0], null, 2).substring(0, 500));
       
-      // Insert one by one to handle duplicates gracefully
-      let successCount = 0;
-      const errors: string[] = [];
+      // Try batch insert first for performance
+      const { data: batchData, error: batchError } = await supabase
+        .from('queue_projects')
+        .insert(items)
+        .select();
       
-      for (const item of items) {
-        const { data, error } = await supabase
-          .from('queue_projects')
-          .insert(item)
-          .select();
+      if (!batchError) {
+        // Batch insert succeeded
+        const successCount = batchData?.length || 0;
+        console.log(`✅ Batch inserted ${successCount} projects`);
+        return { count: successCount };
+      }
+      
+      // If batch failed due to duplicates, fall back to individual inserts
+      if (batchError.message?.includes('duplicate') || batchError.message?.includes('unique')) {
+        console.log('   Batch insert failed due to duplicates, trying individual inserts...');
         
-        if (error) {
-          // Only log if it's not a duplicate error
-          if (!error.message?.includes('duplicate') && !error.message?.includes('unique')) {
-            errors.push(`${item.company_name}: ${error.message}`);
+        let successCount = 0;
+        const errors: string[] = [];
+        
+        for (const item of items) {
+          const { data, error } = await supabase
+            .from('queue_projects')
+            .insert(item)
+            .select();
+          
+          if (error) {
+            // Only log if it's not a duplicate error
+            if (!error.message?.includes('duplicate') && !error.message?.includes('unique')) {
+              errors.push(`${item.company_name}: ${error.message}`);
+            }
+          } else if (data && data.length > 0) {
+            successCount++;
           }
-        } else if (data && data.length > 0) {
-          successCount++;
         }
-      }
 
-      console.log(`✅ Inserted ${successCount} out of ${items.length} projects`);
-      if (items.length - successCount > 0) {
-        console.log(`   Skipped ${items.length - successCount} duplicates`);
+        console.log(`✅ Inserted ${successCount} out of ${items.length} projects`);
+        if (items.length - successCount > 0) {
+          console.log(`   Skipped ${items.length - successCount} duplicates`);
+        }
+        
+        return { count: successCount, error: errors.length > 0 ? errors[0] : undefined };
       }
       
-      return { count: successCount, error: errors.length > 0 ? errors[0] : undefined };
+      // Other error - return it
+      return { count: 0, error: batchError.message };
     } catch (err: any) {
       console.error('❌ Project insertion exception:', err);
       return { count: 0, error: err.message };
@@ -354,32 +374,52 @@ export class StagingService {
     try {
       console.log(`💰 Inserting ${items.length} funding programs...`);
       
-      // Insert one by one to handle duplicates gracefully
-      let successCount = 0;
-      const errors: string[] = [];
+      // Try batch insert first for performance
+      const { data: batchData, error: batchError } = await supabase
+        .from('queue_investors')
+        .insert(items)
+        .select();
       
-      for (const item of items) {
-        const { data, error } = await supabase
-          .from('queue_investors')
-          .insert(item)
-          .select();
+      if (!batchError) {
+        // Batch insert succeeded
+        const successCount = batchData?.length || 0;
+        console.log(`✅ Batch inserted ${successCount} funding programs`);
+        return { count: successCount };
+      }
+      
+      // If batch failed due to duplicates, fall back to individual inserts
+      if (batchError.message?.includes('duplicate') || batchError.message?.includes('unique')) {
+        console.log('   Batch insert failed due to duplicates, trying individual inserts...');
         
-        if (error) {
-          // Only log if it's not a duplicate error
-          if (!error.message?.includes('duplicate') && !error.message?.includes('unique')) {
-            errors.push(`${item.name}: ${error.message}`);
+        let successCount = 0;
+        const errors: string[] = [];
+        
+        for (const item of items) {
+          const { data, error } = await supabase
+            .from('queue_investors')
+            .insert(item)
+            .select();
+          
+          if (error) {
+            // Only log if it's not a duplicate error
+            if (!error.message?.includes('duplicate') && !error.message?.includes('unique')) {
+              errors.push(`${item.name}: ${error.message}`);
+            }
+          } else if (data && data.length > 0) {
+            successCount++;
           }
-        } else if (data && data.length > 0) {
-          successCount++;
         }
-      }
 
-      console.log(`✅ Inserted ${successCount} out of ${items.length} funding programs`);
-      if (items.length - successCount > 0) {
-        console.log(`   Skipped ${items.length - successCount} duplicates`);
+        console.log(`✅ Inserted ${successCount} out of ${items.length} funding programs`);
+        if (items.length - successCount > 0) {
+          console.log(`   Skipped ${items.length - successCount} duplicates`);
+        }
+        
+        return { count: successCount, error: errors.length > 0 ? errors[0] : undefined };
       }
       
-      return { count: successCount, error: errors.length > 0 ? errors[0] : undefined };
+      // Other error - return it
+      return { count: 0, error: batchError.message };
     } catch (err: any) {
       console.error('❌ Funding insertion exception:', err);
       return { count: 0, error: err.message };
@@ -393,32 +433,52 @@ export class StagingService {
     try {
       console.log(`🔧 Inserting ${items.length} resources...`);
       
-      // Insert one by one to handle duplicates gracefully
-      let successCount = 0;
-      const errors: string[] = [];
+      // Try batch insert first for performance
+      const { data: batchData, error: batchError } = await supabase
+        .from('queue_news')
+        .insert(items)
+        .select();
       
-      for (const item of items) {
-        const { data, error } = await supabase
-          .from('queue_news')
-          .insert(item)
-          .select();
+      if (!batchError) {
+        // Batch insert succeeded
+        const successCount = batchData?.length || 0;
+        console.log(`✅ Batch inserted ${successCount} resources`);
+        return { count: successCount };
+      }
+      
+      // If batch failed due to duplicates, fall back to individual inserts
+      if (batchError.message?.includes('duplicate') || batchError.message?.includes('unique')) {
+        console.log('   Batch insert failed due to duplicates, trying individual inserts...');
         
-        if (error) {
-          // Only log if it's not a duplicate error
-          if (!error.message?.includes('duplicate') && !error.message?.includes('unique')) {
-            errors.push(`${item.title}: ${error.message}`);
+        let successCount = 0;
+        const errors: string[] = [];
+        
+        for (const item of items) {
+          const { data, error } = await supabase
+            .from('queue_news')
+            .insert(item)
+            .select();
+          
+          if (error) {
+            // Only log if it's not a duplicate error
+            if (!error.message?.includes('duplicate') && !error.message?.includes('unique')) {
+              errors.push(`${item.title}: ${error.message}`);
+            }
+          } else if (data && data.length > 0) {
+            successCount++;
           }
-        } else if (data && data.length > 0) {
-          successCount++;
         }
-      }
 
-      console.log(`✅ Inserted ${successCount} out of ${items.length} resources`);
-      if (items.length - successCount > 0) {
-        console.log(`   Skipped ${items.length - successCount} duplicates`);
+        console.log(`✅ Inserted ${successCount} out of ${items.length} resources`);
+        if (items.length - successCount > 0) {
+          console.log(`   Skipped ${items.length - successCount} duplicates`);
+        }
+        
+        return { count: successCount, error: errors.length > 0 ? errors[0] : undefined };
       }
       
-      return { count: successCount, error: errors.length > 0 ? errors[0] : undefined };
+      // Other error - return it
+      return { count: 0, error: batchError.message };
     } catch (err: any) {
       console.error('❌ Resource insertion exception:', err);
       return { count: 0, error: err.message };
