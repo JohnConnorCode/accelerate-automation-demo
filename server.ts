@@ -9,10 +9,14 @@ import { logger, logAuditEvent, logError } from './src/services/logger'
 import { scheduler } from './src/services/scheduler'
 import { metricsService } from './src/services/metrics'
 import { monitoringService } from './src/services/monitoring-service'
+import { processManager } from './src/utils/process-manager'
 import dotenv from 'dotenv'
 
 // Load environment variables
 dotenv.config({ path: process.env.NODE_ENV === 'production' ? '.env.production' : '.env' })
+
+// Initialize process manager for error recovery
+processManager.initialize()
 
 const app = express()
 const PORT = process.env.PORT || 3002
@@ -529,7 +533,7 @@ app.get('/api/queue/:type', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`API server running on http://localhost:${PORT}`)
   console.log('Available endpoints:')
   console.log('  GET  /api/health')
@@ -546,3 +550,11 @@ app.listen(PORT, () => {
   console.log('  GET  /api/scheduler/status')
   console.log('  POST /api/scheduler/run')
 })
+
+// Register graceful shutdown
+processManager.onShutdown(async () => {
+  logger.info('Closing server connections...');
+  await new Promise<void>((resolve) => {
+    server.close(() => resolve());
+  });
+});
