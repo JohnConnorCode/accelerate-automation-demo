@@ -240,17 +240,7 @@ export class UnifiedOrchestrator {
       },
       {
         name: 'GitHub Trending',
-        url: 'https://api.github.com/search/repositories?q=created:>2024-01-01&sort=stars&order=desc&per_page=15',
-        parser: (data: any) => data.items || []
-      },
-      {
-        name: 'GitHub Web3',
-        url: 'https://api.github.com/search/repositories?q=web3+OR+blockchain+OR+defi+created:>2024-01-01&sort=updated&per_page=15',
-        parser: (data: any) => data.items || []
-      },
-      {
-        name: 'GitHub AI Startups',
-        url: 'https://api.github.com/search/repositories?q=ai+OR+ml+OR+llm+created:>2024-01-01&sort=stars&per_page=15',
+        url: 'https://api.github.com/search/repositories?q=created:>2024-01-01&sort=stars&order=desc&per_page=10',
         parser: (data: any) => data.items || []
       },
       {
@@ -275,11 +265,6 @@ export class UnifiedOrchestrator {
         url: 'https://hn.algolia.com/api/v1/search?query=grant+OR+accelerator+OR+incubator&hitsPerPage=10',
         parser: (data: any) => data.hits || []
       },
-      {
-        name: 'GitHub Grants',
-        url: 'https://api.github.com/search/repositories?q=grants+OR+funding+OR+accelerator&sort=updated&per_page=10',
-        parser: (data: any) => data.items || []
-      },
       
       // === RESOURCES (Tools, Tutorials, Courses) ===
       {
@@ -301,11 +286,6 @@ export class UnifiedOrchestrator {
         name: 'HackerNews Ask HN',
         url: 'https://hn.algolia.com/api/v1/search?tags=ask_hn&query=how+to+OR+tutorial+OR+guide&hitsPerPage=10',
         parser: (data: any) => data.hits || []
-      },
-      {
-        name: 'GitHub Awesome Lists',
-        url: 'https://api.github.com/search/repositories?q=awesome+in:name+stars:>100&sort=updated&per_page=10',
-        parser: (data: any) => data.items || []
       },
       {
         name: 'Reddit Learn Programming',
