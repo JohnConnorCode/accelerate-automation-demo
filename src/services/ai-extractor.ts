@@ -129,9 +129,9 @@ export class AIExtractor {
       return items.map(item => this.basicExtraction(item, source, this.determineType(item, source)));
     }
 
-    // Process in parallel batches of 5
+    // Process in parallel batches of 10 for better performance
     const results: any[] = [];
-    const batchSize = 5;
+    const batchSize = 10;
     
     for (let i = 0; i < items.length; i += batchSize) {
       const batch = items.slice(i, i + batchSize);
@@ -140,9 +140,9 @@ export class AIExtractor {
       );
       results.push(...batchResults);
       
-      // Small delay to respect rate limits
+      // Minimal delay to respect rate limits
       if (i + batchSize < items.length) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 50));
       }
     }
     

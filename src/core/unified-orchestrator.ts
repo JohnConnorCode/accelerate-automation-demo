@@ -344,7 +344,7 @@ export class UnifiedOrchestrator {
             
             // Fetch with timeout
             const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
+            const timeout = setTimeout(() => controller.abort(), 5000); // 5s timeout
             
             try {
               const response = await fetch(source.url, { signal: controller.signal });
@@ -377,8 +377,8 @@ export class UnifiedOrchestrator {
             }
           },
             { operation: `Fetching from ${source.name}`, source: source.name },
-            3, // Max 3 attempts
-            1000 // 1s initial backoff
+            2, // Max 2 attempts (faster fail)
+            500 // 0.5s initial backoff
           );
           
           // Return the fetched data or empty array if failed

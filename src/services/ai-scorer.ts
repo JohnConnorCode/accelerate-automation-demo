@@ -130,8 +130,8 @@ Return a JSON object with: score (number), accelerate_fit (boolean), reasoning (
   async scoreBatch(items: any[]): Promise<Map<string, ScoringResult>> {
     const results = new Map<string, ScoringResult>();
     
-    // Process in batches of 5 to avoid rate limits
-    const batchSize = 5;
+    // Process in batches of 10 for better performance
+    const batchSize = 10;
     for (let i = 0; i < items.length; i += batchSize) {
       const batch = items.slice(i, i + batchSize);
       const batchResults = await Promise.all(
@@ -143,9 +143,9 @@ Return a JSON object with: score (number), accelerate_fit (boolean), reasoning (
         results.set(id, batchResults[index]);
       });
       
-      // Small delay between batches to respect rate limits
+      // Minimal delay between batches
       if (i + batchSize < items.length) {
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise(resolve => setTimeout(resolve, 50));
       }
     }
     
