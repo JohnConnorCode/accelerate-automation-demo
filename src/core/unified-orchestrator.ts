@@ -15,10 +15,10 @@ import { deduplicationService } from '../services/deduplication';
 import { stagingService } from '../services/staging-service';
 import { logger } from '../services/logger';
 import { metricsService } from '../services/metrics';
-import { ErrorHandler, ErrorSeverity, AppError } from '../utils/error-handler';
 import { AccelerateValidator } from '../validators/accelerate-validator';
 import { aiExtractor } from '../services/ai-extractor';
 import { aiScorer } from '../services/ai-scorer';
+import { RobustErrorHandler, ErrorSeverity } from '../utils/robust-error-handler';
 
 export interface OrchestratorResult {
   success: boolean;
@@ -286,7 +286,8 @@ export class UnifiedOrchestrator {
     const sources = this.getSources();
     const results = await Promise.allSettled(
       sources.map(async source => {
-        return await ErrorHandler.wrap(
+        // Use robust error handler with retry logic
+        return await RobustErrorHandler.withRetry(
           async () => {
             console.log(`   Fetching from ${source.name}...`);
             
@@ -305,6 +306,11 @@ export class UnifiedOrchestrator {
               const data = await response.json();
               const items = source.parser(data);
               
+              // Validate items before processing
+              if (!Array.isArray(items)) {
+                throw new Error(`Invalid response from ${source.name} - expected array`);
+              }
+              
               // Transform to ContentItem format with AI extraction
               // Use AI to extract REAL data, not regex guesses
               const contentItems = await aiExtractor.extractBatch(items, source.name);
@@ -315,8 +321,9 @@ export class UnifiedOrchestrator {
               clearTimeout(timeout);
             }
           },
-          `Fetching from ${source.name}`,
-          ErrorSeverity.LOW // Individual source failures are low severity
+          { operation: `Fetching from ${source.name}`, source: source.name },
+          3, // Max 3 attempts
+          1000 // 1s initial backoff
         ) || [];
       })
     );
