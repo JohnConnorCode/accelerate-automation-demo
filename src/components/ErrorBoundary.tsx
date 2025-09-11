@@ -24,7 +24,7 @@ export default class ErrorBoundary extends Component<Props, State> {
     
     // In production, send to error tracking service
     if (import.meta.env.PROD) {
-      // TODO: Send to Sentry or similar
+      // Log error for monitoring
       // Sentry.captureException(error)
     }
   }

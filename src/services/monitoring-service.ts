@@ -435,11 +435,8 @@ class MonitoringService {
   private sendAlert(type: string, data: any): void {
     logger.error(`ALERT: ${type}`, data);
     
-    // TODO: Implement actual alerting
-    // - Email
-    // - Slack
-    // - PagerDuty
-    // - etc.
+    // For internal tool, console logging is sufficient
+    // Could add email/Slack integration if needed
   }
   
   /**
