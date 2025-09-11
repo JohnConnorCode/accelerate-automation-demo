@@ -9,6 +9,7 @@ import { logger, logAuditEvent, logError } from './src/services/logger'
 import { scheduler } from './src/services/scheduler'
 import { metricsService } from './src/services/metrics'
 import { monitoringService } from './src/services/monitoring-service'
+import { cacheService } from './src/services/cache-service'
 import { processManager } from './src/utils/process-manager'
 import dotenv from 'dotenv'
 
@@ -85,6 +86,13 @@ app.get('/api/monitoring/health', async (req, res) => {
     });
   }
 })
+
+// Cache management endpoint
+app.post('/api/cache/clear', (req, res) => {
+  cacheService.clearAll();
+  logger.info('Cache cleared via API');
+  res.json({ success: true, message: 'Cache cleared' });
+});
 
 // Status endpoint
 app.get('/api/status', async (req, res) => {
