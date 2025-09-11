@@ -19,6 +19,7 @@ import { AccelerateValidator } from '../validators/accelerate-validator';
 import { aiExtractor } from '../services/ai-extractor';
 import { aiScorer } from '../services/ai-scorer';
 import { RobustErrorHandler, ErrorSeverity } from '../utils/robust-error-handler';
+import { cacheService } from '../services/cache-service';
 
 export interface OrchestratorResult {
   success: boolean;
@@ -286,8 +287,18 @@ export class UnifiedOrchestrator {
     const sources = this.getSources();
     const results = await Promise.allSettled(
       sources.map(async source => {
-        // Use robust error handler with retry logic
-        return await RobustErrorHandler.withRetry(
+        try {
+          // Check cache first
+          const cacheKey = cacheService.generateKey(source.url);
+          const cached = cacheService.get(cacheKey);
+          
+          if (cached && Array.isArray(cached) && cached.length > 0) {
+            console.log(`   ✓ ${source.name}: ${cached.length} items (cached)`);
+            return cached;
+          }
+          
+          // Use robust error handler with retry logic
+          const fetchedData = await RobustErrorHandler.withRetry(
           async () => {
             console.log(`   Fetching from ${source.name}...`);
             
@@ -315,16 +326,26 @@ export class UnifiedOrchestrator {
               // Use AI to extract REAL data, not regex guesses
               const contentItems = await aiExtractor.extractBatch(items, source.name);
               
+              // Cache the results
+              cacheService.set(cacheKey, contentItems);
+              
               console.log(`   ✓ ${source.name}: ${contentItems.length} items`);
               return contentItems;
             } finally {
               clearTimeout(timeout);
             }
           },
-          { operation: `Fetching from ${source.name}`, source: source.name },
-          3, // Max 3 attempts
-          1000 // 1s initial backoff
-        ) || [];
+            { operation: `Fetching from ${source.name}`, source: source.name },
+            3, // Max 3 attempts
+            1000 // 1s initial backoff
+          );
+          
+          // Return the fetched data or empty array if failed
+          return fetchedData || [];
+        } catch (error) {
+          console.error(`   ✗ Failed to fetch from ${source.name}:`, error.message || error);
+          return [];
+        }
       })
     );
 
