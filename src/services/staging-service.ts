@@ -315,18 +315,32 @@ export class StagingService {
       console.log(`\n📝 Inserting ${items.length} projects to queue_projects...`);
       console.log(`   Sample item:`, JSON.stringify(items[0], null, 2).substring(0, 500));
       
-      const { data, error } = await supabase
-        .from('queue_projects')
-        .insert(items)
-        .select();
-
-      if (error) {
-        console.error('❌ Project insertion error:', error);
-        return { count: 0, error: error.message || JSON.stringify(error) };
+      // Insert one by one to handle duplicates gracefully
+      let successCount = 0;
+      const errors: string[] = [];
+      
+      for (const item of items) {
+        const { data, error } = await supabase
+          .from('queue_projects')
+          .insert(item)
+          .select();
+        
+        if (error) {
+          // Only log if it's not a duplicate error
+          if (!error.message?.includes('duplicate') && !error.message?.includes('unique')) {
+            errors.push(`${item.company_name}: ${error.message}`);
+          }
+        } else if (data && data.length > 0) {
+          successCount++;
+        }
       }
 
-      console.log(`✅ Inserted ${data?.length || 0} projects`);
-      return { count: data?.length || 0 };
+      console.log(`✅ Inserted ${successCount} out of ${items.length} projects`);
+      if (items.length - successCount > 0) {
+        console.log(`   Skipped ${items.length - successCount} duplicates`);
+      }
+      
+      return { count: successCount, error: errors.length > 0 ? errors[0] : undefined };
     } catch (err: any) {
       console.error('❌ Project insertion exception:', err);
       return { count: 0, error: err.message };
@@ -340,18 +354,32 @@ export class StagingService {
     try {
       console.log(`💰 Inserting ${items.length} funding programs...`);
       
-      const { data, error } = await supabase
-        .from('queue_investors')
-        .insert(items)
-        .select();
-
-      if (error) {
-        console.error('❌ Funding insertion error:', error);
-        return { count: 0, error: error.message || JSON.stringify(error) };
+      // Insert one by one to handle duplicates gracefully
+      let successCount = 0;
+      const errors: string[] = [];
+      
+      for (const item of items) {
+        const { data, error } = await supabase
+          .from('queue_investors')
+          .insert(item)
+          .select();
+        
+        if (error) {
+          // Only log if it's not a duplicate error
+          if (!error.message?.includes('duplicate') && !error.message?.includes('unique')) {
+            errors.push(`${item.name}: ${error.message}`);
+          }
+        } else if (data && data.length > 0) {
+          successCount++;
+        }
       }
 
-      console.log(`✅ Inserted ${data?.length || 0} funding programs`);
-      return { count: data?.length || 0 };
+      console.log(`✅ Inserted ${successCount} out of ${items.length} funding programs`);
+      if (items.length - successCount > 0) {
+        console.log(`   Skipped ${items.length - successCount} duplicates`);
+      }
+      
+      return { count: successCount, error: errors.length > 0 ? errors[0] : undefined };
     } catch (err: any) {
       console.error('❌ Funding insertion exception:', err);
       return { count: 0, error: err.message };
@@ -365,18 +393,32 @@ export class StagingService {
     try {
       console.log(`🔧 Inserting ${items.length} resources...`);
       
-      const { data, error } = await supabase
-        .from('queue_news')
-        .insert(items)
-        .select();
-
-      if (error) {
-        console.error('❌ Resource insertion error:', error);
-        return { count: 0, error: error.message || JSON.stringify(error) };
+      // Insert one by one to handle duplicates gracefully
+      let successCount = 0;
+      const errors: string[] = [];
+      
+      for (const item of items) {
+        const { data, error } = await supabase
+          .from('queue_news')
+          .insert(item)
+          .select();
+        
+        if (error) {
+          // Only log if it's not a duplicate error
+          if (!error.message?.includes('duplicate') && !error.message?.includes('unique')) {
+            errors.push(`${item.title}: ${error.message}`);
+          }
+        } else if (data && data.length > 0) {
+          successCount++;
+        }
       }
 
-      console.log(`✅ Inserted ${data?.length || 0} resources`);
-      return { count: data?.length || 0 };
+      console.log(`✅ Inserted ${successCount} out of ${items.length} resources`);
+      if (items.length - successCount > 0) {
+        console.log(`   Skipped ${items.length - successCount} duplicates`);
+      }
+      
+      return { count: successCount, error: errors.length > 0 ? errors[0] : undefined };
     } catch (err: any) {
       console.error('❌ Resource insertion exception:', err);
       return { count: 0, error: err.message };
