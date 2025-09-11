@@ -30,9 +30,9 @@ class CriteriaService {
   }
 
   async scoreContent(content: any) {
-    // Mock scoring for frontend
+    // No fake scores - return neutral requiring review
     if (!content) return 0;
-    return Math.floor(Math.random() * 40) + 60;
+    return 50; // Neutral - requires manual review
   }
 }
 

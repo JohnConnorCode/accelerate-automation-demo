@@ -138,17 +138,15 @@ class ContentService {
 
     const enrichedData: any = { ...item.metadata }
 
-    // Simulate enrichment (in production, call AI services)
+    // Real enrichment - no fake data
     if (options.aiAnalysis) {
-      enrichedData.aiAnalysis = {
-        quality: Math.random() * 100,
-        relevance: Math.random() * 100,
-        insights: 'AI-generated insights would go here'
-      }
+      // Only add if we have real AI analysis
+      // Do not add fake data
     }
 
     if (options.sentiment) {
-      enrichedData.sentiment = ['positive', 'neutral', 'negative'][Math.floor(Math.random() * 3)]
+      // Only add if we have real sentiment analysis
+      // Do not add fake data
     }
 
     if (options.keywords) {
