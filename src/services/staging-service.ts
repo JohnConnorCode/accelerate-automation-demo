@@ -315,10 +315,13 @@ export class StagingService {
       console.log(`\n📝 Inserting ${items.length} projects to queue_projects...`);
       console.log(`   Sample item:`, JSON.stringify(items[0], null, 2).substring(0, 500));
       
-      // Try batch insert first for performance
+      // Use upsert with onConflict to handle duplicates gracefully
       const { data: batchData, error: batchError } = await supabase
         .from('queue_projects')
-        .insert(items)
+        .upsert(items, { 
+          onConflict: 'url',
+          ignoreDuplicates: false 
+        })
         .select();
       
       if (!batchError) {
@@ -336,10 +339,13 @@ export class StagingService {
         const errors: string[] = [];
         
         for (const item of items) {
-          // Try insert, skip if duplicate
+          // Use upsert for individual items
           const { data, error } = await supabase
             .from('queue_projects')
-            .insert(item)
+            .upsert(item, { 
+              onConflict: 'url',
+              ignoreDuplicates: false 
+            })
             .select();
           
           if (error) {
@@ -398,7 +404,10 @@ export class StagingService {
         for (const item of items) {
           const { data, error } = await supabase
             .from('queue_investors')
-            .insert(item)
+            .upsert(item as any, { 
+              onConflict: 'url',
+              ignoreDuplicates: false 
+            })
             .select();
           
           if (error) {
@@ -434,10 +443,13 @@ export class StagingService {
     try {
       console.log(`🔧 Inserting ${items.length} resources...`);
       
-      // Try batch insert first for performance
+      // Use upsert with onConflict to handle duplicates gracefully
       const { data: batchData, error: batchError } = await supabase
         .from('queue_news')
-        .insert(items as any)
+        .upsert(items as any, { 
+          onConflict: 'url',
+          ignoreDuplicates: false 
+        })
         .select();
       
       if (!batchError) {
@@ -457,7 +469,10 @@ export class StagingService {
         for (const item of items) {
           const { data, error } = await supabase
             .from('queue_news')
-            .insert(item)
+            .upsert(item as any, { 
+              onConflict: 'url',
+              ignoreDuplicates: false 
+            })
             .select();
           
           if (error) {
