@@ -621,7 +621,12 @@ export class BackupRecoveryService {
    */
   
   private generateBackupId(): string {
-    return `backup_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const timestamp = Date.now();
+    const hash = require('crypto').createHash('sha256')
+      .update(`${timestamp}_${process.pid}`)
+      .digest('hex')
+      .substring(0, 9);
+    return `backup_${timestamp}_${hash}`;
   }
   
   private async calculateChecksum(filePath: string): Promise<string> {

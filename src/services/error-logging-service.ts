@@ -561,11 +561,11 @@ export class ErrorLoggingService extends EventEmitter {
    * Generate unique IDs
    */
   private generateErrorId(): string {
-    return `err_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `err_${Date.now()}_${this.errorCount || 0}`;
   }
   
   private generateSessionId(): string {
-    return `sess_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `sess_${Date.now()}_${process.pid}`;
   }
   
   private generateRequestId(): string {

@@ -122,7 +122,7 @@ export default function Dashboard() {
           title: `AI Generated Content ${contentQueue.length + 1}`,
           platform: selectedPlatforms[0] || 'twitter',
           status: 'pending',
-          score: Math.floor(Math.random() * 30) + 70,
+          score: 75, // Default score for new content
           createdAt: new Date().toISOString()
         }
         const updatedQueue = [newContent, ...contentQueue]

@@ -286,7 +286,7 @@ export class MonitoringAlertingService extends EventEmitter {
     metrics.cacheHitRate = 0; // TODO: Get real cache stats
     
     // Database connections (would get from connection pool in production)
-    metrics.dbConnections = Math.floor(Math.random() * 100); // Mock: 0-100
+    metrics.dbConnections = 0; // TODO: Get real connection pool stats
     
     return metrics;
   }

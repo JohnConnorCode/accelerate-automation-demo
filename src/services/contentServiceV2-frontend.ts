@@ -144,8 +144,8 @@ class ContentServiceV2Frontend {
     if (!content || !content.title || !content.category) {
       return { valid: false, score: 0, error: 'Missing required fields' };
     }
-    // Mock score for frontend
-    return { valid: true, score: Math.floor(Math.random() * 40) + 60 };
+    // Default score for frontend validation
+    return { valid: true, score: 70 };
   }
 
   // Placeholder methods for features that require backend

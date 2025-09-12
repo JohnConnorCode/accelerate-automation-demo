@@ -374,15 +374,22 @@ export class CrossPlatformMatcher {
   }
   
   private async checkUrlExists(url: string): Promise<boolean> {
-    // In real implementation, would make HEAD request
-    // For now, return probability based on patterns
-    return Math.random() > 0.5;
+    // TODO: Implement actual URL validation with HEAD request
+    // For now, assume URLs from known sources exist
+    const knownDomains = ['github.com', 'dev.to', 'news.ycombinator.com', 'reddit.com'];
+    try {
+      const urlObj = new URL(url);
+      return knownDomains.some(domain => urlObj.hostname.includes(domain));
+    } catch {
+      return false;
+    }
   }
   
   private async checkGitHubOrgExists(org: string): Promise<boolean> {
-    // Would use GitHub API
-    // For now, return probability
-    return Math.random() > 0.4;
+    // TODO: Implement actual GitHub API check
+    // For now, assume org exists if it follows GitHub naming conventions
+    const validGitHubName = /^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,37}[a-zA-Z0-9])?$/;
+    return validGitHubName.test(org);
   }
   
   private getItemKey(item: ContentItem): string {

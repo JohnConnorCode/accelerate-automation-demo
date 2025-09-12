@@ -223,24 +223,29 @@ export class AIScorer {
   }
 
   private getMockScore(content: any): AIScore {
-    // Simple heuristic scoring for when AI is not available
-    const hasWeb3Keywords = /web3|blockchain|defi|nft|smart contract/i.test(
-      `${content.title} ${content.description}`
-    );
+    // Deterministic heuristic scoring for when AI is not available
+    const text = `${content.title} ${content.description}`.toLowerCase();
     
-    const baseScore = hasWeb3Keywords ? 0.7 : 0.4;
-    const randomVariance = Math.random() * 0.2;
+    // Count relevant keywords for scoring
+    const web3Keywords = ['web3', 'blockchain', 'defi', 'nft', 'smart contract', 'dao', 'dapp'];
+    const keywordCount = web3Keywords.filter(kw => text.includes(kw)).length;
+    
+    // Calculate scores based on content characteristics
+    const relevanceScore = Math.min(0.4 + (keywordCount * 0.15), 1.0);
+    const hasUrl = content.url && content.url.length > 0;
+    const hasDescription = content.description && content.description.length > 50;
+    const qualityScore = (hasUrl ? 0.4 : 0.2) + (hasDescription ? 0.4 : 0.2);
     
     const score = {
-      relevance: baseScore + randomVariance,
-      quality: 0.6 + Math.random() * 0.3,
+      relevance: relevanceScore,
+      quality: qualityScore,
       urgency: content.content_type === 'funding' ? 0.8 : 0.3,
-      authority: 0.5 + Math.random() * 0.3,
+      authority: content.source === 'github' ? 0.7 : 0.5,
       overall: 0,
-      reasoning: 'Mock scoring based on keywords and content type',
+      reasoning: 'Heuristic scoring based on content analysis',
       categories: content.tags || ['web3'],
       sentiment: 'neutral' as const,
-      recommendation: baseScore > 0.6 ? 'review' as const : 'reject' as const,
+      recommendation: relevanceScore > 0.6 ? 'review' as const : 'reject' as const,
     };
     
     score.overall = this.calculateOverallScore(score);

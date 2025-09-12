@@ -550,7 +550,9 @@ export class RealtimeNotificationsService extends EventEmitter {
    * Generate unique ID
    */
   private generateId(): string {
-    return `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const timestamp = Date.now();
+    const sequence = this.subscribers.size;
+    return `notif_${timestamp}_${sequence}`;
   }
   
   /**

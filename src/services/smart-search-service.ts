@@ -152,7 +152,7 @@ export class SmartSearchService {
             text: q,
             type: 'query' as const,
             icon: '🔥',
-            count: Math.floor(Math.random() * 100) + 50
+            count: 75 // Default popularity count
           }));
         allSuggestions.push(...popularMatches);
         

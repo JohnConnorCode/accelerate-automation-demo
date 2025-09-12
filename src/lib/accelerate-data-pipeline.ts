@@ -363,7 +363,7 @@ export class AccelerateDataPipeline extends EventEmitter {
 
   private generateId(item: any): string {
     const source = item.source || 'unknown';
-    const title = item.title || item.url || Math.random().toString();
+    const title = item.title || item.url || `item_${Date.now()}`;
     return `${source}_${Buffer.from(title).toString('base64').substring(0, 10)}_${Date.now()}`;
   }
 

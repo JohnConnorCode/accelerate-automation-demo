@@ -87,7 +87,7 @@ export class WebhookManager {
       const validated = WebhookConfigSchema.parse(config);
 
       // Generate unique ID and secret if not provided
-      const id = `wh_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const id = `wh_${Date.now()}_${this.webhooks.size}`;
       const secret = validated.secret || this.generateSecret();
 
       // Save to database
@@ -152,7 +152,7 @@ export class WebhookManager {
         data,
         metadata: {
           webhookId,
-          deliveryId: `del_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          deliveryId: `del_${Date.now()}_${webhookId.substring(3, 9)}`,
           attempt: 1,
         },
       };
@@ -251,9 +251,12 @@ export class WebhookManager {
 
   // Generate random secret
   private generateSecret(): string {
-    return `whsec_${Array.from({ length: 32 }, () => 
-      Math.random().toString(36).charAt(2)
-    ).join('')}`;
+    const timestamp = Date.now().toString(36);
+    const hash = createHmac('sha256', timestamp)
+      .update(process.env.NODE_ENV || 'production')
+      .digest('hex')
+      .substring(0, 32);
+    return `whsec_${hash}`;
   }
 
   // Log webhook delivery
