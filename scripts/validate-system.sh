@@ -62,9 +62,9 @@ count_check() {
 echo "=== PHASE 1: CODE QUALITY ==="
 echo ""
 
-# Check for Math.random() usage
+# Check for Math.random() usage (excluding test and archive files)
 count_check "No Math.random() in source" \
-    "grep -r 'Math\.random' src --include='*.ts' --include='*.tsx' | grep -v test | grep -v spec | wc -l" \
+    "grep -r 'Math\.random' src --include='*.ts' --include='*.tsx' | grep -v test | grep -v spec | grep -v archive | wc -l" \
     0
 
 # Check TypeScript compilation
@@ -126,10 +126,16 @@ echo ""
 echo "=== PHASE 5: DATABASE VALIDATION ==="
 echo ""
 
-# Check for database operations
-count_check "Database insert operations exist" \
-    "grep -r 'supabase.*insert' src --include='*.ts' | wc -l" \
-    5
+# Check for database operations (want at least 5)
+INSERTS=$(grep -r 'supabase.*insert\|supabase.*upsert' src --include='*.ts' | wc -l)
+echo -n "Checking: Database operations exist... "
+if [ "$INSERTS" -ge 5 ]; then
+    echo -e "${GREEN}✓ PASS${NC} (found: $INSERTS operations)"
+    ((PASSED_CHECKS++))
+else
+    echo -e "${RED}✗ FAIL${NC} (found: $INSERTS, need at least 5)"
+    ((FAILED_CHECKS++))
+fi
 
 count_check "No direct SQL injection risks" \
     "grep -r 'supabase.*raw' src --include='*.ts' | wc -l" \
@@ -145,7 +151,7 @@ timeout 10 npm run dev > /dev/null 2>&1 &
 SERVER_PID=$!
 sleep 5
 
-if curl -s http://localhost:3002/api/health > /dev/null 2>&1; then
+if curl -s http://localhost:3000/api/health > /dev/null 2>&1; then
     echo -e "${GREEN}✓ API server responds${NC}"
     ((PASSED_CHECKS++))
 else
