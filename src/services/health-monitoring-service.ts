@@ -527,15 +527,16 @@ export class HealthMonitoringService {
    * Collect system metrics
    */
   private async collectSystemMetrics(): Promise<SystemMetrics> {
-    // In a real implementation, these would come from actual system monitoring
+    // Real metrics - no fake data
+    const memUsage = process.memoryUsage();
     const metrics: SystemMetrics = {
-      cpu: Math.random() * 0.7 + 0.2,  // Mock: 20-90%
-      memory: Math.random() * 0.6 + 0.3,  // Mock: 30-90%
-      apiCalls: Math.floor(Math.random() * 1000),
-      errorRate: Math.random() * 0.1,  // Mock: 0-10%
-      successRate: 0.9 + Math.random() * 0.1,  // Mock: 90-100%
-      queueSize: Math.floor(Math.random() * 500),
-      activeProcesses: Math.floor(Math.random() * 10)
+      cpu: 0,  // Requires OS integration
+      memory: memUsage.heapUsed / memUsage.heapTotal,
+      apiCalls: 0,  // TODO: Track real API calls
+      errorRate: 0,  // TODO: Track real errors
+      successRate: 0,  // TODO: Track real success rate
+      queueSize: 0,  // TODO: Get real queue size
+      activeProcesses: 1  // At least this process is running
     };
     
     // Get real metrics from database

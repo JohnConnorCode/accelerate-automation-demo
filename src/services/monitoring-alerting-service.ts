@@ -203,10 +203,11 @@ export class MonitoringAlertingService extends EventEmitter {
       dbConnections: 0
     };
     
-    // CPU and Memory (would use actual system monitoring in production)
-    metrics.cpu = Math.random() * 0.8; // Mock: 0-80%
-    metrics.memory = Math.random() * 0.9; // Mock: 0-90%
-    metrics.diskUsage = Math.random() * 0.7; // Mock: 0-70%
+    // Real system monitoring - no fake data
+    // These would need actual OS monitoring integration
+    metrics.cpu = 0; // Not available without OS integration
+    metrics.memory = process.memoryUsage().heapUsed / process.memoryUsage().heapTotal;
+    metrics.diskUsage = 0; // Not available without OS integration
     
     // Network latency
     const pingStart = Date.now();
@@ -282,7 +283,7 @@ export class MonitoringAlertingService extends EventEmitter {
     }
     
     // Cache hit rate (would get from cache service in production)
-    metrics.cacheHitRate = 0.75 + Math.random() * 0.2; // Mock: 75-95%
+    metrics.cacheHitRate = 0; // TODO: Get real cache stats
     
     // Database connections (would get from connection pool in production)
     metrics.dbConnections = Math.floor(Math.random() * 100); // Mock: 0-100
