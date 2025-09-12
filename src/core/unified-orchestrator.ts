@@ -228,41 +228,47 @@ export class UnifiedOrchestrator {
   }
 
   /**
-   * Get MULTIPLE data sources - expanded to include more diverse sources
+   * Get MULTIPLE data sources - WITH TIME-BASED FILTERING FOR NEW CONTENT
    */
   private getSources() {
+    // Get timestamp for 24 hours ago for HackerNews
+    const yesterday = Math.floor(Date.now() / 1000) - 86400;
+    
+    // Get date for 7 days ago for GitHub (ISO format)
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    
     return [
       // === PROJECTS (Startups, GitHub repos, launches) ===
       {
         name: 'HackerNews Show HN',
-        url: 'https://hn.algolia.com/api/v1/search?tags=show_hn&hitsPerPage=20',
+        url: `https://hn.algolia.com/api/v1/search?tags=show_hn&numericFilters=created_at_i>${yesterday}&hitsPerPage=20`,
         parser: (data: any) => data.hits || []
       },
       {
         name: 'GitHub Trending',
-        url: 'https://api.github.com/search/repositories?q=created:>2024-01-01&sort=stars&order=desc&per_page=10',
+        url: `https://api.github.com/search/repositories?q=created:>${weekAgo}&sort=stars&order=desc&per_page=10`,
         parser: (data: any) => data.items || []
       },
       {
         name: 'Reddit Startups',
-        url: 'https://www.reddit.com/r/startups/top.json?limit=10',
+        url: 'https://www.reddit.com/r/startups/new.json?limit=10&t=day',
         parser: (data: any) => data?.data?.children?.map((p: any) => p.data) || []
       },
       {
         name: 'Reddit SideProject',
-        url: 'https://www.reddit.com/r/SideProject/hot.json?limit=10',
+        url: 'https://www.reddit.com/r/SideProject/new.json?limit=10&t=day',
         parser: (data: any) => data?.data?.children?.map((p: any) => p.data) || []
       },
       
       // === FUNDING (Grants, VCs, Accelerators) ===
       {
         name: 'HackerNews Jobs',
-        url: 'https://hn.algolia.com/api/v1/search?tags=job&query=startup+OR+founding+OR+YC&hitsPerPage=15',
+        url: `https://hn.algolia.com/api/v1/search?tags=job&query=startup+OR+founding+OR+YC&numericFilters=created_at_i>${yesterday}&hitsPerPage=15`,
         parser: (data: any) => data.hits || []
       },
       {
         name: 'HackerNews Funding',
-        url: 'https://hn.algolia.com/api/v1/search?query=grant+OR+accelerator+OR+incubator&hitsPerPage=10',
+        url: `https://hn.algolia.com/api/v1/search?query=grant+OR+accelerator+OR+incubator&numericFilters=created_at_i>${yesterday}&hitsPerPage=10`,
         parser: (data: any) => data.hits || []
       },
       
