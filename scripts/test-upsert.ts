@@ -11,7 +11,7 @@ async function testUpsert() {
     title: 'Test Project for Upsert',
     description: 'Testing if upserts work with constraints',
     source: 'test',
-    score: 85,
+    score: 0.85,
     status: 'pending',
     created_at: new Date().toISOString()
   };
@@ -72,7 +72,7 @@ async function testUpsert() {
     // Try upsert on existing
     console.log('\n3️⃣ Testing upsert on existing item...');
     testProject.description = 'Updated description via upsert';
-    testProject.score = 95;
+    testProject.score = 0.95;
     
     const { data: upsertExisting, error: upsertError } = await supabase
       .from('queue_projects')
