@@ -363,7 +363,7 @@ export class StagingService {
       // Other error - return it
       return { count: 0, error: batchError.message };
     } catch (err: any) {
-      logger.error('Project insertion exception', err);
+      console.error('Project insertion exception', err);
       return { count: 0, error: err.message };
     }
   }
@@ -378,7 +378,7 @@ export class StagingService {
       // Try batch insert first for performance
       const { data: batchData, error: batchError } = await supabase
         .from('queue_investors')
-        .insert(items)
+        .insert(items as any)
         .select();
       
       if (!batchError) {
@@ -422,7 +422,7 @@ export class StagingService {
       // Other error - return it
       return { count: 0, error: batchError.message };
     } catch (err: any) {
-      logger.error('Funding insertion exception', err);
+      console.error('Funding insertion exception', err);
       return { count: 0, error: err.message };
     }
   }
@@ -437,7 +437,7 @@ export class StagingService {
       // Try batch insert first for performance
       const { data: batchData, error: batchError } = await supabase
         .from('queue_news')
-        .insert(items)
+        .insert(items as any)
         .select();
       
       if (!batchError) {
@@ -481,7 +481,7 @@ export class StagingService {
       // Other error - return it
       return { count: 0, error: batchError.message };
     } catch (err: any) {
-      logger.error('Resource insertion exception', err);
+      console.error('Resource insertion exception', err);
       return { count: 0, error: err.message };
     }
   }

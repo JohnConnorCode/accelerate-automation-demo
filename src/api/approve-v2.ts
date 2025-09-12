@@ -55,7 +55,7 @@ export class ApprovalServiceV2 {
             reviewed_by: request.reviewedBy || 'admin',
             reviewed_at: new Date().toISOString(),
             rejection_reason: request.reviewerNotes
-          })
+          } as any)
           .eq('id', request.itemId);
 
         if (rejectError) {
@@ -78,7 +78,7 @@ export class ApprovalServiceV2 {
       // 4. Insert into production table
       const { data: insertedItem, error: insertError } = await supabase
         .from(productionTable)
-        .insert(productionData)
+        .insert(productionData as any)
         .select()
         .single();
 
@@ -88,8 +88,8 @@ export class ApprovalServiceV2 {
           // Update existing item instead
           const { data: updatedItem, error: updateError } = await supabase
             .from(productionTable)
-            .update(productionData)
-            .eq('url', productionData.url)
+            .update(productionData as any)
+            .eq('url', (productionData as any).url)
             .select()
             .single();
 
@@ -275,7 +275,7 @@ export class ApprovalServiceV2 {
         status: 'approved',
         reviewed_at: new Date().toISOString(),
         reviewed_by: reviewedBy || 'system'
-      })
+      } as any)
       .eq('id', itemId);
   }
 
@@ -293,7 +293,7 @@ export class ApprovalServiceV2 {
           contentType: item.type,
           action: 'approve',
           reviewedBy
-        })
+        } as any)
       )
     );
 
@@ -322,21 +322,21 @@ export class ApprovalServiceV2 {
         .from('queue_projects')
         .select('*')
         .eq('status', 'pending_review')
-        .order('score', { ascending: false })
+        .order('score', { ascending: false } as any)
         .limit(50),
       
       supabase
         .from('queue_funding_programs')
         .select('*')
         .eq('status', 'pending_review')
-        .order('score', { ascending: false })
+        .order('score', { ascending: false } as any)
         .limit(50),
       
       supabase
         .from('queue_resources')
         .select('*')
         .eq('status', 'pending_review')
-        .order('score', { ascending: false })
+        .order('score', { ascending: false } as any)
         .limit(50)
     ]);
 

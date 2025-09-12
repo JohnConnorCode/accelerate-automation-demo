@@ -51,7 +51,7 @@ export class ApprovalServiceWorkaround {
             reviewed_by: request.reviewedBy || 'admin',
             reviewed_at: new Date().toISOString(),
             rejection_reason: request.reviewerNotes
-          })
+          } as any)
           .eq('id', request.itemId);
 
         if (rejectError) {
@@ -77,7 +77,7 @@ export class ApprovalServiceWorkaround {
         reviewed_by: request.reviewedBy || 'system',
         // Add approval metadata
         metadata: {
-          ...queueItem.metadata,
+          ...(queueItem as any).metadata,
           approval: {
             timestamp: new Date().toISOString(),
             approver: request.reviewedBy || 'system',
@@ -88,7 +88,7 @@ export class ApprovalServiceWorkaround {
 
       const { data: updatedItems, error: updateError } = await supabase
         .from('content_queue')
-        .update(approvalData)
+        .update(approvalData as any)
         .eq('id', request.itemId)
         .select();
       

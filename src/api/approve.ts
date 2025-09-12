@@ -3,6 +3,7 @@
  */
 
 import { supabase } from '../lib/supabase-client';
+import type { ContentQueueItem, ProjectItem, FundingItem, ResourceItem } from '../types/database';
 
 export interface ApprovalRequest {
   itemId: string;
@@ -49,7 +50,7 @@ export class ApprovalService {
             reviewed_by: request.reviewedBy || 'admin',
             reviewed_at: new Date().toISOString(),
             rejection_reason: request.reviewerNotes
-          })
+          } as any)
           .eq('id', request.itemId);
 
         if (rejectError) {
@@ -73,7 +74,7 @@ export class ApprovalService {
       // 4. Insert into production table
       const { data: insertedItem, error: insertError } = await supabase
         .from(targetTable)
-        .insert(productionData)
+        .insert(productionData as any)
         .select()
         .single();
 
@@ -83,8 +84,8 @@ export class ApprovalService {
           // Update existing item instead
           const { data: updatedItem, error: updateError } = await supabase
             .from(targetTable)
-            .update(productionData)
-            .eq('url', productionData.url)
+            .update(productionData as any)
+            .eq('url', (productionData as any).url)
             .select()
             .single();
 
@@ -243,7 +244,7 @@ export class ApprovalService {
         approved_by: reviewedBy || 'system',
         reviewed_at: new Date().toISOString(),
         reviewed_by: reviewedBy || 'system'
-      })
+      } as any)
       .eq('id', itemId);
   }
 
