@@ -149,8 +149,14 @@ export class StagingService {
       return isNaN(num) ? defaultVal : num;
     };
 
+    // Generate unique URL if not provided
+    const uniqueId = `${item.source}_${item.title || item.name || 'untitled'}_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const url = item.url || item.source_url || `https://accelerate.example.com/project/${uniqueId}`;
+    
     return {
       // Core Fields
+      url: url, // Required field - now guaranteed unique
+      title: item.title || item.name || 'Untitled Project', // Required field
       company_name: item.title || item.name || 'Untitled Project',
       description: item.description,
       website: item.website_url || item.url,
@@ -248,11 +254,15 @@ export class StagingService {
       return isNaN(num) ? defaultVal : num;
     };
 
+    // Generate unique URL if not provided or to ensure uniqueness
+    const uniqueId = `${item.source}_${item.title || 'untitled'}_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const url = item.url || `https://accelerate.example.com/resource/${uniqueId}`;
+    
     return {
       // Core Fields
       title: item.title || item.name || 'Untitled News',
       content: item.content || item.description,
-      url: item.url,
+      url: url, // Now guaranteed unique
       published_date: item.published_date || item.created_at || new Date().toISOString(),
       
       // ACCELERATE Fields
