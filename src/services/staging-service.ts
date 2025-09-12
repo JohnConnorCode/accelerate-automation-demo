@@ -336,13 +336,14 @@ export class StagingService {
         const errors: string[] = [];
         
         for (const item of items) {
+          // Try insert, skip if duplicate
           const { data, error } = await supabase
             .from('queue_projects')
             .insert(item)
             .select();
           
           if (error) {
-            // Only log if it's not a duplicate error
+            // Only log non-duplicate errors
             if (!error.message?.includes('duplicate') && !error.message?.includes('unique')) {
               errors.push(`${item.company_name}: ${error.message}`);
             }
