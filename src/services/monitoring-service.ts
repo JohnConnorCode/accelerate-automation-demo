@@ -331,14 +331,14 @@ class MonitoringService {
    */
   getPerformanceMetrics(): PerformanceMetrics {
     const calculatePercentile = (arr: number[], percentile: number): number => {
-      if (arr.length === 0) return 0;
+      if (arr.length === 0) {return 0;}
       const sorted = [...arr].sort((a, b) => a - b);
       const index = Math.ceil((percentile / 100) * sorted.length) - 1;
       return sorted[index] || 0;
     };
     
     const avg = (arr: number[]): number => {
-      if (arr.length === 0) return 0;
+      if (arr.length === 0) {return 0;}
       return arr.reduce((a, b) => a + b, 0) / arr.length;
     };
     

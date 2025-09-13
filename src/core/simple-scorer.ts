@@ -98,29 +98,29 @@ export class SimpleScorer {
   private calculateFactors(criteria: ScoringCriteria): ScoreResult['factors'] {
     // Quality (0-30) - MUCH STRICTER
     let quality = 0;
-    if (criteria.hasTitle) quality += 2;
-    if (criteria.hasDescription) quality += 3;
-    if (criteria.descriptionLength > 200) quality += 5;  // Need substantial description
-    if (criteria.descriptionLength > 500) quality += 10; // Really detailed
-    if (criteria.hasMetrics) quality += 10; // Must have metrics/traction
+    if (criteria.hasTitle) {quality += 2;}
+    if (criteria.hasDescription) {quality += 3;}
+    if (criteria.descriptionLength > 200) {quality += 5;}  // Need substantial description
+    if (criteria.descriptionLength > 500) {quality += 10;} // Really detailed
+    if (criteria.hasMetrics) {quality += 10;} // Must have metrics/traction
     
     // Relevance (0-30) - Need multiple keyword matches
     let relevance = Math.min(30, criteria.keywordMatches * 3);
-    if (criteria.keywordMatches < 2) relevance = 0; // Must match at least 2 keywords
+    if (criteria.keywordMatches < 2) {relevance = 0;} // Must match at least 2 keywords
     
     // Freshness (0-20) - Strict on recency
     let freshness = 20;
-    if (criteria.age > 3) freshness = 15;   // Older than 3 days
-    if (criteria.age > 7) freshness = 10;   // Older than a week
-    if (criteria.age > 30) freshness = 5;   // Older than a month
-    if (criteria.age > 90) freshness = 0;   // Too old
+    if (criteria.age > 3) {freshness = 15;}   // Older than 3 days
+    if (criteria.age > 7) {freshness = 10;}   // Older than a week
+    if (criteria.age > 30) {freshness = 5;}   // Older than a month
+    if (criteria.age > 90) {freshness = 0;}   // Too old
     
     // Completeness (0-20) - Need ALL data
     let completeness = 0;
-    if (criteria.hasUrl) completeness += 3;
-    if (criteria.hasDate) completeness += 3;
-    if (criteria.hasTeam) completeness += 7;     // Team info is important
-    if (criteria.hasFunding) completeness += 7;  // Funding info is important
+    if (criteria.hasUrl) {completeness += 3;}
+    if (criteria.hasDate) {completeness += 3;}
+    if (criteria.hasTeam) {completeness += 7;}     // Team info is important
+    if (criteria.hasFunding) {completeness += 7;}  // Funding info is important
     
     return {
       quality: Math.round(quality),
@@ -154,9 +154,9 @@ export class SimpleScorer {
     score: number, 
     confidence: number
   ): ScoreResult['recommendation'] {
-    if (score < 30 || confidence < 0.4) return 'reject';
-    if (score < 50) return 'review';
-    if (score < 75) return 'approve';
+    if (score < 30 || confidence < 0.4) {return 'reject';}
+    if (score < 50) {return 'review';}
+    if (score < 75) {return 'approve';}
     return 'feature';
   }
 
@@ -164,7 +164,7 @@ export class SimpleScorer {
    * Calculate age in days
    */
   private calculateAge(date?: string | Date): number {
-    if (!date) return 999;
+    if (!date) {return 999;}
     const created = new Date(date);
     const now = new Date();
     const days = (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24);
@@ -177,7 +177,7 @@ export class SimpleScorer {
   private countKeywords(text: string): number {
     let count = 0;
     for (const keyword of this.keywords) {
-      if (text.includes(keyword)) count++;
+      if (text.includes(keyword)) {count++;}
     }
     return count;
   }

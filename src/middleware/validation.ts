@@ -99,7 +99,7 @@ export function sanitizeInput(input: any): any {
     const sanitized: any = {};
     for (const [key, value] of Object.entries(input)) {
       // Skip suspicious keys
-      if (!key.match(/^[a-zA-Z0-9_-]+$/)) continue;
+      if (!key.match(/^[a-zA-Z0-9_-]+$/)) {continue;}
       sanitized[key] = sanitizeInput(value);
     }
     return sanitized;

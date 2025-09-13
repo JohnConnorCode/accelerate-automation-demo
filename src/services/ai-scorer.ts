@@ -87,7 +87,7 @@ Return a JSON object with: score (number), accelerate_fit (boolean), reasoning (
       });
 
       const response = completion.choices[0].message.content;
-      if (!response) throw new Error('No response from AI');
+      if (!response) {throw new Error('No response from AI');}
       
       const result = JSON.parse(response);
       

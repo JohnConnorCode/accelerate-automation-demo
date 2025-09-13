@@ -392,8 +392,8 @@ export class UnifiedOrchestrator {
    * Infer content type from item data
    */
   private inferType(item: any): 'project' | 'funding' | 'resource' {
-    if (item.funding_amount || item.investment_size) return 'funding';
-    if (item.company_name || item.startup_name || item.team_size) return 'project';
+    if (item.funding_amount || item.investment_size) {return 'funding';}
+    if (item.company_name || item.startup_name || item.team_size) {return 'project';}
     return 'resource';
   }
 
@@ -411,5 +411,43 @@ export class UnifiedOrchestrator {
       queueDepth: metrics.queueDepth,
       fetchCount: metrics.fetchCount
     };
+  }
+
+  /**
+   * Run specific category of fetchers
+   */
+  async runCategory(category: string): Promise<any> {
+    console.log(`Running category: ${category}`);
+    // For now, just run all sources
+    const result = await this.run();
+    return {
+      stats: {
+        fetched: result.fetched,
+        enriched: 0,
+        qualified: result.validated,
+        inserted: result.inserted,
+        updated: 0
+      },
+      errors: result.errors
+    };
+  }
+
+  /**
+   * Run continuously at specified interval
+   */
+  async runContinuous(intervalMinutes: number): Promise<void> {
+    console.log(`Starting continuous run every ${intervalMinutes} minutes`);
+    
+    // Run immediately
+    await this.run();
+    
+    // Then schedule periodic runs
+    setInterval(async () => {
+      console.log(`Running scheduled fetch at ${new Date().toISOString()}`);
+      await this.run();
+    }, intervalMinutes * 60 * 1000);
+    
+    // Keep process alive
+    return new Promise(() => {});
   }
 }

@@ -9,7 +9,7 @@ function sanitizeHtml(input: string, allowedTags: string[] = []): string {
   }
   
   // Basic sanitization - remove script tags and event handlers
-  let sanitized = input
+  const sanitized = input
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
     .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
     .replace(/on\w+\s*=\s*"[^"]*"/gi, '')

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll, jest } from '@jest/globals';
-import { AccelerateOrchestrator } from '../../orchestrator';
+import { UnifiedOrchestrator } from '../../core/unified-orchestrator';
 import { intelligentCache } from '../../services/intelligent-cache-service';
 import { smartSearch } from '../../services/smart-search-service';
 import { notifications } from '../../services/realtime-notifications-service';
@@ -8,10 +8,10 @@ import { rateLimiter } from '../../services/rate-limiting-service';
 import { supabase } from '../../lib/supabase-client';
 
 describe('Critical User Paths - Integration Tests', () => {
-  let orchestrator: AccelerateOrchestrator;
+  let orchestrator: UnifiedOrchestrator;
   
   beforeAll(() => {
-    orchestrator = new AccelerateOrchestrator();
+    orchestrator = new UnifiedOrchestrator();
     // Clear all caches and states
     intelligentCache.clear();
     rateLimiter.reset();

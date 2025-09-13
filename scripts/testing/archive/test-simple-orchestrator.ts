@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { SimpleOrchestrator } from './src/core/simple-orchestrator';
+import { SimpleOrchestrator } from '../../../src/archive/old-components/simple-orchestrator';
 
 async function testSimpleOrchestrator() {
   console.log('🚀 Testing Simple Orchestrator...\n');

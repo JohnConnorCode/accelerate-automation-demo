@@ -37,12 +37,12 @@ export class AutomatedQualityChecks {
     // 1. Required Fields Check
     const fieldsCheck = this.checkRequiredFields(item);
     checks.push(fieldsCheck);
-    if (!fieldsCheck.passed) criticalFailures++;
+    if (!fieldsCheck.passed) {criticalFailures++;}
     
     // 2. URL Validation
     const urlCheck = this.checkURL(item);
     checks.push(urlCheck);
-    if (!urlCheck.passed) criticalFailures++;
+    if (!urlCheck.passed) {criticalFailures++;}
     
     // 3. Description Quality
     const descCheck = this.checkDescription(item);
@@ -68,12 +68,12 @@ export class AutomatedQualityChecks {
     // 6. Duplicate Check
     const dupCheck = await this.checkForDuplicates(item);
     checks.push(dupCheck);
-    if (!dupCheck.passed) criticalFailures++;
+    if (!dupCheck.passed) {criticalFailures++;}
     
     // 7. Spam/Scam Detection
     const spamCheck = await this.checkForSpam(item);
     checks.push(spamCheck);
-    if (!spamCheck.passed) criticalFailures++;
+    if (!spamCheck.passed) {criticalFailures++;}
     
     // 8. AI Quality Assessment
     const aiCheck = await this.runAIQualityCheck(item);
@@ -119,11 +119,11 @@ export class AutomatedQualityChecks {
     const required = ['title', 'description', 'url', 'type', 'source'];
     const missing = [];
     
-    if (!item.title || item.title.trim().length === 0) missing.push('title');
-    if (!item.description || item.description.trim().length === 0) missing.push('description');
-    if (!item.url || item.url.trim().length === 0) missing.push('url');
-    if (!item.type) missing.push('type');
-    if (!item.source) missing.push('source');
+    if (!item.title || item.title.trim().length === 0) {missing.push('title');}
+    if (!item.description || item.description.trim().length === 0) {missing.push('description');}
+    if (!item.url || item.url.trim().length === 0) {missing.push('url');}
+    if (!item.type) {missing.push('type');}
+    if (!item.source) {missing.push('source');}
     
     return {
       name: 'Required Fields',

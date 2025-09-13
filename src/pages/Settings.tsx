@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Save, Plus, X, Key, AlertCircle } from 'lucide-react'
+import { useState, useEffect } from 'react';
+import { Save, Plus, X, Key, AlertCircle } from 'lucide-react';
 
 interface ContentSettings {
   minScore: number
@@ -32,68 +32,68 @@ export default function Settings() {
       category: false,
       summary: false,
     },
-  })
+  });
 
-  const [keywordInput, setKeywordInput] = useState('')
-  const [domainInput, setDomainInput] = useState('')
-  const [openaiKey, setOpenaiKey] = useState('')
-  const [saved, setSaved] = useState(false)
-  const [keyVisible, setKeyVisible] = useState(false)
+  const [keywordInput, setKeywordInput] = useState('');
+  const [domainInput, setDomainInput] = useState('');
+  const [openaiKey, setOpenaiKey] = useState('');
+  const [saved, setSaved] = useState(false);
+  const [keyVisible, setKeyVisible] = useState(false);
 
   useEffect(() => {
-    const savedSettings = localStorage.getItem('contentSettings')
+    const savedSettings = localStorage.getItem('contentSettings');
     if (savedSettings) {
-      setSettings(JSON.parse(savedSettings))
+      setSettings(JSON.parse(savedSettings));
     }
     
-    const savedKey = localStorage.getItem('openai_api_key')
+    const savedKey = localStorage.getItem('openai_api_key');
     if (savedKey) {
-      setOpenaiKey(savedKey)
+      setOpenaiKey(savedKey);
     }
-  }, [])
+  }, []);
 
   const handleSave = () => {
-    localStorage.setItem('contentSettings', JSON.stringify(settings))
+    localStorage.setItem('contentSettings', JSON.stringify(settings));
     if (openaiKey) {
-      localStorage.setItem('openai_api_key', openaiKey)
+      localStorage.setItem('openai_api_key', openaiKey);
     }
-    setSaved(true)
-    setTimeout(() => setSaved(false), 3000)
-  }
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
+  };
 
   const addKeyword = () => {
     if (keywordInput.trim() && !settings.keywords.includes(keywordInput.trim())) {
       setSettings({
         ...settings,
         keywords: [...settings.keywords, keywordInput.trim()],
-      })
-      setKeywordInput('')
+      });
+      setKeywordInput('');
     }
-  }
+  };
 
   const removeKeyword = (index: number) => {
     setSettings({
       ...settings,
       keywords: settings.keywords.filter((_, i) => i !== index),
-    })
-  }
+    });
+  };
 
   const addDomain = () => {
     if (domainInput.trim() && !settings.blockedDomains.includes(domainInput.trim())) {
       setSettings({
         ...settings,
         blockedDomains: [...settings.blockedDomains, domainInput.trim()],
-      })
-      setDomainInput('')
+      });
+      setDomainInput('');
     }
-  }
+  };
 
   const removeDomain = (index: number) => {
     setSettings({
       ...settings,
       blockedDomains: settings.blockedDomains.filter((_, i) => i !== index),
-    })
-  }
+    });
+  };
 
   return (
     <div className="bg-white rounded-xl p-6">
@@ -327,5 +327,5 @@ export default function Settings() {
         </div>
       </div>
     </div>
-  )
+  );
 }

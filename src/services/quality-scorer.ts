@@ -138,9 +138,9 @@ export class QualityScorer {
       } else {
         relevance += 5;
         details.meets_criteria = { score: 5, max: 15, reason: 'Partially meets criteria' };
-        if (!meetsTimeCriteria) redFlags.push('Too old (pre-2024)');
-        if (!meetsFundingCriteria) redFlags.push('Over-funded (>$500k)');
-        if (!meetsTeamCriteria) redFlags.push('Team too large (>10)');
+        if (!meetsTimeCriteria) {redFlags.push('Too old (pre-2024)');}
+        if (!meetsFundingCriteria) {redFlags.push('Over-funded (>$500k)');}
+        if (!meetsTeamCriteria) {redFlags.push('Team too large (>10)');}
       }
     } else {
       relevance += 15; // Non-projects automatically get relevance points

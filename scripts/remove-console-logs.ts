@@ -21,7 +21,7 @@ async function removeConsoleLogs() {
     
     const newLines = lines.map(line => {
       // Skip if it's a comment
-      if (line.trim().startsWith('//')) return line;
+      if (line.trim().startsWith('//')) {return line;}
       
       // Replace console.log with logger.debug (if logger exists)
       if (line.includes('console.log(')) {

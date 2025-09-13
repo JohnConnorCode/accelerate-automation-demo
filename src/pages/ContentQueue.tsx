@@ -61,13 +61,13 @@ export default function ContentQueue() {
         .in('status', ['pending_review', 'ready_for_review'])
         .order('quality_score', { ascending: false });
 
-      if (typeFilter) query = query.eq('type', typeFilter);
-      if (sourceFilter) query = query.eq('source', sourceFilter);
-      if (scoreFilter) query = query.gte('quality_score', parseInt(scoreFilter));
+      if (typeFilter) {query = query.eq('type', typeFilter);}
+      if (sourceFilter) {query = query.eq('source', sourceFilter);}
+      if (scoreFilter) {query = query.gte('quality_score', parseInt(scoreFilter));}
 
       const { data, error } = await query;
 
-      if (error) throw error;
+      if (error) {throw error;}
 
       // Calculate quality scores for items without them
       const itemsWithScores = await Promise.all((data || []).map(async (item) => {
@@ -117,7 +117,7 @@ export default function ContentQueue() {
   };
 
   const rejectItem = async () => {
-    if (!rejectingItemId || !rejectionReason) return;
+    if (!rejectingItemId || !rejectionReason) {return;}
 
     try {
       const result = await approvalService.rejectContent(rejectingItemId, rejectionReason, 'user');
@@ -213,8 +213,8 @@ export default function ContentQueue() {
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 70) return 'text-green-600';
-    if (score >= 50) return 'text-orange-600';
+    if (score >= 70) {return 'text-green-600';}
+    if (score >= 50) {return 'text-orange-600';}
     return 'text-red-600';
   };
 

@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
-import { BarChart3, TrendingUp, Activity, Zap } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query';
+import { BarChart3, TrendingUp, Activity, Zap } from 'lucide-react';
 
 interface AnalyticsData {
   contentByType: { type: string; count: number }[]
@@ -40,9 +40,9 @@ export default function Analytics() {
           { date: 'Sat', count: 65 },
           { date: 'Sun', count: 59 },
         ],
-      }
+      };
     },
-  })
+  });
 
   return (
     <div>
@@ -183,5 +183,5 @@ export default function Analytics() {
         </div>
       </div>
     </div>
-  )
+  );
 }

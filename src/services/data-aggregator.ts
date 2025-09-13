@@ -96,7 +96,7 @@ export class DataAggregator {
     
     for (const item of items) {
       const type = item.type || 'unknown';
-      if (!groups[type]) groups[type] = [];
+      if (!groups[type]) {groups[type] = [];}
       groups[type].push(item);
     }
     
@@ -115,7 +115,7 @@ export class DataAggregator {
     
     for (const item of items) {
       const name = this.normalizeCompanyName(item.title);
-      if (!byName.has(name)) byName.set(name, []);
+      if (!byName.has(name)) {byName.set(name, []);}
       byName.get(name)!.push(item);
     }
     
@@ -186,9 +186,9 @@ export class DataAggregator {
       // Estimate funding stage if missing
       if (!meta.funding_stage) {
         if (meta.funding_raised) {
-          if (meta.funding_raised < 150000) meta.funding_stage = 'pre-seed';
-          else if (meta.funding_raised < 500000) meta.funding_stage = 'seed';
-          else meta.funding_stage = 'series-a';
+          if (meta.funding_raised < 150000) {meta.funding_stage = 'pre-seed';}
+          else if (meta.funding_raised < 500000) {meta.funding_stage = 'seed';}
+          else {meta.funding_stage = 'series-a';}
         } else if (meta.yc_batch) {
           meta.funding_stage = 'seed'; // YC provides seed funding
         } else {
@@ -265,19 +265,19 @@ export class DataAggregator {
     // Required fields (weight: 3)
     for (const field of requiredFields) {
       maxScore += 3;
-      if (metadata[field]) score += 3;
+      if (metadata[field]) {score += 3;}
     }
     
     // Important fields (weight: 2)
     for (const field of importantFields) {
       maxScore += 2;
-      if (metadata[field]) score += 2;
+      if (metadata[field]) {score += 2;}
     }
     
     // Bonus fields (weight: 1)
     for (const field of bonusFields) {
       maxScore += 1;
-      if (metadata[field]) score += 1;
+      if (metadata[field]) {score += 1;}
     }
     
     return Math.round((score / maxScore) * 100);

@@ -62,7 +62,7 @@ class RealMatcher {
     const s2 = this.normalizeName(str2);
     
     // Exact match
-    if (s1 === s2) return 1.0;
+    if (s1 === s2) {return 1.0;}
     
     // Skip if one string is too short (avoid false matches like "jo")
     if (s1.length < 3 || s2.length < 3) {
@@ -71,7 +71,7 @@ class RealMatcher {
     
     // One contains the other (but must be significant portion)
     if (s1.length > 5 && s2.length > 5) {
-      if (s1.includes(s2) || s2.includes(s1)) return 0.9;
+      if (s1.includes(s2) || s2.includes(s1)) {return 0.9;}
     }
     
     // Levenshtein distance for similar strings
@@ -142,7 +142,7 @@ class RealMatcher {
       
       // Try to find matches in RSS
       rssItems.forEach((rssItem, index) => {
-        if (processedRss.has(index)) return;
+        if (processedRss.has(index)) {return;}
         
         const rssTitleNorm = this.normalizeName(rssItem.title);
         const similarity = this.similarity(ycItem.title, rssItem.title);
@@ -181,7 +181,7 @@ class RealMatcher {
       
       // Try to find matches in Reddit
       redditItems.forEach((redditItem, index) => {
-        if (processedReddit.has(index)) return;
+        if (processedReddit.has(index)) {return;}
         
         const similarity = this.similarity(ycItem.title, redditItem.title);
         const mentionsCompany = redditItem.description?.toLowerCase().includes(entity.normalized_name) ||
@@ -244,23 +244,23 @@ class RealMatcher {
     let score = 30; // Base score
     
     // Multi-source bonus
-    if (entity.sources.length >= 3) score += 20;
-    else if (entity.sources.length >= 2) score += 10;
+    if (entity.sources.length >= 3) {score += 20;}
+    else if (entity.sources.length >= 2) {score += 10;}
     
     // YC backing
-    if (entity.yc_batch) score += 15;
+    if (entity.yc_batch) {score += 15;}
     
     // Early stage funding
     if (entity.funding_amount) {
-      if (entity.funding_amount < 500000) score += 20;
-      else if (entity.funding_amount < 2000000) score += 10;
+      if (entity.funding_amount < 500000) {score += 20;}
+      else if (entity.funding_amount < 2000000) {score += 10;}
     }
     
     // Small team
-    if (entity.team_size && entity.team_size <= 10) score += 10;
+    if (entity.team_size && entity.team_size <= 10) {score += 10;}
     
     // Reddit validation
-    if (entity.reddit_upvotes && entity.reddit_upvotes > 100) score += 5;
+    if (entity.reddit_upvotes && entity.reddit_upvotes > 100) {score += 5;}
     
     // Data completeness bonus
     score += Math.round(entity.data_completeness * 0.2);

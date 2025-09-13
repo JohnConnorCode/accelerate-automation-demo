@@ -1,6 +1,6 @@
-import { supabase } from '../lib/supabase'
-import { logger } from './logger'
-import os from 'os'
+import { supabase } from '../lib/supabase';
+import { logger } from './logger';
+import os from 'os';
 
 interface HealthStatus {
   status: 'healthy' | 'degraded' | 'unhealthy'
@@ -47,62 +47,62 @@ const metrics = {
   responseTimes: [] as number[],
   errors: [] as number[],
   users: new Set<string>()
-}
+};
 
 /**
  * Check database health
  */
 const checkDatabase = async (): Promise<ServiceHealth> => {
-  const start = Date.now()
+  const start = Date.now();
   try {
     const { error } = await supabase
       .from('profiles')
       .select('count')
       .limit(1)
-      .single()
+      .single();
     
-    if (error) throw error
+    if (error) {throw error;}
     
     return {
       status: 'up',
       responseTime: Date.now() - start
-    }
+    };
   } catch (error) {
-    logger.error('Database health check failed', { error })
+    logger.error('Database health check failed', { error });
     return {
       status: 'down',
       error: error instanceof Error ? error.message : 'Unknown error'
-    }
+    };
   }
-}
+};
 
 /**
  * Check auth service health
  */
 const checkAuth = async (): Promise<ServiceHealth> => {
-  const start = Date.now()
+  const start = Date.now();
   try {
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { session } } = await supabase.auth.getSession();
     
     return {
       status: 'up',
       responseTime: Date.now() - start
-    }
+    };
   } catch (error) {
     return {
       status: 'down',
       error: error instanceof Error ? error.message : 'Unknown error'
-    }
+    };
   }
-}
+};
 
 /**
  * Get system metrics
  */
 const getSystemMetrics = () => {
-  const totalMemory = os.totalmem()
-  const freeMemory = os.freemem()
-  const usedMemory = totalMemory - freeMemory
+  const totalMemory = os.totalmem();
+  const freeMemory = os.freemem();
+  const usedMemory = totalMemory - freeMemory;
   
   return {
     memory: {
@@ -118,20 +118,20 @@ const getSystemMetrics = () => {
       used: 0, // Would need additional library for disk usage
       free: 0
     }
-  }
-}
+  };
+};
 
 /**
  * Calculate request metrics
  */
 const getRequestMetrics = () => {
-  const now = Date.now()
-  const oneMinuteAgo = now - 60000
+  const now = Date.now();
+  const oneMinuteAgo = now - 60000;
   
   // Filter metrics to last minute
-  const recentRequests = metrics.requests.filter(t => t > oneMinuteAgo)
-  const recentErrors = metrics.errors.filter(t => t > oneMinuteAgo)
-  const recentResponseTimes = metrics.responseTimes.filter(t => t > 0)
+  const recentRequests = metrics.requests.filter(t => t > oneMinuteAgo);
+  const recentErrors = metrics.errors.filter(t => t > oneMinuteAgo);
+  const recentResponseTimes = metrics.responseTimes.filter(t => t > 0);
   
   return {
     requestsPerMinute: recentRequests.length,
@@ -142,8 +142,8 @@ const getRequestMetrics = () => {
       ? Math.round((recentErrors.length / recentRequests.length) * 100)
       : 0,
     activeUsers: metrics.users.size
-  }
-}
+  };
+};
 
 /**
  * Perform comprehensive health check
@@ -152,23 +152,23 @@ export const performHealthCheck = async (): Promise<HealthStatus> => {
   const [database, auth] = await Promise.all([
     checkDatabase(),
     checkAuth()
-  ])
+  ]);
   
   const services = {
     database,
     api: { status: 'up' as const },
     auth,
     storage: { status: 'up' as const }
-  }
+  };
   
   // Determine overall status
-  const serviceStatuses = Object.values(services).map(s => s.status)
-  let overallStatus: 'healthy' | 'degraded' | 'unhealthy' = 'healthy'
+  const serviceStatuses = Object.values(services).map(s => s.status);
+  let overallStatus: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
   
   if (serviceStatuses.includes('down')) {
-    overallStatus = 'unhealthy'
+    overallStatus = 'unhealthy';
   } else if (serviceStatuses.includes('degraded')) {
-    overallStatus = 'degraded'
+    overallStatus = 'degraded';
   }
   
   return {
@@ -178,45 +178,45 @@ export const performHealthCheck = async (): Promise<HealthStatus> => {
     services,
     system: getSystemMetrics(),
     metrics: getRequestMetrics()
-  }
-}
+  };
+};
 
 /**
  * Track request metrics
  */
 export const trackRequest = (userId?: string, responseTime?: number, error?: boolean) => {
-  const now = Date.now()
+  const now = Date.now();
   
-  metrics.requests.push(now)
+  metrics.requests.push(now);
   
   if (responseTime) {
-    metrics.responseTimes.push(responseTime)
+    metrics.responseTimes.push(responseTime);
   }
   
   if (error) {
-    metrics.errors.push(now)
+    metrics.errors.push(now);
   }
   
   if (userId) {
-    metrics.users.add(userId)
+    metrics.users.add(userId);
   }
   
   // Clean up old metrics (keep last 5 minutes)
-  const fiveMinutesAgo = now - 300000
-  metrics.requests = metrics.requests.filter(t => t > fiveMinutesAgo)
-  metrics.errors = metrics.errors.filter(t => t > fiveMinutesAgo)
+  const fiveMinutesAgo = now - 300000;
+  metrics.requests = metrics.requests.filter(t => t > fiveMinutesAgo);
+  metrics.errors = metrics.errors.filter(t => t > fiveMinutesAgo);
   
   // Keep only last 100 response times
   if (metrics.responseTimes.length > 100) {
-    metrics.responseTimes = metrics.responseTimes.slice(-100)
+    metrics.responseTimes = metrics.responseTimes.slice(-100);
   }
-}
+};
 
 /**
  * Clear inactive users from metrics
  */
 setInterval(() => {
-  metrics.users.clear()
-}, 300000) // Clear every 5 minutes
+  metrics.users.clear();
+}, 300000); // Clear every 5 minutes
 
-export default performHealthCheck
+export default performHealthCheck;

@@ -1,13 +1,13 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js';
 
 // Get Supabase credentials - handle both Node.js and browser environments
 const supabaseUrl = typeof window !== 'undefined' 
   ? ((import.meta as any).env?.VITE_SUPABASE_URL || 'https://eqpfvmwmdtsgddpsodsr.supabase.co')
-  : (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://eqpfvmwmdtsgddpsodsr.supabase.co')
+  : (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://eqpfvmwmdtsgddpsodsr.supabase.co');
 
 const supabaseAnonKey = typeof window !== 'undefined'
   ? ((import.meta as any).env?.VITE_SUPABASE_ANON_KEY || '')
-  : (process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '')
+  : (process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '');
 
 // Log warning if no key is provided
 if (!supabaseAnonKey) {
@@ -20,7 +20,7 @@ if (!supabaseAnonKey) {
   }
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey || 'placeholder')
+export const supabase = createClient(supabaseUrl, supabaseAnonKey || 'placeholder');
 
 // Content automation specific tables
 export const TABLES = {
@@ -31,4 +31,4 @@ export const TABLES = {
   PROJECTS: 'projects',
   FUNDING_OPPORTUNITIES: 'funding_opportunities',
   RESOURCES: 'resources'
-}
+};

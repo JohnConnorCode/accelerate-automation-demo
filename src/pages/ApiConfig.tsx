@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react';
 import { 
   Key, Save, Plus, Trash2, Eye, EyeOff, CheckCircle, 
   AlertCircle, Database, Brain, Globe, FileText, 
   Sparkles, Zap, Shield, Copy
-} from 'lucide-react'
-import { supabase } from '../lib/supabase-client'
+} from 'lucide-react';
+import { supabase } from '../lib/supabase-client';
 
 interface ApiKey {
   id: string
@@ -18,14 +18,14 @@ interface ApiKey {
 }
 
 export default function ApiConfig() {
-  const [apiKeys, setApiKeys] = useState<ApiKey[]>([])
-  const [showKeys, setShowKeys] = useState<Record<string, boolean>>({})
-  const [isAdding, setIsAdding] = useState(false)
+  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+  const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
+  const [isAdding, setIsAdding] = useState(false);
   const [newKey, setNewKey] = useState({
     name: '',
     service: 'openai',
     key: ''
-  })
+  });
 
   // Available services for content automation - Web3 & Startup focused
   const services = [
@@ -61,29 +61,29 @@ export default function ApiConfig() {
     // Custom Integration
     { id: 'rss', name: 'RSS Feeds', icon: Zap, color: 'bg-yellow-500', description: 'Custom Feeds' },
     { id: 'webhook', name: 'Webhooks', icon: Zap, color: 'bg-gray-500', description: 'Custom Events' }
-  ]
+  ];
 
   useEffect(() => {
     // Load API keys from database
-    loadApiKeys()
-  }, [])
+    loadApiKeys();
+  }, []);
 
   const loadApiKeys = async () => {
     try {
       const { data, error } = await supabase
         .from('api_keys')
         .select('*')
-        .order('created_at', { ascending: false })
+        .order('created_at', { ascending: false });
       
-      if (error) throw error
-      setApiKeys(data || [])
+      if (error) {throw error;}
+      setApiKeys(data || []);
     } catch (error) {
-      console.error('Error loading API keys:', error)
+      console.error('Error loading API keys:', error);
       // Fallback to localStorage if database fails
-      const savedKeys = localStorage.getItem('apiKeys')
+      const savedKeys = localStorage.getItem('apiKeys');
       if (savedKeys) {
         try {
-          const parsed = JSON.parse(savedKeys)
+          const parsed = JSON.parse(savedKeys);
           // Convert old format to new if needed
           const converted = parsed.map((k: any) => ({
             id: k.id,
@@ -94,19 +94,19 @@ export default function ApiConfig() {
             is_active: k.isActive !== undefined ? k.isActive : k.is_active,
             created_at: k.addedAt || k.created_at || new Date().toISOString(),
             updated_at: k.updated_at || new Date().toISOString()
-          }))
-          setApiKeys(converted)
+          }));
+          setApiKeys(converted);
         } catch (e) {
-          console.error('Error parsing localStorage:', e)
+          console.error('Error parsing localStorage:', e);
         }
       }
     }
-  }
+  };
 
   const addApiKey = async () => {
     if (!newKey.name || !newKey.key) {
-      alert('Please fill in all fields')
-      return
+      alert('Please fill in all fields');
+      return;
     }
 
     try {
@@ -120,21 +120,21 @@ export default function ApiConfig() {
           usage_count: 0
         })
         .select()
-        .single()
+        .single();
 
-      if (error) throw error
+      if (error) {throw error;}
 
-      setApiKeys([data, ...apiKeys])
-      setNewKey({ name: '', service: 'openai', key: '' })
-      setIsAdding(false)
+      setApiKeys([data, ...apiKeys]);
+      setNewKey({ name: '', service: 'openai', key: '' });
+      setIsAdding(false);
       
       // Also save to localStorage as backup
-      localStorage.setItem('apiKeys', JSON.stringify([data, ...apiKeys]))
+      localStorage.setItem('apiKeys', JSON.stringify([data, ...apiKeys]));
     } catch (error) {
-      console.error('Error saving API key:', error)
-      alert('Failed to save API key. Check console for details.')
+      console.error('Error saving API key:', error);
+      alert('Failed to save API key. Check console for details.');
     }
-  }
+  };
 
   const deleteApiKey = async (id: string) => {
     if (confirm('Are you sure you want to delete this API key?')) {
@@ -142,27 +142,27 @@ export default function ApiConfig() {
         const { error } = await supabase
           .from('api_keys')
           .delete()
-          .eq('id', id)
+          .eq('id', id);
 
-        if (error) throw error
+        if (error) {throw error;}
 
-        const updatedKeys = apiKeys.filter(key => key.id !== id)
-        setApiKeys(updatedKeys)
-        localStorage.setItem('apiKeys', JSON.stringify(updatedKeys))
+        const updatedKeys = apiKeys.filter(key => key.id !== id);
+        setApiKeys(updatedKeys);
+        localStorage.setItem('apiKeys', JSON.stringify(updatedKeys));
       } catch (error) {
-        console.error('Error deleting API key:', error)
-        alert('Failed to delete API key')
+        console.error('Error deleting API key:', error);
+        alert('Failed to delete API key');
       }
     }
-  }
+  };
 
   const toggleKeyVisibility = (id: string) => {
-    setShowKeys(prev => ({ ...prev, [id]: !prev[id] }))
-  }
+    setShowKeys(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   const toggleKeyActive = async (id: string) => {
-    const key = apiKeys.find(k => k.id === id)
-    if (!key) return
+    const key = apiKeys.find(k => k.id === id);
+    if (!key) {return;}
 
     try {
       const { error } = await supabase
@@ -171,34 +171,34 @@ export default function ApiConfig() {
           is_active: !key.is_active,
           updated_at: new Date().toISOString()
         })
-        .eq('id', id)
+        .eq('id', id);
 
-      if (error) throw error
+      if (error) {throw error;}
 
       const updatedKeys = apiKeys.map(k => 
         k.id === id ? { ...k, is_active: !k.is_active } : k
-      )
-      setApiKeys(updatedKeys)
-      localStorage.setItem('apiKeys', JSON.stringify(updatedKeys))
+      );
+      setApiKeys(updatedKeys);
+      localStorage.setItem('apiKeys', JSON.stringify(updatedKeys));
     } catch (error) {
-      console.error('Error updating API key:', error)
+      console.error('Error updating API key:', error);
     }
-  }
+  };
 
   const maskKey = (key: string) => {
-    if (key.length <= 8) return '••••••••'
-    return key.slice(0, 4) + '•'.repeat(20) + key.slice(-4)
-  }
+    if (key.length <= 8) {return '••••••••';}
+    return key.slice(0, 4) + '•'.repeat(20) + key.slice(-4);
+  };
 
   const copyKey = (key: string) => {
-    navigator.clipboard.writeText(key)
+    navigator.clipboard.writeText(key);
     // Could add a toast notification here
-  }
+  };
 
   const getServiceIcon = (serviceId: string) => {
-    const service = services.find(s => s.id === serviceId)
-    return service || services[services.length - 1] // Default to custom
-  }
+    const service = services.find(s => s.id === serviceId);
+    return service || services[services.length - 1]; // Default to custom
+  };
 
   return (
     <div>
@@ -269,8 +269,8 @@ export default function ApiConfig() {
             </button>
             <button
               onClick={() => {
-                setIsAdding(false)
-                setNewKey({ name: '', service: 'openai', key: '' })
+                setIsAdding(false);
+                setNewKey({ name: '', service: 'openai', key: '' });
               }}
               className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
             >
@@ -283,8 +283,8 @@ export default function ApiConfig() {
       {/* Service Overview */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
         {services.map(service => {
-          const count = apiKeys.filter(k => k.service_name === service.id).length
-          const ServiceIcon = service.icon
+          const count = apiKeys.filter(k => k.service_name === service.id).length;
+          const ServiceIcon = service.icon;
           return (
             <div key={service.id} className="bg-white rounded-lg p-4 shadow-sm">
               <div className={`w-10 h-10 ${service.color} bg-opacity-10 rounded-lg flex items-center justify-center mb-2`}>
@@ -293,7 +293,7 @@ export default function ApiConfig() {
               <h3 className="font-medium text-sm">{service.name}</h3>
               <p className="text-xs text-gray-600 mt-1">{count} key{count !== 1 ? 's' : ''}</p>
             </div>
-          )
+          );
         })}
       </div>
 
@@ -315,8 +315,8 @@ export default function ApiConfig() {
         ) : (
           <div className="divide-y">
             {apiKeys.map(apiKey => {
-              const service = getServiceIcon(apiKey.service_name)
-              const ServiceIcon = service.icon
+              const service = getServiceIcon(apiKey.service_name);
+              const ServiceIcon = service.icon;
               return (
                 <div key={apiKey.id} className="p-6 hover:bg-gray-50">
                   <div className="flex items-center justify-between">
@@ -389,7 +389,7 @@ export default function ApiConfig() {
                     </div>
                   </div>
                 </div>
-              )
+              );
             })}
           </div>
         )}
@@ -409,5 +409,5 @@ export default function ApiConfig() {
         </div>
       </div>
     </div>
-  )
+  );
 }

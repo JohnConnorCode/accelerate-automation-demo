@@ -370,7 +370,7 @@ export class GracefulDegradationService extends EventEmitter {
   ): Promise<void> {
     const oldLevel = this.currentLevel.level;
     
-    if (oldLevel === newLevel) return;
+    if (oldLevel === newLevel) {return;}
 
     // Record transition
     this.degradationHistory.push({
@@ -446,7 +446,7 @@ export class GracefulDegradationService extends EventEmitter {
    */
   private async disableFeature(featureName: string): Promise<void> {
     const config = this.featureConfigs.get(featureName);
-    if (!config) return;
+    if (!config) {return;}
 
     // Store disabled state
     await intelligentCache.set(
@@ -463,7 +463,7 @@ export class GracefulDegradationService extends EventEmitter {
    */
   private async enableFeature(featureName: string): Promise<void> {
     const config = this.featureConfigs.get(featureName);
-    if (!config) return;
+    if (!config) {return;}
     
     // Check dependencies
     for (const dep of config.dependencies) {
@@ -596,7 +596,7 @@ export class GracefulDegradationService extends EventEmitter {
    */
   getFallback(featureName: string): any {
     const config = this.featureConfigs.get(featureName);
-    if (!config) return null;
+    if (!config) {return null;}
     
     return config.fallbackBehavior();
   }

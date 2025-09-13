@@ -177,7 +177,7 @@ export class EnrichmentService {
     try {
       // Extract owner/repo from URL
       const match = url.match(/github\.com\/([^\/]+)\/([^\/]+)/);
-      if (!match) return;
+      if (!match) {return;}
       
       const [_, owner, repo] = match;
       
@@ -243,7 +243,7 @@ export class EnrichmentService {
    */
   private async enrichFromProductHunt(item: any, enriched: EnrichedContent) {
     try {
-      if (!process.env.PRODUCTHUNT_TOKEN) return;
+      if (!process.env.PRODUCTHUNT_TOKEN) {return;}
       
       // ProductHunt GraphQL query would go here
       // For now, extract from existing data

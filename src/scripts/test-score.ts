@@ -18,8 +18,8 @@ async function testScoring() {
     
     if (result) {
 
-      if (result.team_score) console.log(`  Team: ${result.team_score}/10`);
-      if (result.traction_score) console.log(`  Traction: ${result.traction_score}/10`);
+      if (result.team_score) {console.log(`  Team: ${result.team_score}/10`);}
+      if (result.traction_score) {console.log(`  Traction: ${result.traction_score}/10`);}
 
     } else {
 

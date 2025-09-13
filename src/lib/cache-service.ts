@@ -38,7 +38,7 @@ export class CacheService {
    * Get cached data
    */
   async get<T>(key: string): Promise<T | null> {
-    if (process.env.CACHE_ENABLED !== 'true') return null;
+    if (process.env.CACHE_ENABLED !== 'true') {return null;}
 
     // Check in-memory cache first
     const memCached = this.inMemoryCache.get(key);
@@ -76,7 +76,7 @@ export class CacheService {
    * Set cached data
    */
   async set<T>(key: string, value: T, ttlMinutes?: number): Promise<void> {
-    if (process.env.CACHE_ENABLED !== 'true') return;
+    if (process.env.CACHE_ENABLED !== 'true') {return;}
 
     const ttl = ttlMinutes || this.ttlMinutes;
     const expiresAt = new Date(Date.now() + ttl * 60 * 1000);

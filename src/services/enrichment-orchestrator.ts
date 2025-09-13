@@ -252,7 +252,7 @@ export class EnrichmentOrchestrator {
   private async enrichFromGitHub(githubUrl: string): Promise<any> {
     try {
       const match = githubUrl.match(/github\.com\/([^\/]+)\/([^\/]+)/);
-      if (!match) return null;
+      if (!match) {return null;}
       
       const [_, owner, repo] = match;
       
@@ -329,7 +329,7 @@ export class EnrichmentOrchestrator {
    * Use AI to extract structured data from description
    */
   private async extractWithAI(description: string): Promise<any> {
-    if (!openai) return null;
+    if (!openai) {return null;}
     
     try {
       const response = await openai.chat.completions.create({
@@ -437,9 +437,9 @@ export class EnrichmentOrchestrator {
     // Map enriched fields to database columns
     const updateData: any = {};
     
-    if (enrichedFields.description) updateData.description = enrichedFields.description;
-    if (enrichedFields.twitter_url) updateData.twitter_url = enrichedFields.twitter_url;
-    if (enrichedFields.discord_url) updateData.discord_url = enrichedFields.discord_url;
+    if (enrichedFields.description) {updateData.description = enrichedFields.description;}
+    if (enrichedFields.twitter_url) {updateData.twitter_url = enrichedFields.twitter_url;}
+    if (enrichedFields.discord_url) {updateData.discord_url = enrichedFields.discord_url;}
     // Note: team_size, launch_date, funding_raised columns may not exist yet
     
     if (Object.keys(updateData).length > 0) {

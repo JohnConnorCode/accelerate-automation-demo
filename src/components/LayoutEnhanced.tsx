@@ -1,23 +1,23 @@
-import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Home, Layers, Settings, BarChart3, Zap, LogOut, 
   Database, Key, Clock, CheckSquare, TrendingUp,
   Bell, HelpCircle, ChevronRight, Menu, X, 
   RefreshCw, Play, Pause, AlertCircle
-} from 'lucide-react'
-import { useAuth } from '../contexts/AuthContext'
-import { useState, useEffect } from 'react'
-import { toast, Toaster } from 'sonner'
+} from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { useState, useEffect } from 'react';
+import { toast, Toaster } from 'sonner';
 
 export default function LayoutEnhanced() {
-  const { user, signOut, isAdmin } = useAuth()
-  const navigate = useNavigate()
-  const location = useLocation()
-  const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [autoRefresh, setAutoRefresh] = useState(false)
-  const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timer | null>(null)
-  const [notifications, setNotifications] = useState(0)
-  const [lastFetch, setLastFetch] = useState<Date | null>(null)
+  const { user, signOut, isAdmin } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [autoRefresh, setAutoRefresh] = useState(false);
+  const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timer | null>(null);
+  const [notifications, setNotifications] = useState(0);
+  const [lastFetch, setLastFetch] = useState<Date | null>(null);
 
   // Navigation structure with better organization
   const mainNavItems = [
@@ -43,7 +43,7 @@ export default function LayoutEnhanced() {
       badge: null,
       description: 'Performance insights'
     }
-  ]
+  ];
 
   const configNavItems = [
     { 
@@ -67,27 +67,27 @@ export default function LayoutEnhanced() {
       badge: null,
       description: 'System configuration'
     }
-  ]
+  ];
 
   // Auto-refresh functionality
   useEffect(() => {
     if (autoRefresh) {
       const interval = setInterval(() => {
-        fetchLatestData()
-      }, 30000) // 30 seconds
-      setRefreshInterval(interval)
-      toast.success('Auto-refresh enabled (30s)')
+        fetchLatestData();
+      }, 30000); // 30 seconds
+      setRefreshInterval(interval);
+      toast.success('Auto-refresh enabled (30s)');
     } else {
       if (refreshInterval) {
-        clearInterval(refreshInterval)
-        setRefreshInterval(null)
-        toast.info('Auto-refresh disabled')
+        clearInterval(refreshInterval);
+        setRefreshInterval(null);
+        toast.info('Auto-refresh disabled');
       }
     }
     return () => {
-      if (refreshInterval) clearInterval(refreshInterval)
-    }
-  }, [autoRefresh])
+      if (refreshInterval) {clearInterval(refreshInterval);}
+    };
+  }, [autoRefresh]);
 
   // Fetch latest data
   const fetchLatestData = async () => {
@@ -96,20 +96,20 @@ export default function LayoutEnhanced() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ task: 'content-fetch' })
-      })
+      });
       
       if (response.ok) {
-        const data = await response.json()
+        const data = await response.json();
         if (data.result?.inserted > 0) {
-          setNotifications(prev => prev + data.result.inserted)
-          toast.success(`${data.result.inserted} new items fetched`)
+          setNotifications(prev => prev + data.result.inserted);
+          toast.success(`${data.result.inserted} new items fetched`);
         }
-        setLastFetch(new Date())
+        setLastFetch(new Date());
       }
     } catch (error) {
-      console.error('Fetch failed:', error)
+      console.error('Fetch failed:', error);
     }
-  }
+  };
 
   // Manual refresh
   const handleManualRefresh = () => {
@@ -117,48 +117,48 @@ export default function LayoutEnhanced() {
       loading: 'Fetching latest content...',
       success: 'Content updated',
       error: 'Fetch failed'
-    })
-  }
+    });
+  };
 
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       // Ctrl/Cmd + K for quick navigation
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault()
+        e.preventDefault();
         // Could open a command palette here
       }
       
       // Alt + Q for queue
       if (e.altKey && e.key === 'q') {
-        e.preventDefault()
-        navigate('/queue')
+        e.preventDefault();
+        navigate('/queue');
       }
       
       // Alt + D for dashboard
       if (e.altKey && e.key === 'd') {
-        e.preventDefault()
-        navigate('/dashboard')
+        e.preventDefault();
+        navigate('/dashboard');
       }
       
       // Alt + R for refresh
       if (e.altKey && e.key === 'r') {
-        e.preventDefault()
-        handleManualRefresh()
+        e.preventDefault();
+        handleManualRefresh();
       }
-    }
+    };
 
-    window.addEventListener('keydown', handleKeyPress)
-    return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [navigate])
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [navigate]);
 
   const handleSignOut = async () => {
-    const confirmed = window.confirm('Are you sure you want to sign out?')
+    const confirmed = window.confirm('Are you sure you want to sign out?');
     if (confirmed) {
-      await signOut()
-      navigate('/login')
+      await signOut();
+      navigate('/login');
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -419,5 +419,5 @@ export default function LayoutEnhanced() {
         </div>
       </main>
     </div>
-  )
+  );
 }

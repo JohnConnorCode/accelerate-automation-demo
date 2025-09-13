@@ -6,14 +6,14 @@ import { supabase } from './supabase';
  */
 export async function getOpenAIKey(): Promise<string | null> {
   // In production on Vercel/Supabase, this will be set as an environment variable
-  const apiKey = process.env.OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY
+  const apiKey = process.env.OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY;
   
   if (!apiKey) {
-    console.warn('OpenAI API key not found. Set OPENAI_API_KEY in environment variables.')
-    return null
+    console.warn('OpenAI API key not found. Set OPENAI_API_KEY in environment variables.');
+    return null;
   }
   
-  return apiKey
+  return apiKey;
 }
 
 /**
@@ -27,16 +27,16 @@ export async function updateOpenAIKey(apiKey: string): Promise<boolean> {
         key: 'openai_api_key',
         value: apiKey,
         updated_at: new Date().toISOString()
-      })
+      });
     
     if (error) {
-      console.error('Error updating OpenAI key:', error)
-      return false
+      console.error('Error updating OpenAI key:', error);
+      return false;
     }
     
-    return true
+    return true;
   } catch (error) {
-    console.error('Error updating OpenAI key:', error)
-    return false
+    console.error('Error updating OpenAI key:', error);
+    return false;
   }
 }

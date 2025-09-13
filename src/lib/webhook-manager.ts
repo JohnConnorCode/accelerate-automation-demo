@@ -59,7 +59,7 @@ export class WebhookManager {
         .select('*')
         .eq('active', true);
 
-      if (error) throw error;
+      if (error) {throw error;}
 
       if (data) {
         data.forEach(webhook => {
@@ -105,7 +105,7 @@ export class WebhookManager {
           created_at: new Date().toISOString(),
         });
 
-      if (error) throw error;
+      if (error) {throw error;}
 
       // Add to memory
       this.webhooks.set(id, { ...validated, secret });
@@ -125,7 +125,7 @@ export class WebhookManager {
         .delete()
         .eq('id', webhookId);
 
-      if (error) throw error;
+      if (error) {throw error;}
 
       this.webhooks.delete(webhookId);
 
@@ -315,7 +315,7 @@ export class WebhookManager {
       }
 
       const { data, error } = await query;
-      if (error) throw error;
+      if (error) {throw error;}
 
       const stats = {
         total: data?.length || 0,
@@ -361,7 +361,7 @@ export class WebhookManager {
         })
         .eq('id', webhookId);
 
-      if (error) throw error;
+      if (error) {throw error;}
 
       this.webhooks.set(webhookId, validated);
 

@@ -76,7 +76,7 @@ export class CrossPlatformMatcher {
     
     for (const item of items) {
       const itemKey = this.getItemKey(item);
-      if (processed.has(itemKey)) continue;
+      if (processed.has(itemKey)) {continue;}
       
       // Find all potential matches
       const matchGroup = [item];
@@ -84,7 +84,7 @@ export class CrossPlatformMatcher {
       
       for (const candidate of items) {
         const candidateKey = this.getItemKey(candidate);
-        if (processed.has(candidateKey)) continue;
+        if (processed.has(candidateKey)) {continue;}
         
         const matchResult = await this.compareItems(item, candidate);
         if (matchResult.isMatch) {
@@ -402,7 +402,7 @@ export class CrossPlatformMatcher {
   }
   
   private extractDomain(item: ContentItem): string | null {
-    if (!item.url) return null;
+    if (!item.url) {return null;}
     
     try {
       const url = new URL(item.url);
@@ -420,12 +420,12 @@ export class CrossPlatformMatcher {
   }
   
   private calculateSimilarity(str1: string, str2: string): number {
-    if (str1 === str2) return 1.0;
+    if (str1 === str2) {return 1.0;}
     
     const longer = str1.length > str2.length ? str1 : str2;
     const shorter = str1.length > str2.length ? str2 : str1;
     
-    if (longer.length === 0) return 1.0;
+    if (longer.length === 0) {return 1.0;}
     
     const editDistance = this.levenshteinDistance(longer, shorter);
     return (longer.length - editDistance) / longer.length;
@@ -476,22 +476,22 @@ export class CrossPlatformMatcher {
     // From metadata
     if (item.metadata?.twitter_url) {
       const match = item.metadata.twitter_url.match(/twitter\.com\/([^\/]+)/);
-      if (match) handles.twitter = match[1].toLowerCase();
+      if (match) {handles.twitter = match[1].toLowerCase();}
     }
     
     if (item.metadata?.github_url) {
       const match = item.metadata.github_url.match(/github\.com\/([^\/]+)/);
-      if (match) handles.github = match[1].toLowerCase();
+      if (match) {handles.github = match[1].toLowerCase();}
     }
     
     // From description
     const text = `${item.title} ${item.description}`.toLowerCase();
     
     const twitterMatch = text.match(/@([a-z0-9_]+)/);
-    if (twitterMatch) handles.twitter = twitterMatch[1];
+    if (twitterMatch) {handles.twitter = twitterMatch[1];}
     
     const githubMatch = text.match(/github\.com\/([a-z0-9-]+)/);
-    if (githubMatch) handles.github = githubMatch[1];
+    if (githubMatch) {handles.github = githubMatch[1];}
     
     return handles;
   }

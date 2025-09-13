@@ -72,7 +72,7 @@ export default function ContentQueueEnhanced() {
         .select('*')
         .order('accelerate_score', { ascending: false });
 
-      if (error) throw error;
+      if (error) {throw error;}
       setItems(data || []);
       applyFilters(data || []);
     } catch (error) {
@@ -178,7 +178,7 @@ export default function ContentQueueEnhanced() {
     const confirmed = window.confirm(
       `Are you sure you want to approve ${selectedItems.size} item${selectedItems.size > 1 ? 's' : ''}?\n\nThis will move them to production.`
     );
-    if (!confirmed) return;
+    if (!confirmed) {return;}
 
     toast.loading(`Approving ${selectedItems.size} items...`);
     let succeeded = 0;
@@ -233,7 +233,7 @@ export default function ContentQueueEnhanced() {
     }
 
     const confirmed = window.confirm(`Reject ${selectedItems.size} items?`);
-    if (!confirmed) return;
+    if (!confirmed) {return;}
 
     let succeeded = 0;
     for (const id of selectedItems) {
@@ -249,7 +249,7 @@ export default function ContentQueueEnhanced() {
           })
         });
 
-        if (response.ok) succeeded++;
+        if (response.ok) {succeeded++;}
       } catch (error) {
         console.error(error);
       }
@@ -301,7 +301,7 @@ export default function ContentQueueEnhanced() {
         })
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {throw error;}
       
       toast.success('Score updated');
       setEditingScore(null);

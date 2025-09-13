@@ -164,9 +164,9 @@ export class TieredRateLimiter {
 
   getTier(endpoint: string): RateLimiter {
     // Determine tier based on endpoint
-    if (endpoint.includes('/admin/')) return this.tiers.get('admin')!;
-    if (endpoint.includes('/export/')) return this.tiers.get('export')!;
-    if (endpoint.includes('/search')) return this.tiers.get('search')!;
+    if (endpoint.includes('/admin/')) {return this.tiers.get('admin')!;}
+    if (endpoint.includes('/export/')) {return this.tiers.get('export')!;}
+    if (endpoint.includes('/search')) {return this.tiers.get('search')!;}
     return this.tiers.get('default')!;
   }
 

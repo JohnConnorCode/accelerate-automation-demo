@@ -222,7 +222,7 @@ export class AccelerateDataPipeline extends EventEmitter {
 
   private async cleanItem(item: any): Promise<CleanedDataItem | null> {
     // Skip if missing essential fields
-    if (!item.title && !item.description) return null;
+    if (!item.title && !item.description) {return null;}
 
     // Generate unique ID
     const id = this.generateId(item);
@@ -303,33 +303,33 @@ export class AccelerateDataPipeline extends EventEmitter {
 
   private categorizeItem(item: any, tags: string[]): string {
     // Categorize based on tags and content
-    if (tags.includes('defi') || tags.includes('finance')) return 'DeFi';
-    if (tags.includes('nft') || tags.includes('art')) return 'NFT';
-    if (tags.includes('dao') || tags.includes('governance')) return 'DAO';
-    if (tags.includes('infrastructure') || tags.includes('protocol')) return 'Infrastructure';
-    if (tags.includes('gaming') || tags.includes('gamefi')) return 'Gaming';
-    if (tags.includes('tutorial') || tags.includes('guide')) return 'Education';
-    if (item.type === 'repository') return 'Development';
+    if (tags.includes('defi') || tags.includes('finance')) {return 'DeFi';}
+    if (tags.includes('nft') || tags.includes('art')) {return 'NFT';}
+    if (tags.includes('dao') || tags.includes('governance')) {return 'DAO';}
+    if (tags.includes('infrastructure') || tags.includes('protocol')) {return 'Infrastructure';}
+    if (tags.includes('gaming') || tags.includes('gamefi')) {return 'Gaming';}
+    if (tags.includes('tutorial') || tags.includes('guide')) {return 'Education';}
+    if (item.type === 'repository') {return 'Development';}
     return 'General';
   }
 
   private determineType(item: any): CleanedDataItem['type'] {
-    if (item.type === 'repository') return 'project';
-    if (item.type === 'article') return 'article';
-    if (item.type === 'discussion') return 'article';
-    if (item.title?.toLowerCase().includes('hiring') || item.title?.toLowerCase().includes('job')) return 'job';
-    if (item.title?.toLowerCase().includes('conference') || item.title?.toLowerCase().includes('hackathon')) return 'event';
-    if (item.title?.toLowerCase().includes('tutorial') || item.title?.toLowerCase().includes('guide')) return 'tutorial';
-    if (item.title?.toLowerCase().includes('announcement') || item.title?.toLowerCase().includes('launch')) return 'announcement';
+    if (item.type === 'repository') {return 'project';}
+    if (item.type === 'article') {return 'article';}
+    if (item.type === 'discussion') {return 'article';}
+    if (item.title?.toLowerCase().includes('hiring') || item.title?.toLowerCase().includes('job')) {return 'job';}
+    if (item.title?.toLowerCase().includes('conference') || item.title?.toLowerCase().includes('hackathon')) {return 'event';}
+    if (item.title?.toLowerCase().includes('tutorial') || item.title?.toLowerCase().includes('guide')) {return 'tutorial';}
+    if (item.title?.toLowerCase().includes('announcement') || item.title?.toLowerCase().includes('launch')) {return 'announcement';}
     return 'article';
   }
 
   private parseTimestamp(item: any): Date {
-    if (item.publishedAt) return new Date(item.publishedAt);
-    if (item.published_at) return new Date(item.published_at);
-    if (item.lastUpdated) return new Date(item.lastUpdated);
-    if (item.updated_at) return new Date(item.updated_at);
-    if (item.time) return new Date(item.time * 1000); // HN uses unix timestamp
+    if (item.publishedAt) {return new Date(item.publishedAt);}
+    if (item.published_at) {return new Date(item.published_at);}
+    if (item.lastUpdated) {return new Date(item.lastUpdated);}
+    if (item.updated_at) {return new Date(item.updated_at);}
+    if (item.time) {return new Date(item.time * 1000);} // HN uses unix timestamp
     return new Date();
   }
 

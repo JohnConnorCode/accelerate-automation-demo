@@ -152,10 +152,10 @@ export class RobustFetcher<T> {
   validateItems(items: any[]): any[] {
     return items.filter(item => {
       // Must have title or name
-      if (!item.title && !item.name) return false;
+      if (!item.title && !item.name) {return false;}
       
       // Must have URL
-      if (!item.url) return false;
+      if (!item.url) {return false;}
       
       // Must be a real item (not placeholder)
       if (item.title?.toLowerCase().includes('example') ||

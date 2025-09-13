@@ -306,7 +306,7 @@ export class BackupService {
       if (dryRun) {
 
         for (const [table, rows] of Object.entries(backupData)) {
-          if (tables && !tables.includes(table)) continue;
+          if (tables && !tables.includes(table)) {continue;}
 
         }
         return;

@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { stagingService } from './src/services/staging-service';
+import { stagingService } from '../../../src/services/staging-service';
 
 async function test() {
   console.log('Testing minimal staging insertion...\n');

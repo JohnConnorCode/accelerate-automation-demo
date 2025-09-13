@@ -129,7 +129,7 @@ class RetryFetcher {
    */
   private isCircuitOpen(domain: string): boolean {
     const state = this.circuitBreakers.get(domain);
-    if (!state) return false;
+    if (!state) {return false;}
     
     if (state.state === 'open') {
       // Check if timeout has passed

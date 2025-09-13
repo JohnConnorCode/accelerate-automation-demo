@@ -265,7 +265,7 @@ export class UnifiedScorer {
     for (const { scoring } of scoredItems) {
       byCategory[scoring.category]++;
       totalScore += scoring.score;
-      if (scoring.metadata.hasNeeds) withNeeds++;
+      if (scoring.metadata.hasNeeds) {withNeeds++;}
     }
     
     const qualified = scoredItems.filter(s => s.scoring.category !== 'reject');

@@ -1,5 +1,5 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
+import React from 'react';
+import ReactDOM from 'react-dom/client';
 
 // Minimal app to test if React renders
 const MinimalApp = () => {
@@ -11,12 +11,12 @@ const MinimalApp = () => {
         Test Button
       </button>
     </div>
-  )
-}
+  );
+};
 
 // Simple render without any providers
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <MinimalApp />
   </React.StrictMode>
-)
+);

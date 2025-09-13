@@ -1,4 +1,4 @@
-import { supabase, TABLES } from '../lib/supabase'
+import { supabase, TABLES } from '../lib/supabase';
 
 export type ContentCategory = 'projects' | 'funding' | 'resources'
 
@@ -33,9 +33,9 @@ class ContentService {
       item.description && 
       item.description.length >= 50 &&
       item.category
-    )
+    );
 
-    if (validItems.length === 0) return
+    if (validItems.length === 0) {return;}
 
     const { error } = await supabase
       .from(TABLES.CONTENT_QUEUE)
@@ -44,9 +44,9 @@ class ContentService {
         status: 'pending',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
-      })))
+      })));
 
-    if (error) throw error
+    if (error) {throw error;}
   }
 
   // Approve content and push to main app
@@ -56,22 +56,22 @@ class ContentService {
       .from(TABLES.CONTENT_QUEUE)
       .select('*')
       .in('id', ids)
-      .eq('status', 'pending')
+      .eq('status', 'pending');
 
-    if (fetchError) throw fetchError
-    if (!items || items.length === 0) return
+    if (fetchError) {throw fetchError;}
+    if (!items || items.length === 0) {return;}
 
     // Update status
     const { error: updateError } = await supabase
       .from(TABLES.CONTENT_QUEUE)
       .update({ status: 'approved', updated_at: new Date().toISOString() })
-      .in('id', ids)
+      .in('id', ids);
 
-    if (updateError) throw updateError
+    if (updateError) {throw updateError;}
 
     // Push to appropriate tables in main app
     for (const item of items) {
-      await this.pushToMainApp(item)
+      await this.pushToMainApp(item);
     }
   }
 
@@ -84,7 +84,7 @@ class ContentService {
       url: item.url,
       created_at: new Date().toISOString(),
       metadata: item.metadata || {}
-    }
+    };
 
     switch (item.category) {
       case 'projects':
@@ -93,8 +93,8 @@ class ContentService {
           status: 'active',
           categories: item.metadata?.tags || [],
           technologies: item.metadata?.technologies || []
-        })
-        break
+        });
+        break;
 
       case 'funding':
         await supabase.from(TABLES.FUNDING_OPPORTUNITIES).insert({
@@ -102,16 +102,16 @@ class ContentService {
           amount: item.metadata?.amount,
           deadline: item.metadata?.deadline,
           requirements: item.metadata?.requirements || []
-        })
-        break
+        });
+        break;
 
       case 'resources':
         await supabase.from(TABLES.RESOURCES).insert({
           ...baseData,
           type: item.metadata?.type || 'article',
           tags: item.metadata?.tags || []
-        })
-        break
+        });
+        break;
     }
   }
 
@@ -120,9 +120,9 @@ class ContentService {
     const { error } = await supabase
       .from(TABLES.CONTENT_QUEUE)
       .update({ status: 'rejected', updated_at: new Date().toISOString() })
-      .in('id', ids)
+      .in('id', ids);
 
-    if (error) throw error
+    if (error) {throw error;}
   }
 
   // Enrich content with AI
@@ -131,12 +131,12 @@ class ContentService {
       .from(TABLES.CONTENT_QUEUE)
       .select('*')
       .eq('id', id)
-      .single()
+      .single();
 
-    if (fetchError) throw fetchError
-    if (!item) return
+    if (fetchError) {throw fetchError;}
+    if (!item) {return;}
 
-    const enrichedData: any = { ...item.metadata }
+    const enrichedData: any = { ...item.metadata };
 
     // Real enrichment - no fake data
     if (options.aiAnalysis) {
@@ -150,15 +150,15 @@ class ContentService {
     }
 
     if (options.keywords) {
-      enrichedData.keywords = ['innovation', 'technology', 'funding', 'startup']
+      enrichedData.keywords = ['innovation', 'technology', 'funding', 'startup'];
     }
 
     if (options.category) {
-      enrichedData.suggestedCategory = item.category // Keep original for now
+      enrichedData.suggestedCategory = item.category; // Keep original for now
     }
 
     if (options.summary) {
-      enrichedData.summary = item.description.substring(0, 150) + '...'
+      enrichedData.summary = item.description.substring(0, 150) + '...';
     }
 
     // Update item with enriched data
@@ -169,43 +169,43 @@ class ContentService {
         enriched: true,
         updated_at: new Date().toISOString()
       })
-      .eq('id', id)
+      .eq('id', id);
 
-    if (updateError) throw updateError
+    if (updateError) {throw updateError;}
 
     // Log enrichment
     await supabase.from(TABLES.ENRICHMENT_LOGS).insert({
       content_id: id,
       options: options,
       created_at: new Date().toISOString()
-    })
+    });
   }
 
   // Get content queue
   async getQueue(filters?: { status?: string; category?: ContentCategory }): Promise<ContentItem[]> {
-    let query = supabase.from(TABLES.CONTENT_QUEUE).select('*')
+    let query = supabase.from(TABLES.CONTENT_QUEUE).select('*');
 
     if (filters?.status) {
-      query = query.eq('status', filters.status)
+      query = query.eq('status', filters.status);
     }
 
     if (filters?.category) {
-      query = query.eq('category', filters.category)
+      query = query.eq('category', filters.category);
     }
 
-    const { data, error } = await query.order('created_at', { ascending: false })
+    const { data, error } = await query.order('created_at', { ascending: false });
 
-    if (error) throw error
-    return data || []
+    if (error) {throw error;}
+    return data || [];
   }
 
   // Get stats
   async getStats() {
     const { data, error } = await supabase
       .from(TABLES.CONTENT_QUEUE)
-      .select('status, category, score')
+      .select('status, category, score');
 
-    if (error) throw error
+    if (error) {throw error;}
 
     const stats = {
       total: data?.length || 0,
@@ -218,9 +218,9 @@ class ContentService {
         funding: data?.filter(i => i.category === 'funding').length || 0,
         resources: data?.filter(i => i.category === 'resources').length || 0
       }
-    }
+    };
 
-    return stats
+    return stats;
   }
 
   // Auto-approve high-scoring content
@@ -229,16 +229,16 @@ class ContentService {
       .from(TABLES.CONTENT_QUEUE)
       .select('id')
       .eq('status', 'pending')
-      .gte('score', minScore)
+      .gte('score', minScore);
 
-    if (error) throw error
-    if (!data || data.length === 0) return 0
+    if (error) {throw error;}
+    if (!data || data.length === 0) {return 0;}
 
-    const ids = data.map(item => item.id)
-    await this.approveContent(ids)
+    const ids = data.map(item => item.id);
+    await this.approveContent(ids);
     
-    return ids.length
+    return ids.length;
   }
 }
 
-export const contentService = new ContentService()
+export const contentService = new ContentService();

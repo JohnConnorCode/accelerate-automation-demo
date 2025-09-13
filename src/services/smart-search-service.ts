@@ -225,7 +225,7 @@ export class SmartSearchService {
       return [];
     }
     
-    if (!data) return [];
+    if (!data) {return [];}
     
     // Score and rank results
     for (const item of data) {
@@ -316,12 +316,12 @@ export class SmartSearchService {
     // Boost for recency
     const age = Date.now() - new Date(item.created_at).getTime();
     const daysSinceCreation = age / (1000 * 60 * 60 * 24);
-    if (daysSinceCreation < 7) relevance += 2;
-    if (daysSinceCreation < 1) relevance += 3;
+    if (daysSinceCreation < 7) {relevance += 2;}
+    if (daysSinceCreation < 1) {relevance += 3;}
     
     // Boost for high quality score
-    if (item.score > 80) relevance += 2;
-    if (item.score > 90) relevance += 3;
+    if (item.score > 80) {relevance += 2;}
+    if (item.score > 90) {relevance += 3;}
     
     return relevance;
   }
@@ -488,7 +488,7 @@ export class SmartSearchService {
       (item.metadata.tags || []).forEach((tag: string) => tags.add(tag));
     });
     
-    if (tags.size === 0) return [];
+    if (tags.size === 0) {return [];}
     
     // Find items with similar tags
     const { data } = await supabase
@@ -500,7 +500,7 @@ export class SmartSearchService {
     if (data) {
       for (const item of data) {
         // Skip if already in results
-        if (items.find(r => r.id === item.id)) continue;
+        if (items.find(r => r.id === item.id)) {continue;}
         
         related.push({
           id: item.id,
@@ -606,7 +606,7 @@ export class SmartSearchService {
       .order('count', { ascending: false })
       .limit(5);
     
-    if (!data) return [];
+    if (!data) {return [];}
     
     return data.map(tag => ({
       text: `#${tag.name}`,
@@ -625,7 +625,7 @@ export class SmartSearchService {
       .from('approved_content')
       .select('id, title, description, tags, type');
     
-    if (!data) return;
+    if (!data) {return;}
     
     for (const item of data) {
       const terms = new Set<string>();

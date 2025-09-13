@@ -152,7 +152,7 @@ export class TeamVerificationService {
         contributions.github_repos = githubData.public_repos;
         contributions.github_stars = githubData.total_stars;
         
-        if (!member.name) member.name = githubData.name;
+        if (!member.name) {member.name = githubData.name;}
       }
     }
 
@@ -227,11 +227,11 @@ export class TeamVerificationService {
 
       // Calculate credibility
       let credibility = 0;
-      if (user.public_repos > 10) credibility += 20;
-      if (user.followers > 100) credibility += 20;
-      if (totalStars > 100) credibility += 20;
-      if (web3Repos.length > 0) credibility += 20;
-      if (user.created_at && new Date(user.created_at) < new Date('2022-01-01')) credibility += 20;
+      if (user.public_repos > 10) {credibility += 20;}
+      if (user.followers > 100) {credibility += 20;}
+      if (totalStars > 100) {credibility += 20;}
+      if (web3Repos.length > 0) {credibility += 20;}
+      if (user.created_at && new Date(user.created_at) < new Date('2022-01-01')) {credibility += 20;}
 
       return {
         name: user.name,
@@ -263,7 +263,7 @@ export class TeamVerificationService {
    * Verify Twitter account
    */
   private async verifyTwitter(handle: string): Promise<boolean> {
-    if (!process.env.TWITTER_BEARER_TOKEN) return false;
+    if (!process.env.TWITTER_BEARER_TOKEN) {return false;}
 
     try {
       const response = await fetch(
@@ -302,7 +302,7 @@ export class TeamVerificationService {
   private async getGitHubContributors(repoUrl: string): Promise<any[]> {
     try {
       const match = repoUrl.match(/github\.com\/([^/]+)\/([^/]+)/);
-      if (!match) return [];
+      if (!match) {return [];}
 
       const [, owner, repo] = match;
       const { data: contributors } = await this.octokit.repos.listContributors({

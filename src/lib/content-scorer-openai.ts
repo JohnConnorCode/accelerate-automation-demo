@@ -27,7 +27,7 @@ export class ContentScorer {
         }
       });
 
-      if (error) throw error;
+      if (error) {throw error;}
       
       return data as ScoringResult;
     } catch (error) {

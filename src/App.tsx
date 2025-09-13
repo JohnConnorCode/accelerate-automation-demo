@@ -1,22 +1,22 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
-import { useAuth } from './contexts/AuthContext'
-import ProtectedRoute from './components/ProtectedRoute'
-import Layout from './components/Layout'
-import LayoutEnhanced from './components/LayoutEnhanced'
-import Login from './pages/Login'
-import Dashboard from './pages/Dashboard'
-import ContentQueueV2 from './pages/ContentQueueV2'
-import ContentQueueEnhanced from './pages/ContentQueueEnhanced'
-import Settings from './pages/Settings'
-import Analytics from './pages/Analytics'
-import SystemTest from './pages/SystemTest'
-import { AdminSettings } from './pages/AdminSettings'
-import ApiConfig from './pages/ApiConfig'
-import { SystemDiagnostics } from './pages/SystemDiagnostics'
-import { DataSources } from './pages/DataSources'
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from './contexts/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import Layout from './components/Layout';
+import LayoutEnhanced from './components/LayoutEnhanced';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import ContentQueueV2 from './pages/ContentQueueV2';
+import ContentQueueEnhanced from './pages/ContentQueueEnhanced';
+import Settings from './pages/Settings';
+import Analytics from './pages/Analytics';
+import SystemTest from './pages/SystemTest';
+import { AdminSettings } from './pages/AdminSettings';
+import ApiConfig from './pages/ApiConfig';
+import { SystemDiagnostics } from './pages/SystemDiagnostics';
+import { DataSources } from './pages/DataSources';
 
 function App() {
-  const { user, loading } = useAuth()
+  const { user, loading } = useAuth();
   
   // Show loading state while checking auth
   if (loading) {
@@ -27,7 +27,7 @@ function App() {
           <p className="text-gray-600">Loading...</p>
         </div>
       </div>
-    )
+    );
   }
   
   return (
@@ -73,7 +73,7 @@ function App() {
       {/* Catch all - redirect to login */}
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
-  )
+  );
 }
 
-export default App
+export default App;

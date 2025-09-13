@@ -45,7 +45,7 @@ export class AccelerateValidator {
    */
   static validate(item: ContentItem): ValidationResult {
     const reasons: string[] = [];
-    let score = 0;
+    const score = 0;
 
     // Check required fields
     if (!this.hasRequiredFields(item)) {
@@ -167,10 +167,10 @@ export class AccelerateValidator {
 
     // Determine category
     let category: 'perfect' | 'good' | 'maybe' | 'rejected';
-    if (score >= 90) category = 'perfect';
-    else if (score >= 70) category = 'good';
-    else if (score >= 50) category = 'maybe';
-    else category = 'rejected';
+    if (score >= 90) {category = 'perfect';}
+    else if (score >= 70) {category = 'good';}
+    else if (score >= 50) {category = 'maybe';}
+    else {category = 'rejected';}
 
     return {
       isValid: score >= this.CRITERIA.MIN_SCORE,
@@ -274,8 +274,9 @@ export class AccelerateValidator {
    * Check if item has required fields
    */
   private static hasRequiredFields(item: ContentItem): boolean {
-    const requiredFields = this.CRITERIA.REQUIRED_FIELDS[item.type] || [];
-    return requiredFields.every(field => {
+    const requiredFieldsMap = this.CRITERIA.REQUIRED_FIELDS as Record<string, string[]>;
+    const requiredFields = requiredFieldsMap[item.type] || [];
+    return requiredFields.every((field: string) => {
       const value = (item as any)[field];
       return value !== undefined && value !== null && value !== '';
     });

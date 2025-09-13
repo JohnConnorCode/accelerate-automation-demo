@@ -6,6 +6,15 @@ import type { Database } from '../types/supabase';
  * Connects to the Accelerate database to store qualified content
  */
 
+// Load dotenv if we're in Node.js
+if (typeof window === 'undefined' && typeof process !== 'undefined') {
+  try {
+    require('dotenv').config();
+  } catch (e) {
+    // dotenv might not be available in some environments
+  }
+}
+
 // Get environment variables with fallbacks
 // In browser, use import.meta.env for Vite
 // In Node.js, use process.env

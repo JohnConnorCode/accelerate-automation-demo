@@ -326,7 +326,7 @@ export class MonitoringAlertingService extends EventEmitter {
    */
   private async evaluateRule(rule: AlertRule): Promise<void> {
     const metricData = this.metrics.get(rule.metric);
-    if (!metricData || metricData.length === 0) return;
+    if (!metricData || metricData.length === 0) {return;}
     
     // Check cooldown
     const lastAlertTime = this.lastAlertTimes.get(rule.metric) || 0;
@@ -339,7 +339,7 @@ export class MonitoringAlertingService extends EventEmitter {
     const cutoff = new Date(Date.now() - duration);
     const recentValues = metricData.filter(p => p.timestamp > cutoff);
     
-    if (recentValues.length === 0) return;
+    if (recentValues.length === 0) {return;}
     
     // Calculate average value
     const avgValue = recentValues.reduce((sum, p) => sum + p.value, 0) / recentValues.length;

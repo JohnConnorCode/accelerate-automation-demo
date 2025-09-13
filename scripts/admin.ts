@@ -70,10 +70,11 @@ program
   .command('run [category]')
   .description('Run fetchers (all, projects, funding, resources, metrics)')
   .option('-d, --dry-run', 'Simulate without database writes')
-  .action(async (category, options) => {
+  .action(async (category, _options) => {
     const spinner = ora('Starting orchestrator...').start();
     
     try {
+      const orchestrator = new UnifiedOrchestrator();
       let result;
       if (category) {
         spinner.text = `Running ${category} fetchers...`;
@@ -195,6 +196,7 @@ program
     const interval = parseInt(options.interval);
     console.log(chalk.blue(`\n📊 Starting continuous monitoring (every ${interval} minutes)\n`));
     
+    const orchestrator = new UnifiedOrchestrator();
     await orchestrator.runContinuous(interval);
   });
 

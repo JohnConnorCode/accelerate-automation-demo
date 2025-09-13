@@ -1,6 +1,6 @@
-import { Navigate } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
-import { Loader2, ShieldAlert } from 'lucide-react'
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { Loader2, ShieldAlert } from 'lucide-react';
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -8,7 +8,7 @@ interface ProtectedRouteProps {
 }
 
 export default function ProtectedRoute({ children, adminOnly = true }: ProtectedRouteProps) {
-  const { user, loading, isAdmin } = useAuth()
+  const { user, loading, isAdmin } = useAuth();
 
   if (loading) {
     return (
@@ -18,11 +18,11 @@ export default function ProtectedRoute({ children, adminOnly = true }: Protected
           <p className="text-gray-600">Loading...</p>
         </div>
       </div>
-    )
+    );
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />
+    return <Navigate to="/login" replace />;
   }
 
   if (adminOnly && !isAdmin) {
@@ -45,8 +45,8 @@ export default function ProtectedRoute({ children, adminOnly = true }: Protected
           </button>
         </div>
       </div>
-    )
+    );
   }
 
-  return <>{children}</>
+  return <>{children}</>;
 }

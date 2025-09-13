@@ -96,8 +96,8 @@ export class AnalyticsService {
       const stats = sourceMap.get(item.source);
       stats.count++;
       stats.total_score += item.score || 0;
-      if (item.recommendation === 'approve') stats.approved++;
-      if (item.recommendation === 'reject') stats.rejected++;
+      if (item.recommendation === 'approve') {stats.approved++;}
+      if (item.recommendation === 'reject') {stats.rejected++;}
     });
 
     const performance = [];
@@ -133,11 +133,11 @@ export class AnalyticsService {
 
     data?.forEach(item => {
       const score = item.score || 0;
-      if (score <= 2) distribution['0-2']++;
-      else if (score <= 4) distribution['3-4']++;
-      else if (score <= 6) distribution['5-6']++;
-      else if (score <= 8) distribution['7-8']++;
-      else distribution['9-10']++;
+      if (score <= 2) {distribution['0-2']++;}
+      else if (score <= 4) {distribution['3-4']++;}
+      else if (score <= 6) {distribution['5-6']++;}
+      else if (score <= 8) {distribution['7-8']++;}
+      else {distribution['9-10']++;}
     });
 
     return distribution;

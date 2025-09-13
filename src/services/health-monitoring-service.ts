@@ -181,7 +181,7 @@ export class HealthMonitoringService {
   private async checkDatabaseHealth(): Promise<ComponentHealth> {
     const startTime = Date.now();
     let status: ComponentHealth['status'] = 'healthy';
-    let details: any = {};
+    const details: any = {};
     
     try {
       // Test database connection
@@ -191,7 +191,7 @@ export class HealthMonitoringService {
         .limit(1)
         .single();
       
-      if (error) throw error;
+      if (error) {throw error;}
       
       // Check response time
       const responseTime = Date.now() - startTime;
@@ -472,7 +472,7 @@ export class HealthMonitoringService {
   private async checkPipelineHealth(): Promise<ComponentHealth> {
     const startTime = Date.now();
     let status: ComponentHealth['status'] = 'healthy';
-    let details: any = {};
+    const details: any = {};
     
     try {
       // Check queue size

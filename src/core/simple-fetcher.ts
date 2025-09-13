@@ -138,7 +138,7 @@ class SimpleFetcher {
     let stored = 0;
 
     for (const result of results) {
-      if (result.items.length === 0) continue;
+      if (result.items.length === 0) {continue;}
 
       try {
         const insertData = result.items.map(item => ({
@@ -151,7 +151,7 @@ class SimpleFetcher {
           .from('content_raw')
           .insert(insertData as any);
 
-        if (error) throw error;
+        if (error) {throw error;}
         stored += result.items.length;
       } catch (error) {
         errors.push(`Failed to store ${result.source}: ${error}`);

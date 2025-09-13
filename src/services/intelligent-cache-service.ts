@@ -58,12 +58,14 @@ export class IntelligentCacheService {
     system_config: 3600000  // 1 hour - rarely changes
   };
 
-  constructor() {
+  constructor(options?: { skipWarmup?: boolean }) {
     // Start cache cleanup interval
     this.startCleanupInterval();
     
-    // Warm up cache with frequently accessed data
-    this.warmupCache();
+    // Warm up cache with frequently accessed data (skip in tests)
+    if (!options?.skipWarmup) {
+      this.warmupCache();
+    }
   }
 
   /**
@@ -149,7 +151,28 @@ export class IntelligentCacheService {
     }
   ): Promise<void> {
     const cacheKey = this.generateKey(key);
-    const dataSize = this.calculateSize(data);
+    
+    // Serialize data to handle circular references
+    let serializedData: any;
+    try {
+      // Try normal JSON serialization first
+      JSON.stringify(data);
+      serializedData = data;
+    } catch (error) {
+      // If circular reference detected, create a safe copy
+      const seen = new WeakSet();
+      serializedData = JSON.parse(JSON.stringify(data, (key, value) => {
+        if (typeof value === 'object' && value !== null) {
+          if (seen.has(value)) {
+            return '[Circular]';
+          }
+          seen.add(value);
+        }
+        return value;
+      }));
+    }
+    
+    const dataSize = this.calculateSize(serializedData);
     
     // Check if we need to evict entries
     if (this.needsEviction(dataSize)) {
@@ -159,7 +182,7 @@ export class IntelligentCacheService {
     // Create cache entry
     const entry: CacheEntry = {
       key: cacheKey,
-      data,
+      data: serializedData,
       metadata: {
         created: Date.now(),
         lastAccessed: Date.now(),
@@ -297,15 +320,15 @@ export class IntelligentCacheService {
    */
   private getSmartTTL(key: string): number {
     // Match key patterns to appropriate TTL
-    if (key.includes('project')) return this.ttlConfig.projects;
-    if (key.includes('funding')) return this.ttlConfig.funding;
-    if (key.includes('resource')) return this.ttlConfig.resources;
-    if (key.includes('ai_assessment')) return this.ttlConfig.ai_assessment;
-    if (key.includes('quality')) return this.ttlConfig.quality_check;
-    if (key.includes('search')) return this.ttlConfig.search_results;
-    if (key.includes('dashboard')) return this.ttlConfig.user_dashboard;
-    if (key.includes('analytics')) return this.ttlConfig.analytics;
-    if (key.includes('settings') || key.includes('config')) return this.ttlConfig.system_config;
+    if (key.includes('project')) {return this.ttlConfig.projects;}
+    if (key.includes('funding')) {return this.ttlConfig.funding;}
+    if (key.includes('resource')) {return this.ttlConfig.resources;}
+    if (key.includes('ai_assessment')) {return this.ttlConfig.ai_assessment;}
+    if (key.includes('quality')) {return this.ttlConfig.quality_check;}
+    if (key.includes('search')) {return this.ttlConfig.search_results;}
+    if (key.includes('dashboard')) {return this.ttlConfig.user_dashboard;}
+    if (key.includes('analytics')) {return this.ttlConfig.analytics;}
+    if (key.includes('settings') || key.includes('config')) {return this.ttlConfig.system_config;}
     
     return this.defaultTTL;
   }
@@ -317,21 +340,21 @@ export class IntelligentCacheService {
     const tags: string[] = [];
     
     // Add type tags
-    if (key.includes('project')) tags.push('project');
-    if (key.includes('funding')) tags.push('funding');
-    if (key.includes('resource')) tags.push('resource');
-    if (key.includes('content')) tags.push('content');
+    if (key.includes('project')) {tags.push('project');}
+    if (key.includes('funding')) {tags.push('funding');}
+    if (key.includes('resource')) {tags.push('resource');}
+    if (key.includes('content')) {tags.push('content');}
     
     // Add operation tags
-    if (key.includes('search')) tags.push('search');
-    if (key.includes('list')) tags.push('list');
-    if (key.includes('detail')) tags.push('detail');
-    if (key.includes('analytics')) tags.push('analytics');
+    if (key.includes('search')) {tags.push('search');}
+    if (key.includes('list')) {tags.push('list');}
+    if (key.includes('detail')) {tags.push('detail');}
+    if (key.includes('analytics')) {tags.push('analytics');}
     
     // Add status tags
-    if (key.includes('approved')) tags.push('approved');
-    if (key.includes('rejected')) tags.push('rejected');
-    if (key.includes('pending')) tags.push('pending');
+    if (key.includes('approved')) {tags.push('approved');}
+    if (key.includes('rejected')) {tags.push('rejected');}
+    if (key.includes('pending')) {tags.push('pending');}
     
     return tags;
   }
@@ -372,7 +395,7 @@ export class IntelligentCacheService {
     let evicted = 0;
     
     for (const { key, entry } of entries) {
-      if (freedSpace >= requiredSpace) break;
+      if (freedSpace >= requiredSpace) {break;}
       
       // Don't evict critical entries unless necessary
       if (entry.metadata.priority === 'critical' && freedSpace < requiredSpace * 0.8) {
@@ -428,8 +451,17 @@ export class IntelligentCacheService {
    */
   private calculateSize(data: any): number {
     // Rough estimation of object size
-    const str = JSON.stringify(data);
-    return str.length * 2; // 2 bytes per character (Unicode)
+    try {
+      const str = JSON.stringify(data);
+      return str.length * 2; // 2 bytes per character (Unicode)
+    } catch (error) {
+      // Handle circular references or other serialization errors
+      // Return a default size estimate
+      if (typeof data === 'object' && data !== null) {
+        return Object.keys(data).length * 100; // Rough estimate
+      }
+      return 100; // Default size for non-serializable data
+    }
   }
 
   /**

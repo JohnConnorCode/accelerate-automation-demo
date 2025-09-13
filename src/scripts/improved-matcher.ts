@@ -26,7 +26,7 @@ class ImprovedMatcher {
    * Extract domain from URL or text
    */
   private extractDomain(url: string): string {
-    if (!url) return '';
+    if (!url) {return '';}
     try {
       // If it's a full URL
       if (url.includes('://')) {
@@ -66,23 +66,23 @@ class ImprovedMatcher {
    * Check if text contains a company name with word boundaries
    */
   private containsCompanyName(text: string, companyName: string): boolean {
-    if (!text || !companyName) return false;
+    if (!text || !companyName) {return false;}
     
     const textLower = text.toLowerCase();
     const strict = this.strictNormalize(companyName);
     const loose = this.looseNormalize(companyName);
     
     // Skip very short names
-    if (loose.length < 4) return false;
+    if (loose.length < 4) {return false;}
     
     // Check for exact match with word boundaries
     const strictRegex = new RegExp(`\\b${strict.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
-    if (strictRegex.test(textLower)) return true;
+    if (strictRegex.test(textLower)) {return true;}
     
     // Check for loose match (only if name is long enough)
     if (loose.length >= 5) {
       const looseRegex = new RegExp(`\\b${loose.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
-      if (looseRegex.test(textLower)) return true;
+      if (looseRegex.test(textLower)) {return true;}
     }
     
     return false;

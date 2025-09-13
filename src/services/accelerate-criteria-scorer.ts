@@ -365,19 +365,19 @@ export class AccelerateCriteriaScorer {
 
   // Helper functions
   private getDaysSince(date?: string): number {
-    if (!date) return 999;
+    if (!date) {return 999;}
     const diff = Date.now() - new Date(date).getTime();
     return Math.floor(diff / (1000 * 60 * 60 * 24));
   }
 
   private getDaysUntil(date?: string): number | null {
-    if (!date) return null;
+    if (!date) {return null;}
     const diff = new Date(date).getTime() - Date.now();
     return Math.floor(diff / (1000 * 60 * 60 * 24));
   }
 
   private getMonthsSince(date?: string): number {
-    if (!date) return 999;
+    if (!date) {return 999;}
     const diff = Date.now() - new Date(date).getTime();
     return Math.floor(diff / (1000 * 60 * 60 * 24 * 30));
   }

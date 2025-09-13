@@ -1,4 +1,4 @@
-import { stagingService } from './src/services/staging-service';
+import { stagingService } from '../../../src/services/staging-service';
 
 async function testDirectInsertion() {
   console.log('Testing direct insertion to queue tables...\n');

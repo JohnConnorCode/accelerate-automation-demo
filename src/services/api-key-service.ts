@@ -25,7 +25,7 @@ class ApiKeyService {
    * Initialize by loading keys from database
    */
   async initialize(): Promise<void> {
-    if (this.initialized) return;
+    if (this.initialized) {return;}
 
     try {
       const { data, error } = await supabase

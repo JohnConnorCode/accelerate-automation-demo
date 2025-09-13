@@ -138,15 +138,15 @@ class ProductionMatcher {
     const normalizedName = this.normalize(company.title);
     
     // Skip very short names to avoid false positives
-    if (normalizedName.length < 4) return false;
+    if (normalizedName.length < 4) {return false;}
     
     const articleText = `${article.title} ${article.description}`.toLowerCase();
     
     // Check for exact name match
-    if (articleText.includes(companyName)) return true;
+    if (articleText.includes(companyName)) {return true;}
     
     // Check for normalized name (without Inc, LLC, etc)
-    if (normalizedName.length > 5 && articleText.includes(normalizedName)) return true;
+    if (normalizedName.length > 5 && articleText.includes(normalizedName)) {return true;}
     
     // Check if it's specifically about this YC batch company
     if (company.metadata?.yc_batch && 
@@ -231,20 +231,20 @@ class ProductionMatcher {
     let score = 30; // Base
     
     // YC backing
-    if (company.yc_batch) score += 20;
+    if (company.yc_batch) {score += 20;}
     
     // Early stage (under $2M)
     if (company.funding.total) {
-      if (company.funding.total <= 500000) score += 20;
-      else if (company.funding.total <= 2000000) score += 10;
+      if (company.funding.total <= 500000) {score += 20;}
+      else if (company.funding.total <= 2000000) {score += 10;}
     }
     
     // Small team
-    if (company.team_size && company.team_size <= 10) score += 10;
+    if (company.team_size && company.team_size <= 10) {score += 10;}
     
     // Multi-source validation
-    if (company.match_quality.sources_count > 1) score += 10;
-    if (company.match_quality.has_funding_news) score += 10;
+    if (company.match_quality.sources_count > 1) {score += 10;}
+    if (company.match_quality.has_funding_news) {score += 10;}
     
     // Data completeness bonus
     score += Math.round(company.match_quality.data_completeness * 0.2);

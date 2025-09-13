@@ -112,8 +112,8 @@ export const SystemDiagnostics: React.FC = () => {
         const result = await test.fn();
         const status = result ? 'pass' : 'fail';
         
-        if (result) passed++;
-        else failed++;
+        if (result) {passed++;}
+        else {failed++;}
 
         results.push({
           name: test.name,

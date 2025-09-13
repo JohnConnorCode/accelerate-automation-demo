@@ -285,12 +285,80 @@ export interface Database {
         Insert: any
         Update: any
       }
+      queue_projects: {
+        Row: {
+          id: string
+          created_at: string
+          updated_at: string
+          url: string
+          title: string
+          description: string
+          source: string
+          score: number
+          status: string
+          metadata: Json
+          accelerate_fit: boolean | null
+          accelerate_reason: string | null
+          processed_at: string | null
+        }
+        Insert: Omit<Database['public']['Tables']['queue_projects']['Row'], 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Database['public']['Tables']['queue_projects']['Insert']>
+      }
+      queue_investors: {
+        Row: {
+          id: string
+          created_at: string
+          updated_at: string
+          url: string
+          title: string
+          description: string
+          source: string
+          score: number
+          status: string
+          metadata: Json
+          accelerate_fit: boolean | null
+          accelerate_reason: string | null
+          processed_at: string | null
+        }
+        Insert: Omit<Database['public']['Tables']['queue_investors']['Row'], 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Database['public']['Tables']['queue_investors']['Insert']>
+      }
+      queue_news: {
+        Row: {
+          id: string
+          created_at: string
+          updated_at: string
+          url: string
+          title: string
+          description: string
+          source: string
+          score: number
+          status: string
+          metadata: Json
+          accelerate_fit: boolean | null
+          accelerate_reason: string | null
+          processed_at: string | null
+        }
+        Insert: Omit<Database['public']['Tables']['queue_news']['Row'], 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Database['public']['Tables']['queue_news']['Insert']>
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      exec_sql: {
+        Args: { sql: string }
+        Returns: unknown
+      }
+      get_table_constraints: {
+        Args: { table_name: string }
+        Returns: Array<{
+          table_name: string
+          constraint_name: string
+          constraint_type: string
+        }>
+      }
     }
     Enums: {
       [_ in never]: never

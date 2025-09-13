@@ -1,7 +1,7 @@
 // Frontend-safe version of contentServiceV2
 // This version doesn't use any Node.js specific features or process.env
 
-import { supabase } from '../lib/supabase'
+import { supabase } from '../lib/supabase';
 
 export type ContentCategory = 'projects' | 'funding' | 'resources' | 'builders';
 
@@ -32,7 +32,7 @@ class ContentServiceV2Frontend {
       
       const { data, error } = await query;
       
-      if (error) throw error;
+      if (error) {throw error;}
       return data || [];
     } catch (error) {
       console.error('Error fetching queue items:', error);
@@ -47,7 +47,7 @@ class ContentServiceV2Frontend {
         .update({ status, updated_at: new Date().toISOString() })
         .eq('id', id);
       
-      if (error) throw error;
+      if (error) {throw error;}
       return true;
     } catch (error) {
       console.error('Error updating item status:', error);
@@ -62,7 +62,7 @@ class ContentServiceV2Frontend {
         .delete()
         .eq('id', id);
       
-      if (error) throw error;
+      if (error) {throw error;}
       return true;
     } catch (error) {
       console.error('Error deleting item:', error);
@@ -74,9 +74,9 @@ class ContentServiceV2Frontend {
     try {
       const { data, error } = await supabase
         .from('content_queue')
-        .select('status, category, score')
+        .select('status, category, score');
       
-      if (error) throw error;
+      if (error) {throw error;}
       
       const scores = data?.map(item => item.score || 0) || [];
       const avgScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;

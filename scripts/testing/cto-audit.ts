@@ -5,8 +5,8 @@
  */
 
 import chalk from 'chalk'
-import { supabase } from './src/lib/supabase'
-import { contentServiceV2 } from './src/services/contentServiceV2'
+import { supabase } from '../../src/lib/supabase-client'
+import contentServiceV2 from '../../src/services/contentServiceV2'
 
 interface AuditResult {
   category: string

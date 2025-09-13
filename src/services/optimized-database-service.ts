@@ -264,7 +264,7 @@ export class OptimizedDatabaseService {
           }
           
           const { data, error } = await query;
-          if (error) throw error;
+          if (error) {throw error;}
           return data || [] as T[];
         },
         {
@@ -380,7 +380,7 @@ export class OptimizedDatabaseService {
           .select(selectClauses.join(','))
           .order(groupBy, { ascending: false });
         
-        if (error) throw error;
+        if (error) {throw error;}
         return data;
       },
       {

@@ -53,15 +53,15 @@ async function executeMigration() {
     
     // Get a description of what we're doing
     let description = 'SQL statement';
-    if (statement.includes('ALTER TABLE queue_projects')) description = 'Adding unique constraint to queue_projects';
-    else if (statement.includes('ALTER TABLE queue_investors')) description = 'Adding unique constraint to queue_investors';
-    else if (statement.includes('ALTER TABLE queue_news')) description = 'Adding unique constraint to queue_news';
-    else if (statement.includes('ALTER TABLE projects')) description = 'Adding unique constraint to projects';
-    else if (statement.includes('ALTER TABLE funding_programs')) description = 'Adding unique constraint to funding_programs';
-    else if (statement.includes('ALTER TABLE resources')) description = 'Adding unique constraint to resources';
-    else if (statement.includes('CREATE INDEX')) description = 'Creating index';
-    else if (statement.includes('CREATE OR REPLACE FUNCTION')) description = 'Creating cleanup function';
-    else if (statement.includes('COMMENT ON')) description = 'Adding comment';
+    if (statement.includes('ALTER TABLE queue_projects')) {description = 'Adding unique constraint to queue_projects';}
+    else if (statement.includes('ALTER TABLE queue_investors')) {description = 'Adding unique constraint to queue_investors';}
+    else if (statement.includes('ALTER TABLE queue_news')) {description = 'Adding unique constraint to queue_news';}
+    else if (statement.includes('ALTER TABLE projects')) {description = 'Adding unique constraint to projects';}
+    else if (statement.includes('ALTER TABLE funding_programs')) {description = 'Adding unique constraint to funding_programs';}
+    else if (statement.includes('ALTER TABLE resources')) {description = 'Adding unique constraint to resources';}
+    else if (statement.includes('CREATE INDEX')) {description = 'Creating index';}
+    else if (statement.includes('CREATE OR REPLACE FUNCTION')) {description = 'Creating cleanup function';}
+    else if (statement.includes('COMMENT ON')) {description = 'Adding comment';}
     
     process.stdout.write(`${i + 1}/${statements.length}: ${description}... `);
     

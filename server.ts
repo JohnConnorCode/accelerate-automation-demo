@@ -1,3 +1,7 @@
+import dotenv from 'dotenv'
+// Load environment variables FIRST before any other imports
+dotenv.config({ path: process.env.NODE_ENV === 'production' ? '.env.production' : '.env' })
+
 import express from 'express'
 import cors from 'cors'
 import jwt from 'jsonwebtoken'
@@ -11,10 +15,6 @@ import { metricsService } from './src/services/metrics'
 import { monitoringService } from './src/services/monitoring-service'
 import { cacheService } from './src/services/cache-service'
 import { processManager } from './src/utils/process-manager'
-import dotenv from 'dotenv'
-
-// Load environment variables
-dotenv.config({ path: process.env.NODE_ENV === 'production' ? '.env.production' : '.env' })
 
 // Initialize process manager for error recovery
 processManager.initialize()

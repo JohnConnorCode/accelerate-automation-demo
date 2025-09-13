@@ -169,7 +169,7 @@ export default function ContentQueueV2() {
         .from(targetTable)
         .insert(insertData);
       
-      if (insertError) throw insertError;
+      if (insertError) {throw insertError;}
       
       // Remove from queue
       const queueTable = activeTab === 'projects' ? 'queue_projects' : 
@@ -180,7 +180,7 @@ export default function ContentQueueV2() {
         .delete()
         .eq('id', item.id);
       
-      if (deleteError) throw deleteError;
+      if (deleteError) {throw deleteError;}
       
       // Track approval metric
       metricsService.trackApproval(true);
@@ -204,7 +204,7 @@ export default function ContentQueueV2() {
         .delete()
         .eq('id', item.id);
       
-      if (error) throw error;
+      if (error) {throw error;}
       
       // Track rejection metric
       metricsService.trackApproval(false);
@@ -219,19 +219,19 @@ export default function ContentQueueV2() {
   };
 
   const getItemTitle = (item: QueueItem): string => {
-    if ('company_name' in item) return item.company_name;
-    if ('title' in item) return item.title;
+    if ('company_name' in item) {return item.company_name;}
+    if ('title' in item) {return item.title;}
     return item.name;
   };
 
   const getItemDescription = (item: QueueItem): string => {
-    if ('content' in item) return item.content || item.description || '';
+    if ('content' in item) {return item.content || item.description || '';}
     return item.description || '';
   };
 
   const getItemUrl = (item: QueueItem): string => {
-    if ('website' in item) return item.website || '';
-    if ('url' in item) return item.url || '';
+    if ('website' in item) {return item.website || '';}
+    if ('url' in item) {return item.url || '';}
     return '';
   };
 

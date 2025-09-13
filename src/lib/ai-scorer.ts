@@ -250,8 +250,8 @@ export class AIScorer {
     
     score.overall = this.calculateOverallScore(score);
     
-    if (score.overall > 0.75) score.recommendation = 'review'; // Changed from 'approve' since that's not in the enum
-    else if (score.overall < 0.35) score.recommendation = 'reject';
+    if (score.overall > 0.75) {score.recommendation = 'review';} // Changed from 'approve' since that's not in the enum
+    else if (score.overall < 0.35) {score.recommendation = 'reject';}
     
     return score;
   }

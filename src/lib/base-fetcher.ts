@@ -152,7 +152,7 @@ export abstract class BaseFetcher<T> {
         const data = await response.json();
         return this.schema.parse(data); // Validate with Zod
       } catch (error) {
-        if (i === retries - 1) throw error;
+        if (i === retries - 1) {throw error;}
 
         await this.delay(Math.pow(2, i) * 1000);
       }
@@ -185,7 +185,7 @@ export abstract class BaseFetcher<T> {
    * Check for duplicates in the database
    */
   private async checkDuplicates(items: ContentItem[]): Promise<ContentItem[]> {
-    if (items.length === 0) return [];
+    if (items.length === 0) {return [];}
     
     try {
       const urls = items.map(item => item.url);

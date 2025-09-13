@@ -173,7 +173,7 @@ View full analytics: ${process.env.VERCEL_URL || 'http://localhost:3000'}/analyt
       // Check database connection
       const { supabase } = await import('../lib/supabase');
       const { error } = await supabase.from('content_curated').select('count').limit(1);
-      if (error) issues.push('Database connection failed');
+      if (error) {issues.push('Database connection failed');}
     } catch (error) {
       issues.push('Database unreachable');
     }
@@ -181,7 +181,7 @@ View full analytics: ${process.env.VERCEL_URL || 'http://localhost:3000'}/analyt
     // Check API endpoints
     try {
       const response = await fetch('http://localhost:3000/api/health');
-      if (!response.ok) issues.push('API unhealthy');
+      if (!response.ok) {issues.push('API unhealthy');}
     } catch (error) {
       issues.push('API unreachable');
     }

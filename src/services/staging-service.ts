@@ -230,7 +230,7 @@ export class StagingService {
 
   /**
    * Transform to funding program format (queue_investors table)
-   * SIMPLIFIED - Only use columns that actually exist
+   * FIXED: Added required URL field to prevent null violations
    */
   private transformToFunding(item: any) {
     // Helper to ensure numeric values
@@ -245,14 +245,23 @@ export class StagingService {
       description = `${item.title || item.name || 'Funding Program'} - ${item.source} funding opportunity for ACCELERATE-eligible startups. ${description}`.padEnd(100, '.');
     }
 
+    // Generate URL if not provided - REQUIRED field
+    const url = item.url || item.source_url || 
+                `https://accelerate.funding/${item.source}/${(item.title || item.name || 'program').replace(/\s+/g, '-').toLowerCase()}-${Date.now()}`;
+
     const now = new Date();
 
-    // BARE MINIMUM - Only fields that MUST exist based on errors
-    // queue_investors is clearly different from other tables
+    // Include all required fields based on table schema
     return {
-      name: item.title || item.name || 'Untitled Funding Program',
+      url: url, // REQUIRED - not-null constraint
+      title: item.title || item.name || 'Untitled Funding Program',
       description,
       source: item.source, // REQUIRED - not-null constraint
+      score: toNumber(item.score || item.accelerate_score || 5, 5),
+      status: 'pending',
+      metadata: item.metadata || {},
+      accelerate_fit: item.accelerate_fit !== undefined ? item.accelerate_fit : true,
+      accelerate_reason: item.accelerate_reason || 'Funding opportunity for ACCELERATE-eligible startups',
       created_at: now.toISOString()
     };
   }
@@ -355,29 +364,54 @@ export class StagingService {
       }
       
       // If batch failed due to duplicates, fall back to individual inserts
-      if (batchError.message?.includes('duplicate') || batchError.message?.includes('unique')) {
-        console.log('   Batch insert failed due to duplicates, trying individual inserts...');
+      if (batchError.message?.includes('duplicate') || batchError.message?.includes('unique') || 
+          batchError.message?.includes('ON CONFLICT')) {
+        console.log('   Batch insert failed due to conflicts, trying individual inserts...');
         
         let successCount = 0;
         const errors: string[] = [];
+        const processedUrls = new Set<string>();
         
         for (const item of items) {
-          // Use upsert for individual items
-          const { data, error } = await supabase
+          // Skip if we've already processed this URL in this batch
+          if (processedUrls.has(item.url)) {
+            console.log(`   Skipping duplicate URL in batch: ${item.url}`);
+            continue;
+          }
+          processedUrls.add(item.url);
+          
+          // Try to insert, if it fails due to duplicate, try updating
+          const { data: insertData, error: insertError } = await supabase
             .from('queue_projects')
-            .upsert(item, { 
-              onConflict: 'url',
-              ignoreDuplicates: false 
-            })
+            .insert(item)
             .select();
           
-          if (error) {
-            // Only log non-duplicate errors
-            if (!error.message?.includes('duplicate') && !error.message?.includes('unique')) {
-              errors.push(`${item.company_name}: ${error.message}`);
+          if (!insertError) {
+            // Insert succeeded
+            if (insertData && insertData.length > 0) {
+              successCount++;
             }
-          } else if (data && data.length > 0) {
-            successCount++;
+          } else if (insertError.message?.includes('duplicate') || 
+                     insertError.message?.includes('unique') ||
+                     insertError.message?.includes('violates unique constraint')) {
+            // Try to update instead
+            const { data: updateData, error: updateError } = await supabase
+              .from('queue_projects')
+              .update({
+                ...item,
+                updated_at: new Date().toISOString()
+              })
+              .eq('url', item.url)
+              .select();
+            
+            if (!updateError && updateData && updateData.length > 0) {
+              successCount++;
+            } else if (updateError && !updateError.message?.includes('ON CONFLICT')) {
+              errors.push(`${item.company_name}: ${updateError.message}`);
+            }
+          } else if (!insertError.message?.includes('ON CONFLICT')) {
+            // Other error, not duplicate-related
+            errors.push(`${item.company_name}: ${insertError.message}`);
           }
         }
 
@@ -418,28 +452,54 @@ export class StagingService {
       }
       
       // If batch failed due to duplicates, fall back to individual inserts
-      if (batchError.message?.includes('duplicate') || batchError.message?.includes('unique')) {
-        console.log('   Batch insert failed due to duplicates, trying individual inserts...');
+      if (batchError.message?.includes('duplicate') || batchError.message?.includes('unique') || 
+          batchError.message?.includes('ON CONFLICT')) {
+        console.log('   Batch insert failed due to conflicts, trying individual inserts...');
         
         let successCount = 0;
         const errors: string[] = [];
+        const processedUrls = new Set<string>();
         
         for (const item of items) {
-          const { data, error } = await supabase
+          // Skip if we've already processed this URL in this batch
+          if (processedUrls.has(item.url)) {
+            console.log(`   Skipping duplicate URL in batch: ${item.url}`);
+            continue;
+          }
+          processedUrls.add(item.url);
+          
+          // Try to insert, if it fails due to duplicate, try updating
+          const { data: insertData, error: insertError } = await supabase
             .from('queue_investors')
-            .upsert(item as any, { 
-              onConflict: 'url',
-              ignoreDuplicates: false 
-            })
+            .insert(item)
             .select();
           
-          if (error) {
-            // Only log if it's not a duplicate error
-            if (!error.message?.includes('duplicate') && !error.message?.includes('unique')) {
-              errors.push(`${item.name}: ${error.message}`);
+          if (!insertError) {
+            // Insert succeeded
+            if (insertData && insertData.length > 0) {
+              successCount++;
             }
-          } else if (data && data.length > 0) {
-            successCount++;
+          } else if (insertError.message?.includes('duplicate') || 
+                     insertError.message?.includes('unique') ||
+                     insertError.message?.includes('violates unique constraint')) {
+            // Try to update instead
+            const { data: updateData, error: updateError } = await supabase
+              .from('queue_investors')
+              .update({
+                ...item,
+                updated_at: new Date().toISOString()
+              })
+              .eq('url', item.url)
+              .select();
+            
+            if (!updateError && updateData && updateData.length > 0) {
+              successCount++;
+            } else if (updateError && !updateError.message?.includes('ON CONFLICT')) {
+              errors.push(`${item.title}: ${updateError.message}`);
+            }
+          } else if (!insertError.message?.includes('ON CONFLICT')) {
+            // Other error, not duplicate-related
+            errors.push(`${item.title}: ${insertError.message}`);
           }
         }
 
@@ -565,7 +625,7 @@ export class StagingService {
   }
 
   private processStats(data: any[] | null, stats: any) {
-    if (!data) return;
+    if (!data) {return;}
     
     data.forEach(item => {
       switch (item.status) {

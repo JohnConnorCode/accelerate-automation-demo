@@ -31,7 +31,7 @@ class CriteriaService {
 
   async scoreContent(content: any) {
     // No fake scores - return neutral requiring review
-    if (!content) return 0;
+    if (!content) {return 0;}
     return 50; // Neutral - requires manual review
   }
 }

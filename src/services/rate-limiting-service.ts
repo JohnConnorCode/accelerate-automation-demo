@@ -210,7 +210,7 @@ export class RateLimitingService {
    */
   private getRecentRequests(clientId: string, windowMs: number): number {
     const metrics = this.clients.get(clientId);
-    if (!metrics) return 0;
+    if (!metrics) {return 0;}
     
     const now = Date.now();
     if (now - metrics.lastRequest > windowMs) {

@@ -179,7 +179,7 @@ class ExistingEntryEnricher {
     let retrySuccess = 0;
     for (const item of failedItems) {
       const success = await this.enrichItem(item);
-      if (success) retrySuccess++;
+      if (success) {retrySuccess++;}
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
     

@@ -193,7 +193,7 @@ export class ErrorRecoveryService {
    */
   private isCircuitOpen(operation: string): boolean {
     const breaker = this.circuitBreakers.get(operation);
-    if (!breaker) return false;
+    if (!breaker) {return false;}
 
     // Check if circuit should be reset to half-open
     if (breaker.state === 'open') {
@@ -411,7 +411,7 @@ export class ErrorRecoveryService {
    * Flush error logs to database
    */
   private async flushErrorLogs(): Promise<void> {
-    if (this.errorLogs.length === 0) return;
+    if (this.errorLogs.length === 0) {return;}
 
     try {
       await supabase.from('error_logs').insert(this.errorLogs);

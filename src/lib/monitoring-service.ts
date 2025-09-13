@@ -160,7 +160,7 @@ export class MonitoringService {
         .order('created_at', { ascending: false })
         .limit(1000);
 
-      if (error) throw error;
+      if (error) {throw error;}
 
       const stats = {
         total: queueStats?.length || 0,
@@ -205,7 +205,7 @@ export class MonitoringService {
         .select('total_tokens, success, processing_time_ms')
         .gte('created_at', oneHourAgo.toISOString());
 
-      if (error) throw error;
+      if (error) {throw error;}
 
       const stats = {
         totalTokens: aiLogs?.reduce((sum, log) => sum + (log.total_tokens || 0), 0) || 0,
@@ -271,7 +271,7 @@ export class MonitoringService {
         .select('success')
         .gte('created_at', oneHourAgo.toISOString());
 
-      if (fetchError) throw fetchError;
+      if (fetchError) {throw fetchError;}
 
       const fetchErrorRate = fetchHistory?.length ? 
         (fetchHistory.filter(f => !f.success).length / fetchHistory.length) * 100 : 0;
@@ -282,7 +282,7 @@ export class MonitoringService {
         .select('status')
         .gte('delivered_at', oneHourAgo.toISOString());
 
-      if (webhookError) throw webhookError;
+      if (webhookError) {throw webhookError;}
 
       const webhookErrorRate = webhookDeliveries?.length ?
         (webhookDeliveries.filter(d => d.status === 'failed').length / webhookDeliveries.length) * 100 : 0;
@@ -319,7 +319,7 @@ export class MonitoringService {
         .order('created_at', { ascending: false })
         .limit(10);
 
-      if (error) throw error;
+      if (error) {throw error;}
 
       // Check if fetchers are running
       const lastFetch = recentFetches?.[0];
@@ -343,7 +343,7 @@ export class MonitoringService {
       recentFetches?.forEach(fetch => {
         const stats = fetcherStats.get(fetch.fetcher_name) || { success: 0, total: 0 };
         stats.total++;
-        if (fetch.success) stats.success++;
+        if (fetch.success) {stats.success++;}
         fetcherStats.set(fetch.fetcher_name, stats);
       });
 
@@ -364,7 +364,7 @@ export class MonitoringService {
 
     this.thresholds.forEach((threshold, metricName) => {
       const metrics = recentMetrics.filter(m => m.name === metricName);
-      if (metrics.length === 0) return;
+      if (metrics.length === 0) {return;}
 
       const avgValue = metrics.reduce((sum, m) => sum + m.value, 0) / metrics.length;
 
@@ -548,8 +548,8 @@ export class MonitoringService {
     const degraded = services.filter(s => s.status === 'degraded').length;
 
     let overall = 'healthy';
-    if (unhealthy > 0) overall = 'unhealthy';
-    else if (degraded > 0) overall = 'degraded';
+    if (unhealthy > 0) {overall = 'unhealthy';}
+    else if (degraded > 0) {overall = 'degraded';}
 
     return { overall, services };
   }

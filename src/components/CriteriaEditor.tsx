@@ -37,7 +37,7 @@ export const CriteriaEditor: React.FC<CriteriaEditorProps> = ({ type, onSave }) 
   };
 
   const handleSave = async () => {
-    if (!user?.id) return;
+    if (!user?.id) {return;}
     
     setIsSaving(true);
     try {
@@ -134,7 +134,7 @@ export const CriteriaEditor: React.FC<CriteriaEditorProps> = ({ type, onSave }) 
     }
   };
 
-  if (!criteria) return <div>Loading criteria...</div>;
+  if (!criteria) {return <div>Loading criteria...</div>;}
 
   return (
     <div className="criteria-editor bg-white rounded-lg shadow-lg p-6">

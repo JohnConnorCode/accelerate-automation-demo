@@ -58,7 +58,7 @@ class ErrorLogger {
    * Flush logs to database
    */
   async flush() {
-    if (this.logs.length === 0) return;
+    if (this.logs.length === 0) {return;}
 
     const logsToSend = [...this.logs];
     this.logs = [];

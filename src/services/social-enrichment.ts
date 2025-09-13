@@ -172,7 +172,7 @@ export class SocialEnrichmentService {
    * Fetch Twitter/X metrics
    */
   private async fetchTwitterMetrics(handle: string): Promise<SocialMetrics['twitter'] | undefined> {
-    if (!process.env.TWITTER_BEARER_TOKEN) return undefined;
+    if (!process.env.TWITTER_BEARER_TOKEN) {return undefined;}
 
     try {
       // Get user info
@@ -181,7 +181,7 @@ export class SocialEnrichmentService {
         { headers: this.twitterHeaders }
       );
 
-      if (!userResponse.ok) return undefined;
+      if (!userResponse.ok) {return undefined;}
 
       const userData = await userResponse.json();
       const user = userData.data;
@@ -236,7 +236,7 @@ export class SocialEnrichmentService {
         `https://discord.com/api/v10/invites/${inviteCode}?with_counts=true&with_expiration=true`
       );
 
-      if (!response.ok) return undefined;
+      if (!response.ok) {return undefined;}
 
       const data = await response.json();
 
@@ -281,7 +281,7 @@ export class SocialEnrichmentService {
    * Fetch Farcaster metrics
    */
   private async fetchFarcasterMetrics(username: string): Promise<SocialMetrics['farcaster'] | undefined> {
-    if (!process.env.NEYNAR_API_KEY) return undefined;
+    if (!process.env.NEYNAR_API_KEY) {return undefined;}
 
     try {
       const response = await fetch(
@@ -293,7 +293,7 @@ export class SocialEnrichmentService {
         }
       );
 
-      if (!response.ok) return undefined;
+      if (!response.ok) {return undefined;}
 
       const data = await response.json();
       const user = data.user;
@@ -367,8 +367,8 @@ export class SocialEnrichmentService {
     }
 
     // Multi-platform bonus
-    if (platformCount >= 3) score += 10;
-    else if (platformCount >= 2) score += 5;
+    if (platformCount >= 3) {score += 10;}
+    else if (platformCount >= 2) {score += 5;}
 
     return Math.min(Math.round(score), 100);
   }
@@ -382,36 +382,36 @@ export class SocialEnrichmentService {
     // Account age (older is more credible)
     if (metrics.twitter?.created_at) {
       const ageMonths = (Date.now() - new Date(metrics.twitter.created_at).getTime()) / (30 * 24 * 60 * 60 * 1000);
-      if (ageMonths > 12) score += 20;
-      else if (ageMonths > 6) score += 10;
-      else if (ageMonths > 3) score += 5;
+      if (ageMonths > 12) {score += 20;}
+      else if (ageMonths > 6) {score += 10;}
+      else if (ageMonths > 3) {score += 5;}
     }
 
     // Verification status
-    if (metrics.twitter?.verified) score += 25;
-    if (metrics.farcaster?.verified) score += 15;
+    if (metrics.twitter?.verified) {score += 25;}
+    if (metrics.farcaster?.verified) {score += 15;}
 
     // Follower/following ratio (not following everyone back)
     if (metrics.twitter) {
       const ratio = metrics.twitter.followers / Math.max(metrics.twitter.following, 1);
-      if (ratio > 2) score += 15;
-      else if (ratio > 1) score += 10;
-      else if (ratio > 0.5) score += 5;
+      if (ratio > 2) {score += 15;}
+      else if (ratio > 1) {score += 10;}
+      else if (ratio > 0.5) {score += 5;}
     }
 
     // Community engagement
     if (metrics.discord) {
       const engagementRate = metrics.discord.online_count / Math.max(metrics.discord.member_count, 1);
-      if (engagementRate > 0.2) score += 15;
-      else if (engagementRate > 0.1) score += 10;
-      else if (engagementRate > 0.05) score += 5;
+      if (engagementRate > 0.2) {score += 15;}
+      else if (engagementRate > 0.1) {score += 10;}
+      else if (engagementRate > 0.05) {score += 5;}
     }
 
     // Consistent activity
     if (metrics.twitter?.tweets) {
       const accountAge = (Date.now() - new Date(metrics.twitter.created_at).getTime()) / (24 * 60 * 60 * 1000);
       const tweetsPerDay = metrics.twitter.tweets / Math.max(accountAge, 1);
-      if (tweetsPerDay > 1 && tweetsPerDay < 20) score += 10; // Active but not spammy
+      if (tweetsPerDay > 1 && tweetsPerDay < 20) {score += 10;} // Active but not spammy
     }
 
     return Math.min(Math.round(score), 100);
@@ -444,9 +444,9 @@ export class SocialEnrichmentService {
    */
   private calculateActivityLevel(online: number, total: number): string {
     const ratio = online / Math.max(total, 1);
-    if (ratio > 0.3) return 'very-active';
-    if (ratio > 0.15) return 'active';
-    if (ratio > 0.05) return 'moderate';
+    if (ratio > 0.3) {return 'very-active';}
+    if (ratio > 0.15) {return 'active';}
+    if (ratio > 0.05) {return 'moderate';}
     return 'low';
   }
 
@@ -478,7 +478,7 @@ export class SocialEnrichmentService {
    * Store enriched metrics in database
    */
   async storeMetrics(item: ContentItem): Promise<void> {
-    if (!item.metadata?.social_metrics) return;
+    if (!item.metadata?.social_metrics) {return;}
 
     try {
       await supabase

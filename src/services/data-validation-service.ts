@@ -378,7 +378,7 @@ export class DataValidationService {
    * Sanitize a string value
    */
   private sanitizeString(str: string, options: SanitizationOptions): string {
-    if (!str || typeof str !== 'string') return str;
+    if (!str || typeof str !== 'string') {return str;}
     
     // Remove null bytes
     let sanitized = str.replace(/\0/g, '');

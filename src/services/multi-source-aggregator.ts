@@ -220,14 +220,14 @@ export class MultiSourceAggregator {
     const processed = new Set<number>();
     
     items.forEach((item, index) => {
-      if (processed.has(index)) return;
+      if (processed.has(index)) {return;}
       
       // Find all matches for this item
       const matches = [item];
       processed.add(index);
       
       items.forEach((candidate, candidateIndex) => {
-        if (processed.has(candidateIndex)) return;
+        if (processed.has(candidateIndex)) {return;}
         
         if (this.isMatch(item, candidate)) {
           matches.push(candidate);
@@ -321,11 +321,11 @@ export class MultiSourceAggregator {
     
     // GitHub mentions
     const githubMatch = text.match(/github\.com\/([a-z0-9-]+)/);
-    if (githubMatch) identifiers.github = githubMatch[1];
+    if (githubMatch) {identifiers.github = githubMatch[1];}
     
     // Twitter mentions
     const twitterMatch = text.match(/@([a-z0-9_]+)/);
-    if (twitterMatch) identifiers.twitter = twitterMatch[1];
+    if (twitterMatch) {identifiers.twitter = twitterMatch[1];}
     
     return identifiers;
   }
@@ -496,8 +496,8 @@ export class MultiSourceAggregator {
     
     // Determine verification level
     let verificationLevel: 'none' | 'partial' | 'verified' = 'none';
-    if (profile.metadata.sources.length >= 3) verificationLevel = 'verified';
-    else if (profile.metadata.sources.length >= 2) verificationLevel = 'partial';
+    if (profile.metadata.sources.length >= 3) {verificationLevel = 'verified';}
+    else if (profile.metadata.sources.length >= 2) {verificationLevel = 'partial';}
     
     // Update metadata
     profile.metadata.data_quality = {
@@ -540,26 +540,26 @@ export class MultiSourceAggregator {
     // Calculate score
     let score = 30; // Base score
     
-    if (criteria.is_early_stage) score += 20;
-    if (criteria.has_web3_focus) score += 15;
-    if (criteria.under_500k_funding) score += 20;
-    if (criteria.small_team) score += 15;
-    if (criteria.launched_2024_plus) score += 20;
+    if (criteria.is_early_stage) {score += 20;}
+    if (criteria.has_web3_focus) {score += 15;}
+    if (criteria.under_500k_funding) {score += 20;}
+    if (criteria.small_team) {score += 15;}
+    if (criteria.launched_2024_plus) {score += 20;}
     
     // Bonus for data quality
     score += Math.round(profile.metadata.data_quality.completeness * 0.2);
     
     // Bonus for multiple sources
-    if (profile.metadata.sources.length >= 3) score += 10;
+    if (profile.metadata.sources.length >= 3) {score += 10;}
     
     profile.accelerate.score = Math.min(100, score);
     profile.accelerate.eligible = score >= 60;
     
     // Determine recommendation
-    if (score >= 80) profile.accelerate.recommendation = 'feature';
-    else if (score >= 60) profile.accelerate.recommendation = 'approve';
-    else if (score >= 40) profile.accelerate.recommendation = 'review';
-    else profile.accelerate.recommendation = 'reject';
+    if (score >= 80) {profile.accelerate.recommendation = 'feature';}
+    else if (score >= 60) {profile.accelerate.recommendation = 'approve';}
+    else if (score >= 40) {profile.accelerate.recommendation = 'review';}
+    else {profile.accelerate.recommendation = 'reject';}
   }
   
   // Helper methods
@@ -582,7 +582,7 @@ export class MultiSourceAggregator {
     const longer = str1.length > str2.length ? str1 : str2;
     const shorter = str1.length > str2.length ? str2 : str1;
     
-    if (longer.length === 0) return 1.0;
+    if (longer.length === 0) {return 1.0;}
     
     const editDistance = this.levenshteinDistance(longer, shorter);
     return (longer.length - editDistance) / longer.length;
@@ -619,18 +619,18 @@ export class MultiSourceAggregator {
   private hasSharedContext(item1: ContentItem, item2: ContentItem): boolean {
     // Check for shared YC batch
     if (item1.metadata?.yc_batch && item2.metadata?.yc_batch) {
-      if (item1.metadata.yc_batch === item2.metadata.yc_batch) return true;
+      if (item1.metadata.yc_batch === item2.metadata.yc_batch) {return true;}
     }
     
     // Check for shared location
     if (item1.metadata?.location && item2.metadata?.location) {
-      if (item1.metadata.location === item2.metadata.location) return true;
+      if (item1.metadata.location === item2.metadata.location) {return true;}
     }
     
     // Check for shared tags
     if (item1.tags && item2.tags) {
       const shared = item1.tags.filter(t => item2.tags?.includes(t));
-      if (shared.length >= 2) return true;
+      if (shared.length >= 2) {return true;}
     }
     
     return false;
@@ -645,14 +645,14 @@ export class MultiSourceAggregator {
   private calculateRichness(item: ContentItem): number {
     let score = 0;
     
-    if (item.title) score += 1;
-    if (item.description?.length > 100) score += 2;
-    if (item.url) score += 1;
-    if (item.metadata?.funding_raised) score += 3;
-    if (item.metadata?.team_size) score += 2;
-    if (item.metadata?.yc_batch) score += 3;
-    if (item.metadata?.github_url) score += 2;
-    if (item.metadata?.twitter_url) score += 2;
+    if (item.title) {score += 1;}
+    if (item.description?.length > 100) {score += 2;}
+    if (item.url) {score += 1;}
+    if (item.metadata?.funding_raised) {score += 3;}
+    if (item.metadata?.team_size) {score += 2;}
+    if (item.metadata?.yc_batch) {score += 3;}
+    if (item.metadata?.github_url) {score += 2;}
+    if (item.metadata?.twitter_url) {score += 2;}
     
     return score;
   }
@@ -660,10 +660,10 @@ export class MultiSourceAggregator {
   private selectBestName(items: ContentItem[]): string {
     // Prefer YC name, then ProductHunt, then others
     const ycItem = items.find(i => i.source === 'YCombinator');
-    if (ycItem) return ycItem.title;
+    if (ycItem) {return ycItem.title;}
     
     const phItem = items.find(i => i.source === 'ProductHunt');
-    if (phItem) return phItem.title;
+    if (phItem) {return phItem.title;}
     
     // Return longest name as it's likely most complete
     return items.sort((a, b) => b.title.length - a.title.length)[0].title;
@@ -763,9 +763,9 @@ export class MultiSourceAggregator {
     // Determine from funding amount
     const funding = this.extractFundingData(items);
     if (funding.total_raised) {
-      if (funding.total_raised < 150000) return 'pre-seed';
-      if (funding.total_raised < 2000000) return 'seed';
-      if (funding.total_raised < 15000000) return 'series-a';
+      if (funding.total_raised < 150000) {return 'pre-seed';}
+      if (funding.total_raised < 2000000) {return 'seed';}
+      if (funding.total_raised < 15000000) {return 'series-a';}
       return 'series-b+';
     }
     
@@ -812,11 +812,11 @@ export class MultiSourceAggregator {
   
   private determineTeamSizeRange(items: ContentItem[]): string {
     const size = this.extractTeamSize(items);
-    if (size <= 1) return 'solo';
-    if (size <= 5) return '2-5';
-    if (size <= 10) return '6-10';
-    if (size <= 25) return '11-25';
-    if (size <= 50) return '26-50';
+    if (size <= 1) {return 'solo';}
+    if (size <= 5) {return '2-5';}
+    if (size <= 10) {return '6-10';}
+    if (size <= 25) {return '11-25';}
+    if (size <= 50) {return '26-50';}
     return '50+';
   }
   

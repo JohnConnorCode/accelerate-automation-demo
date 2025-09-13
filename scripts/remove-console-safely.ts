@@ -35,8 +35,8 @@ async function removeConsoleLogs() {
         
         // Count brackets in this line
         for (const char of line) {
-          if (char === '(') bracketDepth++;
-          if (char === ')') bracketDepth--;
+          if (char === '(') {bracketDepth++;}
+          if (char === ')') {bracketDepth--;}
         }
         
         // If brackets are balanced, we're done with this console statement
@@ -53,8 +53,8 @@ async function removeConsoleLogs() {
       } else if (inConsoleStatement) {
         // We're in a multi-line console statement
         for (const char of line) {
-          if (char === '(') bracketDepth++;
-          if (char === ')') bracketDepth--;
+          if (char === '(') {bracketDepth++;}
+          if (char === ')') {bracketDepth--;}
         }
         
         // Comment out this line too

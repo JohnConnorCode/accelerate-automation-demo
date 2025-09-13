@@ -45,10 +45,10 @@ export class ContentPrioritizer {
    * Get priority level from score
    */
   getPriorityLevel(score: number): ContentPriority {
-    if (score >= 8) return ContentPriority.EMERGENCY;
-    if (score >= 6) return ContentPriority.HIGH;
-    if (score >= 4) return ContentPriority.MEDIUM;
-    if (score >= 2) return ContentPriority.LOW;
+    if (score >= 8) {return ContentPriority.EMERGENCY;}
+    if (score >= 6) {return ContentPriority.HIGH;}
+    if (score >= 4) {return ContentPriority.MEDIUM;}
+    if (score >= 2) {return ContentPriority.LOW;}
     return ContentPriority.BACKLOG;
   }
 
@@ -105,7 +105,7 @@ export class ContentPrioritizer {
         }
       });
       
-      if (error) throw error;
+      if (error) {throw error;}
       return data;
     } catch (error) {
       console.error('AI scoring failed:', error);
@@ -123,7 +123,7 @@ export class ContentPrioritizer {
    * Calculate age in days
    */
   private getAgeInDays(date?: string | Date): number {
-    if (!date) return 999;
+    if (!date) {return 999;}
     const created = new Date(date);
     const now = new Date();
     return Math.floor((now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));

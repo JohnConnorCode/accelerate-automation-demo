@@ -44,7 +44,7 @@ class DomainBasedMatcher {
    * Extract clean domain from URL
    */
   private extractDomain(url: string): string | null {
-    if (!url) return null;
+    if (!url) {return null;}
     
     try {
       // Handle various URL formats
@@ -69,7 +69,7 @@ class DomainBasedMatcher {
    * Extract all URLs/domains from text
    */
   private extractDomainsFromText(text: string): string[] {
-    if (!text) return [];
+    if (!text) {return [];}
     
     const domains = new Set<string>();
     
@@ -117,23 +117,23 @@ class DomainBasedMatcher {
    * Check if company name appears with proper boundaries
    */
   private nameMatches(text: string, companyName: string): boolean {
-    if (!text || !companyName) return false;
+    if (!text || !companyName) {return false;}
     
     const normalized = this.normalize(companyName);
     
     // Skip very short names
-    if (normalized.length < 4) return false;
+    if (normalized.length < 4) {return false;}
     
     const textLower = text.toLowerCase();
     
     // Check for exact company name (case insensitive)
-    if (textLower.includes(companyName.toLowerCase())) return true;
+    if (textLower.includes(companyName.toLowerCase())) {return true;}
     
     // Check for normalized version (only if long enough)
     if (normalized.length >= 5) {
       // Create word boundary regex
       const regex = new RegExp(`\\b${normalized}\\b`, 'i');
-      if (regex.test(textLower)) return true;
+      if (regex.test(textLower)) {return true;}
     }
     
     return false;
@@ -230,15 +230,15 @@ class DomainBasedMatcher {
     const hasDomain = domain !== null;
     
     let confidence = 50; // Base confidence for YC company
-    if (hasDomain) confidence += 20;
-    if (hasNews) confidence += 20;
-    if (hasReddit) confidence += 10;
+    if (hasDomain) {confidence += 20;}
+    if (hasNews) {confidence += 20;}
+    if (hasReddit) {confidence += 10;}
     
     // Collect all match signals
     const allSignals = new Set<string>();
-    if (hasDomain) allSignals.add('has_domain');
-    if (hasNews) allSignals.add(`news:${newsMatches.length}`);
-    if (hasReddit) allSignals.add(`reddit:${redditMatches.length}`);
+    if (hasDomain) {allSignals.add('has_domain');}
+    if (hasNews) {allSignals.add(`news:${newsMatches.length}`);}
+    if (hasReddit) {allSignals.add(`reddit:${redditMatches.length}`);}
     
     // Add specific match signals
     [...newsMatches, ...redditMatches].forEach(match => {

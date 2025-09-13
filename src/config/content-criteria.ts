@@ -322,45 +322,45 @@ export class ContentTypeDetector {
         // Recency (2024+ is mandatory, newer is better)
         if (item.launch_date) {
           const monthsOld = this.getAgeInMonths(item.launch_date);
-          if (monthsOld < 3) totalScore += 100 * weights.recency;
-          else if (monthsOld < 6) totalScore += 70 * weights.recency;
-          else if (monthsOld < 12) totalScore += 40 * weights.recency;
+          if (monthsOld < 3) {totalScore += 100 * weights.recency;}
+          else if (monthsOld < 6) {totalScore += 70 * weights.recency;}
+          else if (monthsOld < 12) {totalScore += 40 * weights.recency;}
         }
         // Team size (smaller is better for early stage)
         if (item.team_size) {
-          if (item.team_size <= 3) totalScore += 100 * weights.team_size;
-          else if (item.team_size <= 5) totalScore += 75 * weights.team_size;
-          else if (item.team_size <= 10) totalScore += 50 * weights.team_size;
+          if (item.team_size <= 3) {totalScore += 100 * weights.team_size;}
+          else if (item.team_size <= 5) {totalScore += 75 * weights.team_size;}
+          else if (item.team_size <= 10) {totalScore += 50 * weights.team_size;}
         }
         // Funding stage (less is more early-stage)
         if (item.funding_raised !== undefined) {
-          if (item.funding_raised === 0) totalScore += 100 * weights.funding_stage;
-          else if (item.funding_raised < 100000) totalScore += 70 * weights.funding_stage;
-          else if (item.funding_raised < 500000) totalScore += 40 * weights.funding_stage;
+          if (item.funding_raised === 0) {totalScore += 100 * weights.funding_stage;}
+          else if (item.funding_raised < 100000) {totalScore += 70 * weights.funding_stage;}
+          else if (item.funding_raised < 500000) {totalScore += 40 * weights.funding_stage;}
         }
         // Validation (grants/incubators)
-        if (item.grant_participation?.length > 0) totalScore += 50 * weights.validation;
-        if (item.incubator_participation?.length > 0) totalScore += 50 * weights.validation;
+        if (item.grant_participation?.length > 0) {totalScore += 50 * weights.validation;}
+        if (item.incubator_participation?.length > 0) {totalScore += 50 * weights.validation;}
         // Traction
-        if (item.metrics?.users > 100) totalScore += 50 * weights.traction;
-        if (item.metrics?.github_stars > 50) totalScore += 50 * weights.traction;
+        if (item.metrics?.users > 100) {totalScore += 50 * weights.traction;}
+        if (item.metrics?.github_stars > 50) {totalScore += 50 * weights.traction;}
         // Needs (actively seeking help)
-        if (item.project_needs?.includes('funding')) totalScore += 40 * weights.needs;
-        if (item.project_needs?.includes('co-founder')) totalScore += 60 * weights.needs;
+        if (item.project_needs?.includes('funding')) {totalScore += 40 * weights.needs;}
+        if (item.project_needs?.includes('co-founder')) {totalScore += 60 * weights.needs;}
         break;
         
       case 'funding':
         // Deadline urgency
         if (item.deadline) {
           const daysLeft = this.daysUntilDeadline(item.deadline);
-          if (daysLeft > 7 && daysLeft < 30) totalScore += 100 * weights.deadline_urgency;
-          else if (daysLeft < 60) totalScore += 70 * weights.deadline_urgency;
+          if (daysLeft > 7 && daysLeft < 30) {totalScore += 100 * weights.deadline_urgency;}
+          else if (daysLeft < 60) {totalScore += 70 * weights.deadline_urgency;}
         } else {
           totalScore += 50 * weights.deadline_urgency; // Rolling basis
         }
         // Accessibility (no equity is best)
-        if (!item.equity_required) totalScore += 100 * weights.accessibility;
-        else if (item.equity_percentage < 7) totalScore += 50 * weights.accessibility;
+        if (!item.equity_required) {totalScore += 100 * weights.accessibility;}
+        else if (item.equity_percentage < 7) {totalScore += 50 * weights.accessibility;}
         // Amount fit ($10k-$100k sweet spot)
         if (item.min_amount <= 10000 && item.max_amount >= 100000) {
           totalScore += 100 * weights.amount_fit;
@@ -372,26 +372,26 @@ export class ContentTypeDetector {
           totalScore += 100 * weights.recent_activity;
         }
         // Benefits beyond money
-        if (item.benefits?.includes('mentorship')) totalScore += 50 * weights.benefits;
-        if (item.benefits?.includes('network')) totalScore += 50 * weights.benefits;
+        if (item.benefits?.includes('mentorship')) {totalScore += 50 * weights.benefits;}
+        if (item.benefits?.includes('network')) {totalScore += 50 * weights.benefits;}
         break;
         
       case 'resource':
         // Price accessibility (free is best for early stage)
-        if (item.price_type === 'free') totalScore += 100 * weights.price_accessibility;
-        else if (item.price_type === 'freemium') totalScore += 75 * weights.price_accessibility;
-        else if (item.price_amount < 100) totalScore += 50 * weights.price_accessibility;
+        if (item.price_type === 'free') {totalScore += 100 * weights.price_accessibility;}
+        else if (item.price_type === 'freemium') {totalScore += 75 * weights.price_accessibility;}
+        else if (item.price_amount < 100) {totalScore += 50 * weights.price_accessibility;}
         // Recency (updated in last 6 months)
         if (item.last_updated) {
           const monthsSinceUpdate = this.getAgeInMonths(item.last_updated);
-          if (monthsSinceUpdate < 1) totalScore += 100 * weights.recency;
-          else if (monthsSinceUpdate < 3) totalScore += 70 * weights.recency;
-          else if (monthsSinceUpdate < 6) totalScore += 40 * weights.recency;
+          if (monthsSinceUpdate < 1) {totalScore += 100 * weights.recency;}
+          else if (monthsSinceUpdate < 3) {totalScore += 70 * weights.recency;}
+          else if (monthsSinceUpdate < 6) {totalScore += 40 * weights.recency;}
         }
         // Credibility
         const credText = item.provider_credibility || '';
-        if (credText.includes('YC') || credText.includes('Y Combinator')) totalScore += 50 * weights.credibility;
-        if (credText.includes('a16z') || credText.includes('Andreessen')) totalScore += 50 * weights.credibility;
+        if (credText.includes('YC') || credText.includes('Y Combinator')) {totalScore += 50 * weights.credibility;}
+        if (credText.includes('a16z') || credText.includes('Andreessen')) {totalScore += 50 * weights.credibility;}
         // Relevance to early-stage
         if (item.category === 'smart-contracts' || item.category === 'fundraising') {
           totalScore += 100 * weights.relevance;
@@ -400,7 +400,7 @@ export class ContentTypeDetector {
         const useful = this.assessUsefulness(item);
         totalScore += useful * weights.usefulness;
         // Quality (success stories)
-        if (item.success_stories?.length > 0) totalScore += 100 * weights.quality;
+        if (item.success_stories?.length > 0) {totalScore += 100 * weights.quality;}
         break;
     }
     
@@ -432,14 +432,14 @@ export class ContentTypeDetector {
   }
   
   private getAgeInDays(date?: string): number {
-    if (!date) return 999;
+    if (!date) {return 999;}
     const created = new Date(date);
     const now = new Date();
     return Math.floor((now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
   }
   
   private getAgeInMonths(date?: string): number {
-    if (!date) return 999;
+    if (!date) {return 999;}
     const created = new Date(date);
     const now = new Date();
     return Math.floor((now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24 * 30));
@@ -456,7 +456,7 @@ export class ContentTypeDetector {
       'beginner', 'tutorial', 'complete guide', 'best practices'
     ];
     valuable.forEach(keyword => {
-      if (text.includes(keyword)) score += 5;
+      if (text.includes(keyword)) {score += 5;}
     });
     
     return Math.min(100, score);

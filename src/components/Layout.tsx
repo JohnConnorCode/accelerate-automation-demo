@@ -1,9 +1,9 @@
-import { Outlet, NavLink } from 'react-router-dom'
-import { Home, Layers, Settings, BarChart3, Zap, FlaskConical, LogOut, User, Database, Key } from 'lucide-react'
-import { useAuth } from '../contexts/AuthContext'
+import { Outlet, NavLink } from 'react-router-dom';
+import { Home, Layers, Settings, BarChart3, Zap, FlaskConical, LogOut, User, Database, Key } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Layout() {
-  const { user, signOut, isAdmin } = useAuth()
+  const { user, signOut, isAdmin } = useAuth();
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary to-secondary">
@@ -165,5 +165,5 @@ export default function Layout() {
         </main>
       </div>
     </div>
-  )
+  );
 }

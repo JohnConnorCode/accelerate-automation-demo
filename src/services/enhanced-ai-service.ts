@@ -399,7 +399,7 @@ export class EnhancedAIService {
       .order('created_at', { ascending: false })
       .limit(100);
     
-    if (!overrides || overrides.length === 0) return;
+    if (!overrides || overrides.length === 0) {return;}
     
     const learningPrompt = `
       Analyze these cases where human reviewers overrode AI decisions:

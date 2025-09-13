@@ -45,7 +45,7 @@ class CriteriaService {
     // Check cache first
     if (this.isCacheValid()) {
       const cached = this.cache.get(type);
-      if (cached) return cached;
+      if (cached) {return cached;}
     }
 
     // Fetch from database
@@ -301,130 +301,130 @@ class CriteriaService {
     // Generic scoring logic that works with any factor
     switch (factor) {
       case 'recency':
-        if (!item.launch_date && !item.created_at) return 0;
+        if (!item.launch_date && !item.created_at) {return 0;}
         const ageMonths = this.getAgeInMonths(item.launch_date || item.created_at);
-        if (ageMonths < 3) return 100;
-        if (ageMonths < 6) return 70;
-        if (ageMonths < 12) return 40;
+        if (ageMonths < 3) {return 100;}
+        if (ageMonths < 6) {return 70;}
+        if (ageMonths < 12) {return 40;}
         return 20;
 
       case 'team_size':
-        if (!item.team_size) return 0;
-        if (item.team_size <= 3) return 100;
-        if (item.team_size <= 5) return 75;
-        if (item.team_size <= 10) return 50;
+        if (!item.team_size) {return 0;}
+        if (item.team_size <= 3) {return 100;}
+        if (item.team_size <= 5) {return 75;}
+        if (item.team_size <= 10) {return 50;}
         return 0;
 
       case 'funding_stage':
-        if (item.funding_raised === undefined) return 0;
-        if (item.funding_raised === 0) return 100;
-        if (item.funding_raised < 100000) return 70;
-        if (item.funding_raised < rules.max_funding) return 40;
+        if (item.funding_raised === undefined) {return 0;}
+        if (item.funding_raised === 0) {return 100;}
+        if (item.funding_raised < 100000) {return 70;}
+        if (item.funding_raised < rules.max_funding) {return 40;}
         return 0;
 
       case 'validation':
         let score = 0;
-        if (item.grant_participation?.length > 0) score += 50;
-        if (item.incubator_participation?.length > 0) score += 50;
+        if (item.grant_participation?.length > 0) {score += 50;}
+        if (item.incubator_participation?.length > 0) {score += 50;}
         return score;
 
       case 'traction':
         let tScore = 0;
-        if (item.metrics?.users > 100) tScore += 50;
-        if (item.metrics?.github_stars > 50) tScore += 50;
+        if (item.metrics?.users > 100) {tScore += 50;}
+        if (item.metrics?.github_stars > 50) {tScore += 50;}
         return tScore;
 
       case 'deadline_urgency':
-        if (!item.deadline) return 50; // Rolling basis
+        if (!item.deadline) {return 50;} // Rolling basis
         const daysLeft = this.getDaysUntil(item.deadline);
-        if (daysLeft > 7 && daysLeft < 30) return 100;
-        if (daysLeft < 60) return 70;
+        if (daysLeft > 7 && daysLeft < 30) {return 100;}
+        if (daysLeft < 60) {return 70;}
         return 30;
 
       case 'accessibility':
-        if (!item.equity_required) return 100;
-        if (item.equity_percentage < 7) return 50;
+        if (!item.equity_required) {return 100;}
+        if (item.equity_percentage < 7) {return 50;}
         return 20;
 
       case 'price_accessibility':
-        if (item.price_type === 'free') return 100;
-        if (item.price_type === 'freemium') return 75;
-        if (item.price_amount < 100) return 50;
+        if (item.price_type === 'free') {return 100;}
+        if (item.price_type === 'freemium') {return 75;}
+        if (item.price_amount < 100) {return 50;}
         return 20;
 
       case 'amount_fit':
         // For funding programs - sweet spot is $10k-$100k
-        if (!item.min_amount && !item.max_amount) return 50;
-        if (item.min_amount <= 10000 && item.max_amount >= 100000) return 100;
-        if (item.max_amount >= 50000) return 70;
-        if (item.max_amount >= 25000) return 50;
+        if (!item.min_amount && !item.max_amount) {return 50;}
+        if (item.min_amount <= 10000 && item.max_amount >= 100000) {return 100;}
+        if (item.max_amount >= 50000) {return 70;}
+        if (item.max_amount >= 25000) {return 50;}
         return 30;
 
       case 'recent_activity':
         // For funding programs - must show 2025 activity
-        if (!item.last_investment_date) return 0;
+        if (!item.last_investment_date) {return 0;}
         const daysSinceInvestment = this.getDaysSince(item.last_investment_date);
-        if (daysSinceInvestment < 30) return 100;
-        if (daysSinceInvestment < 60) return 70;
-        if (daysSinceInvestment < 90) return 40;
+        if (daysSinceInvestment < 30) {return 100;}
+        if (daysSinceInvestment < 60) {return 70;}
+        if (daysSinceInvestment < 90) {return 40;}
         return 10;
 
       case 'benefits':
         // Extra benefits beyond funding
         let benefitScore = 0;
-        if (item.benefits?.includes('mentorship')) benefitScore += 30;
-        if (item.benefits?.includes('network')) benefitScore += 30;
-        if (item.benefits?.includes('workspace')) benefitScore += 20;
-        if (item.benefits?.includes('credits')) benefitScore += 20;
+        if (item.benefits?.includes('mentorship')) {benefitScore += 30;}
+        if (item.benefits?.includes('network')) {benefitScore += 30;}
+        if (item.benefits?.includes('workspace')) {benefitScore += 20;}
+        if (item.benefits?.includes('credits')) {benefitScore += 20;}
         return Math.min(100, benefitScore);
 
       case 'needs':
         // For projects - actively seeking help
         let needsScore = 0;
-        if (item.project_needs?.includes('funding')) needsScore += 40;
-        if (item.project_needs?.includes('co-founder')) needsScore += 60;
-        if (item.project_needs?.includes('developers')) needsScore += 40;
-        if (item.project_needs?.includes('marketing')) needsScore += 30;
+        if (item.project_needs?.includes('funding')) {needsScore += 40;}
+        if (item.project_needs?.includes('co-founder')) {needsScore += 60;}
+        if (item.project_needs?.includes('developers')) {needsScore += 40;}
+        if (item.project_needs?.includes('marketing')) {needsScore += 30;}
         return Math.min(100, needsScore);
 
       case 'credibility':
         // For resources - provider reputation
         const providerText = (item.provider_credibility || '').toLowerCase();
         let credScore = 0;
-        if (providerText.includes('yc') || providerText.includes('y combinator')) credScore += 40;
-        if (providerText.includes('a16z') || providerText.includes('andreessen')) credScore += 40;
-        if (providerText.includes('sequoia')) credScore += 30;
-        if (providerText.includes('google')) credScore += 20;
-        if (providerText.includes('microsoft')) credScore += 20;
+        if (providerText.includes('yc') || providerText.includes('y combinator')) {credScore += 40;}
+        if (providerText.includes('a16z') || providerText.includes('andreessen')) {credScore += 40;}
+        if (providerText.includes('sequoia')) {credScore += 30;}
+        if (providerText.includes('google')) {credScore += 20;}
+        if (providerText.includes('microsoft')) {credScore += 20;}
         return Math.min(100, credScore);
 
       case 'relevance':
         // For resources - relevance to early-stage founders
         const category = item.category || '';
-        if (category === 'smart-contracts' || category === 'fundraising') return 100;
-        if (category === 'infrastructure' || category === 'educational') return 80;
-        if (category === 'tools' || category === 'communities') return 60;
+        if (category === 'smart-contracts' || category === 'fundraising') {return 100;}
+        if (category === 'infrastructure' || category === 'educational') {return 80;}
+        if (category === 'tools' || category === 'communities') {return 60;}
         return 30;
 
       case 'usefulness':
         // For resources - practical value
         const description = (item.description || '').toLowerCase();
         let usefulScore = 50; // Base score
-        if (description.includes('free')) usefulScore += 20;
-        if (description.includes('open source')) usefulScore += 20;
-        if (description.includes('tutorial') || description.includes('guide')) usefulScore += 15;
-        if (description.includes('beginner')) usefulScore += 15;
-        if (description.includes('startup') || description.includes('founder')) usefulScore += 10;
+        if (description.includes('free')) {usefulScore += 20;}
+        if (description.includes('open source')) {usefulScore += 20;}
+        if (description.includes('tutorial') || description.includes('guide')) {usefulScore += 15;}
+        if (description.includes('beginner')) {usefulScore += 15;}
+        if (description.includes('startup') || description.includes('founder')) {usefulScore += 10;}
         return Math.min(100, usefulScore);
 
       case 'quality':
         // For resources - quality indicators
         let qualityScore = 0;
-        if (item.documentation_quality === 'excellent') qualityScore += 40;
-        if (item.github_stars > 1000) qualityScore += 30;
-        else if (item.github_stars > 100) qualityScore += 20;
-        if (item.success_stories?.length > 0) qualityScore += 30;
-        if (item.user_reviews?.average_rating > 4) qualityScore += 30;
+        if (item.documentation_quality === 'excellent') {qualityScore += 40;}
+        if (item.github_stars > 1000) {qualityScore += 30;}
+        else if (item.github_stars > 100) {qualityScore += 20;}
+        if (item.success_stories?.length > 0) {qualityScore += 30;}
+        if (item.user_reviews?.average_rating > 4) {qualityScore += 30;}
         return Math.min(100, qualityScore);
 
       default:

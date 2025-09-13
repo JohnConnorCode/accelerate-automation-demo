@@ -1,19 +1,19 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react';
 import { 
   TrendingUp, Clock, CheckCircle, XCircle, Package, DollarSign, 
   BookOpen, Zap, AlertCircle, Plus, Play, Pause, RefreshCw,
   Globe, Twitter, Linkedin, Youtube, FileText, Send, Settings,
   BarChart3, Calendar, Filter, Search, Download, Upload
-} from 'lucide-react'
-import { supabase } from '../lib/supabase-client'
+} from 'lucide-react';
+import { supabase } from '../lib/supabase-client';
 
 export default function Dashboard() {
-  const [activeTab, setActiveTab] = useState('overview')
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [contentQueue, setContentQueue] = useState<any[]>([])
-  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(['twitter', 'linkedin'])
-  const [automationStatus, setAutomationStatus] = useState('paused')
-  const [selectedContent, setSelectedContent] = useState<any>(null)
+  const [activeTab, setActiveTab] = useState('overview');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [contentQueue, setContentQueue] = useState<any[]>([]);
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(['twitter', 'linkedin']);
+  const [automationStatus, setAutomationStatus] = useState('paused');
+  const [selectedContent, setSelectedContent] = useState<any>(null);
   const [stats, setStats] = useState({
     total: 0,
     pending: 0,
@@ -28,37 +28,37 @@ export default function Dashboard() {
       youtube: 0,
       blog: 0
     }
-  })
+  });
   
   // Load real data from localStorage on mount
   useEffect(() => {
-    const savedContent = localStorage.getItem('contentQueue')
-    const savedStats = localStorage.getItem('dashboard_stats')
+    const savedContent = localStorage.getItem('contentQueue');
+    const savedStats = localStorage.getItem('dashboard_stats');
     if (savedContent) {
-      const queue = JSON.parse(savedContent)
-      setContentQueue(queue)
-      updateStats(queue)
+      const queue = JSON.parse(savedContent);
+      setContentQueue(queue);
+      updateStats(queue);
     }
     if (savedStats) {
-      setStats(JSON.parse(savedStats))
+      setStats(JSON.parse(savedStats));
     }
-  }, [])
+  }, []);
   
   // Update stats based on content queue
   const updateStats = (queue: any[]) => {
-    const pending = queue.filter(c => c.status === 'pending').length
-    const approved = queue.filter(c => c.status === 'approved').length
-    const rejected = queue.filter(c => c.status === 'rejected').length
-    const today = new Date().toDateString()
-    const todayGenerated = queue.filter(c => new Date(c.createdAt).toDateString() === today).length
+    const pending = queue.filter(c => c.status === 'pending').length;
+    const approved = queue.filter(c => c.status === 'approved').length;
+    const rejected = queue.filter(c => c.status === 'rejected').length;
+    const today = new Date().toDateString();
+    const todayGenerated = queue.filter(c => new Date(c.createdAt).toDateString() === today).length;
     
     const platformCounts = queue.reduce((acc, content) => {
-      acc[content.platform] = (acc[content.platform] || 0) + 1
-      return acc
-    }, { twitter: 0, linkedin: 0, youtube: 0, blog: 0 })
+      acc[content.platform] = (acc[content.platform] || 0) + 1;
+      return acc;
+    }, { twitter: 0, linkedin: 0, youtube: 0, blog: 0 });
     
-    const scores = queue.map(c => c.score).filter(s => s)
-    const avgScore = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0
+    const scores = queue.map(c => c.score).filter(s => s);
+    const avgScore = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
     
     const newStats = {
       total: queue.length,
@@ -69,19 +69,19 @@ export default function Dashboard() {
       todayGenerated,
       weeklyGrowth: 0, // Will calculate when we have historical data
       platformStats: platformCounts
-    }
-    setStats(newStats)
+    };
+    setStats(newStats);
     // Save stats to localStorage
-    localStorage.setItem('dashboard_stats', JSON.stringify(newStats))
-  }
+    localStorage.setItem('dashboard_stats', JSON.stringify(newStats));
+  };
 
   const handleGenerateContent = async (contentType: 'projects' | 'funding' | 'resources' = 'projects') => {
-    setIsGenerating(true)
+    setIsGenerating(true);
     
     try {
       // Get project URL and anon key
-      const projectUrl = supabase.supabaseUrl
-      const anonKey = supabase.supabaseKey
+      const projectUrl = supabase.supabaseUrl;
+      const anonKey = supabase.supabaseKey;
       
       // Fetch latest Accelerate data and generate content about it
       const response = await fetch(`${projectUrl}/functions/v1/fetch-accelerate-content`, {
@@ -94,9 +94,9 @@ export default function Dashboard() {
           contentType,
           limit: 5
         })
-      })
+      });
       
-      const result = await response.json()
+      const result = await response.json();
       
       if (result.success && result.content) {
         // Add all generated content pieces to queue
@@ -109,12 +109,12 @@ export default function Dashboard() {
           score: 85,
           metadata: piece.sourceData,
           createdAt: new Date().toISOString()
-        }))
+        }));
         
-        const updatedQueue = [...newContentItems, ...contentQueue]
-        setContentQueue(updatedQueue)
-        updateStats(updatedQueue)
-        localStorage.setItem('contentQueue', JSON.stringify(updatedQueue))
+        const updatedQueue = [...newContentItems, ...contentQueue];
+        setContentQueue(updatedQueue);
+        updateStats(updatedQueue);
+        localStorage.setItem('contentQueue', JSON.stringify(updatedQueue));
       } else {
         // Fallback to mock data if API fails
         const newContent = {
@@ -124,14 +124,14 @@ export default function Dashboard() {
           status: 'pending',
           score: 75, // Default score for new content
           createdAt: new Date().toISOString()
-        }
-        const updatedQueue = [newContent, ...contentQueue]
-        setContentQueue(updatedQueue)
-        updateStats(updatedQueue)
-        localStorage.setItem('contentQueue', JSON.stringify(updatedQueue))
+        };
+        const updatedQueue = [newContent, ...contentQueue];
+        setContentQueue(updatedQueue);
+        updateStats(updatedQueue);
+        localStorage.setItem('contentQueue', JSON.stringify(updatedQueue));
       }
     } catch (error) {
-      console.error('Error generating content:', error)
+      console.error('Error generating content:', error);
       // Fallback to mock data
       const newContent = {
         id: Date.now(),
@@ -140,19 +140,19 @@ export default function Dashboard() {
         status: 'pending',
         score: 75,
         createdAt: new Date().toISOString()
-      }
-      const updatedQueue = [newContent, ...contentQueue]
-      setContentQueue(updatedQueue)
-      updateStats(updatedQueue)
-      localStorage.setItem('contentQueue', JSON.stringify(updatedQueue))
+      };
+      const updatedQueue = [newContent, ...contentQueue];
+      setContentQueue(updatedQueue);
+      updateStats(updatedQueue);
+      localStorage.setItem('contentQueue', JSON.stringify(updatedQueue));
     } finally {
-      setIsGenerating(false)
+      setIsGenerating(false);
     }
-  }
+  };
 
   const toggleAutomation = () => {
-    setAutomationStatus(automationStatus === 'running' ? 'paused' : 'running')
-  }
+    setAutomationStatus(automationStatus === 'running' ? 'paused' : 'running');
+  };
 
   return (
     <div>
@@ -497,9 +497,9 @@ export default function Dashboard() {
                       checked={selectedPlatforms.includes(platform.toLowerCase())}
                       onChange={(e) => {
                         if (e.target.checked) {
-                          setSelectedPlatforms([...selectedPlatforms, platform.toLowerCase()])
+                          setSelectedPlatforms([...selectedPlatforms, platform.toLowerCase()]);
                         } else {
-                          setSelectedPlatforms(selectedPlatforms.filter(p => p !== platform.toLowerCase()))
+                          setSelectedPlatforms(selectedPlatforms.filter(p => p !== platform.toLowerCase()));
                         }
                       }}
                       className="rounded text-primary"
@@ -568,11 +568,11 @@ export default function Dashboard() {
                 onClick={() => {
                   const updated = contentQueue.map(c => 
                     c.id === selectedContent.id ? {...c, status: 'approved'} : c
-                  )
-                  setContentQueue(updated)
-                  updateStats(updated)
-                  localStorage.setItem('contentQueue', JSON.stringify(updated))
-                  setSelectedContent(null)
+                  );
+                  setContentQueue(updated);
+                  updateStats(updated);
+                  localStorage.setItem('contentQueue', JSON.stringify(updated));
+                  setSelectedContent(null);
                 }}
               >
                 <CheckCircle className="w-4 h-4 inline mr-2" />
@@ -583,11 +583,11 @@ export default function Dashboard() {
                 onClick={() => {
                   const updated = contentQueue.map(c => 
                     c.id === selectedContent.id ? {...c, status: 'rejected'} : c
-                  )
-                  setContentQueue(updated)
-                  updateStats(updated)
-                  localStorage.setItem('contentQueue', JSON.stringify(updated))
-                  setSelectedContent(null)
+                  );
+                  setContentQueue(updated);
+                  updateStats(updated);
+                  localStorage.setItem('contentQueue', JSON.stringify(updated));
+                  setSelectedContent(null);
                 }}
               >
                 <XCircle className="w-4 h-4 inline mr-2" />
@@ -604,5 +604,5 @@ export default function Dashboard() {
         </div>
       )}
     </div>
-  )
+  );
 }

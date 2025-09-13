@@ -1,6 +1,6 @@
 #!/usr/bin/env npx tsx
 
-import { supabase } from './src/lib/supabase-client';
+import { supabase } from '../../src/lib/supabase-client';
 
 async function listTables() {
   // Try to query information_schema or pg_tables

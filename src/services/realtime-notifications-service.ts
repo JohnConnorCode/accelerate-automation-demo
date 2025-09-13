@@ -380,7 +380,7 @@ export class RealtimeNotificationsService extends EventEmitter {
    * Play notification sound
    */
   private playNotificationSound(type: NotificationType): void {
-    if (!this.soundEnabled) return;
+    if (!this.soundEnabled) {return;}
     
     const template = this.templates[type];
     const sound = template.sound;

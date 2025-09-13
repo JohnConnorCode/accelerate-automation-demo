@@ -1,5 +1,5 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react'
-import { AlertTriangle } from 'lucide-react'
+import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { AlertTriangle } from 'lucide-react';
 
 interface Props {
   children: ReactNode
@@ -13,14 +13,14 @@ interface State {
 export default class ErrorBoundary extends Component<Props, State> {
   public state: State = {
     hasError: false
-  }
+  };
 
   public static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error }
+    return { hasError: true, error };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Uncaught error:', error, errorInfo)
+    console.error('Uncaught error:', error, errorInfo);
     
     // In production, send to error tracking service
     if (import.meta.env.PROD) {
@@ -63,9 +63,9 @@ export default class ErrorBoundary extends Component<Props, State> {
             </button>
           </div>
         </div>
-      )
+      );
     }
 
-    return this.props.children
+    return this.props.children;
   }
 }

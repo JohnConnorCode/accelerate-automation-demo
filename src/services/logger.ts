@@ -1,15 +1,15 @@
-import winston from 'winston'
-import path from 'path'
+import winston from 'winston';
+import path from 'path';
 
-const logLevel = process.env.LOG_LEVEL || 'info'
-const logFilePath = process.env.LOG_FILE_PATH || './logs/app.log'
-const auditLogPath = process.env.AUDIT_LOG_PATH || './logs/audit.log'
+const logLevel = process.env.LOG_LEVEL || 'info';
+const logFilePath = process.env.LOG_FILE_PATH || './logs/app.log';
+const auditLogPath = process.env.AUDIT_LOG_PATH || './logs/audit.log';
 
 // Create logs directory if it doesn't exist
-import fs from 'fs'
-const logDir = path.dirname(logFilePath)
+import fs from 'fs';
+const logDir = path.dirname(logFilePath);
 if (!fs.existsSync(logDir)) {
-  fs.mkdirSync(logDir, { recursive: true })
+  fs.mkdirSync(logDir, { recursive: true });
 }
 
 // Main application logger
@@ -36,7 +36,7 @@ export const logger = winston.createLogger({
       maxFiles: 5
     })
   ]
-})
+});
 
 // Audit logger for tracking admin actions
 export const auditLogger = winston.createLogger({
@@ -52,7 +52,7 @@ export const auditLogger = winston.createLogger({
       maxFiles: 10
     })
   ]
-})
+});
 
 // Add console output in development
 if (process.env.NODE_ENV !== 'production') {
@@ -61,7 +61,7 @@ if (process.env.NODE_ENV !== 'production') {
       winston.format.colorize(),
       winston.format.simple()
     )
-  }))
+  }));
 }
 
 // Audit logging helper
@@ -81,8 +81,8 @@ export const logAuditEvent = (
     timestamp: new Date().toISOString(),
     ip: details?.ip,
     userAgent: details?.userAgent
-  })
-}
+  });
+};
 
 // Error tracking helper
 export const logError = (
@@ -98,13 +98,13 @@ export const logError = (
     stack: error.stack,
     ...context,
     timestamp: new Date().toISOString()
-  })
+  });
   
   // Send to error tracking service in production
   if (process.env.NODE_ENV === 'production' && process.env.SENTRY_DSN) {
     // Sentry integration would go here
   }
-}
+};
 
 // Performance logging
 export const logPerformance = (
@@ -118,7 +118,7 @@ export const logPerformance = (
     duration,
     ...metadata,
     timestamp: new Date().toISOString()
-  })
-}
+  });
+};
 
-export default logger
+export default logger;

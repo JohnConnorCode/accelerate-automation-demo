@@ -46,7 +46,7 @@ class ProductionReadyMatcher {
    * Extract domain from URL
    */
   private extractDomain(url: string): string | null {
-    if (!url) return null;
+    if (!url) {return null;}
     
     try {
       let cleanUrl = url.trim();
@@ -75,16 +75,16 @@ class ProductionReadyMatcher {
     const normalized = name.toLowerCase().trim();
     
     // Check if it's a common first name
-    if (this.AMBIGUOUS_NAMES.has(normalized)) return true;
+    if (this.AMBIGUOUS_NAMES.has(normalized)) {return true;}
     
     // Check if it's a common word
-    if (this.COMMON_WORDS.has(normalized)) return true;
+    if (this.COMMON_WORDS.has(normalized)) {return true;}
     
     // Check if it's too short (likely to cause false positives)
-    if (normalized.length <= 3) return true;
+    if (normalized.length <= 3) {return true;}
     
     // Check if it's just numbers
-    if (/^\d+$/.test(normalized)) return true;
+    if (/^\d+$/.test(normalized)) {return true;}
     
     return false;
   }
@@ -227,7 +227,7 @@ class ProductionReadyMatcher {
         if (!this.isAmbiguousName(company.title)) {
           confidence += 50;
           signals.push('name_in_title');
-          if (matchType === 'weak') matchType = 'medium';
+          if (matchType === 'weak') {matchType = 'medium';}
         } else {
           // Ambiguous name in title needs more validation
           confidence += 20;

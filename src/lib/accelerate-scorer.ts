@@ -58,12 +58,12 @@ export class AccelerateScorer {
       const monthsOld = (Date.now() - launchDate.getTime()) / (30 * 24 * 60 * 60 * 1000);
       
       // Be more lenient - accept projects from 2023+
-      if (launchDate < new Date('2023-01-01')) score -= 10; // Penalty but not disqualified
+      if (launchDate < new Date('2023-01-01')) {score -= 10;} // Penalty but not disqualified
       
-      if (monthsOld < 3) score += 30;
-      else if (monthsOld < 6) score += 20;
-      else if (monthsOld < 12) score += 10;
-      else score += 5; // Still give some points for older projects
+      if (monthsOld < 3) {score += 30;}
+      else if (monthsOld < 6) {score += 20;}
+      else if (monthsOld < 12) {score += 10;}
+      else {score += 5;} // Still give some points for older projects
     } else {
       // No launch date? Give benefit of doubt
       score += 15;
@@ -71,38 +71,38 @@ export class AccelerateScorer {
 
     // Team size - smaller is better for early stage
     if (meta.team_size) {
-      if (meta.team_size > 10) return 0; // Disqualified
+      if (meta.team_size > 10) {return 0;} // Disqualified
       
-      if (meta.team_size <= 3) score += 20;
-      else if (meta.team_size <= 5) score += 15;
-      else if (meta.team_size <= 10) score += 10;
+      if (meta.team_size <= 3) {score += 20;}
+      else if (meta.team_size <= 5) {score += 15;}
+      else if (meta.team_size <= 10) {score += 10;}
     }
 
     // Funding - less is more early-stage
     if (typeof meta.funding_raised === 'number') {
-      if (meta.funding_raised > 500000) return 0; // Disqualified
+      if (meta.funding_raised > 500000) {return 0;} // Disqualified
       
-      if (meta.funding_raised === 0) score += 15;
-      else if (meta.funding_raised < 100000) score += 10;
-      else if (meta.funding_raised < 500000) score += 5;
+      if (meta.funding_raised === 0) {score += 15;}
+      else if (meta.funding_raised < 100000) {score += 10;}
+      else if (meta.funding_raised < 500000) {score += 5;}
     }
 
     // Validation signals
-    if (meta.grant_participation?.length > 0) score += 15;
-    if (meta.incubator_participation?.length > 0) score += 15;
-    if (meta.traction_metrics?.users > 100) score += 10;
-    if (meta.traction_metrics?.github_stars > 50) score += 10;
+    if (meta.grant_participation?.length > 0) {score += 15;}
+    if (meta.incubator_participation?.length > 0) {score += 15;}
+    if (meta.traction_metrics?.users > 100) {score += 10;}
+    if (meta.traction_metrics?.github_stars > 50) {score += 10;}
 
     // Needs - actively seeking help boosts score
-    if (meta.project_needs?.includes('funding')) score += 10;
-    if (meta.project_needs?.includes('co-founder')) score += 15;
-    if (meta.project_needs?.includes('developers')) score += 10;
+    if (meta.project_needs?.includes('funding')) {score += 10;}
+    if (meta.project_needs?.includes('co-founder')) {score += 15;}
+    if (meta.project_needs?.includes('developers')) {score += 10;}
 
     // Activity check - be more lenient
     if (meta.last_activity) {
       const daysSinceActivity = (Date.now() - new Date(meta.last_activity).getTime()) / (24 * 60 * 60 * 1000);
-      if (daysSinceActivity > 90) score *= 0.7; // 30% penalty for very inactive
-      else if (daysSinceActivity > 30) score *= 0.9; // 10% penalty for somewhat inactive
+      if (daysSinceActivity > 90) {score *= 0.7;} // 30% penalty for very inactive
+      else if (daysSinceActivity > 30) {score *= 0.9;} // 10% penalty for somewhat inactive
     } else {
       // No activity date? Assume it's recent
       score += 5;
@@ -120,35 +120,35 @@ export class AccelerateScorer {
 
     // Deadline urgency
     if (meta.days_until_deadline) {
-      if (meta.days_until_deadline < 7) return 0; // Too urgent, likely to miss
-      if (meta.days_until_deadline < 30) score += 20;
-      else if (meta.days_until_deadline < 60) score += 10;
+      if (meta.days_until_deadline < 7) {return 0;} // Too urgent, likely to miss
+      if (meta.days_until_deadline < 30) {score += 20;}
+      else if (meta.days_until_deadline < 60) {score += 10;}
     } else {
       score += 15; // Rolling basis is good
     }
 
     // Amount accessibility
-    if (meta.min_amount <= 10000) score += 15;
-    if (meta.max_amount >= 100000) score += 10;
+    if (meta.min_amount <= 10000) {score += 15;}
+    if (meta.max_amount >= 100000) {score += 10;}
 
     // Equity terms
-    if (meta.equity_required === false) score += 20;
-    else if (meta.equity_percentage < 7) score += 10;
+    if (meta.equity_required === false) {score += 20;}
+    else if (meta.equity_percentage < 7) {score += 10;}
 
     // Recent activity - prefer active funds but don't disqualify
     if (meta.last_investment_date) {
       const daysSinceInvestment = (Date.now() - new Date(meta.last_investment_date).getTime()) / (24 * 60 * 60 * 1000);
-      if (daysSinceInvestment > 180) score -= 20; // Penalty for very old
-      else if (daysSinceInvestment < 30) score += 20;
-      else if (daysSinceInvestment < 90) score += 10;
+      if (daysSinceInvestment > 180) {score -= 20;} // Penalty for very old
+      else if (daysSinceInvestment < 30) {score += 20;}
+      else if (daysSinceInvestment < 90) {score += 10;}
     } else {
       // No investment date? Assume it's active
       score += 15;
     }
 
     // Benefits beyond money
-    if (meta.benefits?.includes('mentorship')) score += 5;
-    if (meta.benefits?.includes('network')) score += 5;
+    if (meta.benefits?.includes('mentorship')) {score += 5;}
+    if (meta.benefits?.includes('network')) {score += 5;}
 
     return score;
   }
@@ -161,32 +161,32 @@ export class AccelerateScorer {
     const meta = item.metadata || {};
 
     // Free is better for early stage
-    if (meta.price_type === 'free') score += 20;
-    else if (meta.price_type === 'freemium') score += 15;
-    else if (meta.price_amount < 100) score += 10;
-    else if (meta.price_amount >= 100) return 0; // Too expensive
+    if (meta.price_type === 'free') {score += 20;}
+    else if (meta.price_type === 'freemium') {score += 15;}
+    else if (meta.price_amount < 100) {score += 10;}
+    else if (meta.price_amount >= 100) {return 0;} // Too expensive
 
     // Recency - prefer recent but don't disqualify
     if (meta.last_updated) {
       const monthsSinceUpdate = (Date.now() - new Date(meta.last_updated).getTime()) / (30 * 24 * 60 * 60 * 1000);
-      if (monthsSinceUpdate > 12) score -= 10; // Penalty for very old
-      else if (monthsSinceUpdate < 1) score += 15;
-      else if (monthsSinceUpdate < 3) score += 10;
-      else if (monthsSinceUpdate < 6) score += 5;
+      if (monthsSinceUpdate > 12) {score -= 10;} // Penalty for very old
+      else if (monthsSinceUpdate < 1) {score += 15;}
+      else if (monthsSinceUpdate < 3) {score += 10;}
+      else if (monthsSinceUpdate < 6) {score += 5;}
     } else {
       // No update date? Give benefit of doubt
       score += 10;
     }
 
     // Credibility
-    if (meta.provider_credibility?.includes('YC')) score += 10;
-    if (meta.provider_credibility?.includes('a16z')) score += 10;
-    if (meta.success_stories?.length > 0) score += 10;
+    if (meta.provider_credibility?.includes('YC')) {score += 10;}
+    if (meta.provider_credibility?.includes('a16z')) {score += 10;}
+    if (meta.success_stories?.length > 0) {score += 10;}
 
     // Relevance to builders
-    if (meta.category === 'smart-contracts') score += 10;
-    if (meta.category === 'fundraising') score += 10;
-    if (meta.difficulty_level === 'beginner') score += 5;
+    if (meta.category === 'smart-contracts') {score += 10;}
+    if (meta.category === 'fundraising') {score += 10;}
+    if (meta.difficulty_level === 'beginner') {score += 5;}
 
     return score;
   }
@@ -200,9 +200,9 @@ export class AccelerateScorer {
     
     if (created) {
       const hoursSincePost = (Date.now() - new Date(created).getTime()) / (60 * 60 * 1000);
-      if (hoursSincePost < 24) score += 15;
-      else if (hoursSincePost < 24 * 3) score += 10;
-      else if (hoursSincePost < 24 * 7) score += 5;
+      if (hoursSincePost < 24) {score += 15;}
+      else if (hoursSincePost < 24 * 3) {score += 10;}
+      else if (hoursSincePost < 24 * 7) {score += 5;}
     }
 
     return score;
@@ -218,8 +218,8 @@ export class AccelerateScorer {
     // Different engagement metrics per type
     if (item.type === 'project') {
       const stars = meta.github_stars || meta.traction_metrics?.github_stars || 0;
-      if (stars > 500) score += 10;
-      else if (stars > 100) score += 5;
+      if (stars > 500) {score += 10;}
+      else if (stars > 100) {score += 5;}
     } else if (item.type === 'resource') {
       const qualityScore = meta.quality_score || 0;
       score += Math.floor(qualityScore / 20); // 0-5 points
@@ -236,7 +236,7 @@ export class AccelerateScorer {
     const meta = item.metadata || {};
 
     // Check for detailed descriptions
-    if (item.description && item.description.length > 500) score += 5;
+    if (item.description && item.description.length > 500) {score += 5;}
 
     // Check for complete metadata
     const requiredFields = this.getRequiredFields(item.type);

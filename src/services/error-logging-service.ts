@@ -411,11 +411,11 @@ export class ErrorLoggingService extends EventEmitter {
         break;
       case 'error':
 
-        if (error.stack) console.error(error.stack);
+        if (error.stack) {console.error(error.stack);}
         break;
       case 'critical':
 
-        if (error.stack) console.error(error.stack);
+        if (error.stack) {console.error(error.stack);}
         break;
     }
   }
@@ -472,7 +472,7 @@ export class ErrorLoggingService extends EventEmitter {
    * Flush buffered logs
    */
   private async flushLogs(): Promise<void> {
-    if (this.logBuffer.length === 0) return;
+    if (this.logBuffer.length === 0) {return;}
     
     const logsToFlush = [...this.logBuffer];
     this.logBuffer = [];
@@ -544,7 +544,7 @@ export class ErrorLoggingService extends EventEmitter {
    * Prune old errors from memory
    */
   private pruneOldErrors(): void {
-    if (this.errors.size <= this.config.maxErrorsInMemory) return;
+    if (this.errors.size <= this.config.maxErrorsInMemory) {return;}
     
     // Sort by last seen and remove oldest
     const sorted = Array.from(this.errors.entries())

@@ -5,7 +5,7 @@ describe('IntelligentCacheService', () => {
   let cache: IntelligentCacheService;
   
   beforeEach(() => {
-    cache = new IntelligentCacheService();
+    cache = new IntelligentCacheService({ skipWarmup: true });
     cache.clear();
   });
   
@@ -187,7 +187,7 @@ describe('IntelligentCacheService', () => {
   
   describe('Smart TTL', () => {
     it('should apply appropriate TTL based on key patterns', async () => {
-      const service = new IntelligentCacheService();
+      const service = new IntelligentCacheService({ skipWarmup: true });
       
       // Test different patterns
       const testCases = [

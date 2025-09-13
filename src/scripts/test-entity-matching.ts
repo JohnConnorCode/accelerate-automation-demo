@@ -75,13 +75,13 @@ class EntityMatchValidator {
     const domain1 = this.extractDomain(item1.url);
     const domain2 = this.extractDomain(item2.url);
     
-    if (!domain1 || !domain2) return false;
+    if (!domain1 || !domain2) {return false;}
     
     // Exact domain match
-    if (domain1 === domain2) return true;
+    if (domain1 === domain2) {return true;}
     
     // Subdomain match (e.g., blog.company.com matches company.com)
-    if (domain1.includes(domain2) || domain2.includes(domain1)) return true;
+    if (domain1.includes(domain2) || domain2.includes(domain1)) {return true;}
     
     return false;
   }

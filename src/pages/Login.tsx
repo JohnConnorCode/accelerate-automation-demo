@@ -1,65 +1,65 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
-import { Loader2, Mail, Lock, AlertCircle, Zap } from 'lucide-react'
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { Loader2, Mail, Lock, AlertCircle, Zap } from 'lucide-react';
 
 export default function Login() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [isSignUp, setIsSignUp] = useState(false)
-  const [fullName, setFullName] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const { signIn, signUp } = useAuth()
-  const navigate = useNavigate()
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [fullName, setFullName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { signIn, signUp } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
+    e.preventDefault();
+    setError(null);
     
     // Validate inputs
     if (!email || !password) {
-      setError('Please enter both email and password')
-      return
+      setError('Please enter both email and password');
+      return;
     }
     
     if (password.length < 6) {
-      setError('Password must be at least 6 characters')
-      return
+      setError('Password must be at least 6 characters');
+      return;
     }
     
-    setLoading(true)
+    setLoading(true);
 
     try {
       if (isSignUp) {
         if (!fullName || fullName.trim().length === 0) {
-          setError('Please enter your full name')
-          setLoading(false)
-          return
+          setError('Please enter your full name');
+          setLoading(false);
+          return;
         }
         
-        const { error } = await signUp(email, password, fullName)
+        const { error } = await signUp(email, password, fullName);
         if (error) {
-          setError(error.message)
+          setError(error.message);
         } else {
-          setError('✅ Check your email to confirm your account!')
+          setError('✅ Check your email to confirm your account!');
         }
-        setLoading(false)
+        setLoading(false);
       } else {
-        const { error } = await signIn(email, password)
+        const { error } = await signIn(email, password);
         if (error) {
-          setError(error.message)
-          setLoading(false)
+          setError(error.message);
+          setLoading(false);
         } else {
-          navigate('/dashboard')
+          navigate('/dashboard');
         }
       }
     } catch (err: any) {
-      console.error('Auth error:', err)
-      setError(err.message || 'Authentication failed. Please try again.')
-      setLoading(false)
+      console.error('Auth error:', err);
+      setError(err.message || 'Authentication failed. Please try again.');
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary to-secondary flex items-center justify-center p-4">
@@ -156,8 +156,8 @@ export default function Login() {
         <div className="mt-6 text-center">
           <button
             onClick={() => {
-              setIsSignUp(!isSignUp)
-              setError(null)
+              setIsSignUp(!isSignUp);
+              setError(null);
             }}
             className="text-sm text-primary hover:underline"
           >
@@ -174,5 +174,5 @@ export default function Login() {
         </div>
       </div>
     </div>
-  )
+  );
 }

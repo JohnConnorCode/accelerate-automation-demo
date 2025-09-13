@@ -40,14 +40,14 @@ export class EntityResolver {
     
     // Group items by potential matches
     for (let i = 0; i < items.length; i++) {
-      if (processed.has(i)) continue;
+      if (processed.has(i)) {continue;}
       
       const matches: ContentItem[] = [items[i]];
       processed.add(i);
       
       // Find all potential matches for this item
       for (let j = i + 1; j < items.length; j++) {
-        if (processed.has(j)) continue;
+        if (processed.has(j)) {continue;}
         
         const matchScore = this.calculateMatchScore(items[i], items[j]);
         
@@ -185,20 +185,20 @@ export class EntityResolver {
     for (const item of sortedItems) {
       // Collect names
       names.add(item.title);
-      if (item.metadata?.startup_name) names.add(item.metadata.startup_name);
+      if (item.metadata?.startup_name) {names.add(item.metadata.startup_name);}
       
       // Collect domains
       const domain = this.extractDomain(item.url);
-      if (domain) domains.add(domain);
+      if (domain) {domains.add(domain);}
       
       // Collect sources
       sources.add(item.source);
       
       // Collect social handles
       const handles = this.extractSocialHandles(item);
-      if (handles.twitter) socialHandles.twitter = handles.twitter;
-      if (handles.github) socialHandles.github = handles.github;
-      if (handles.discord) socialHandles.discord = handles.discord;
+      if (handles.twitter) {socialHandles.twitter = handles.twitter;}
+      if (handles.github) {socialHandles.github = handles.github;}
+      if (handles.discord) {socialHandles.discord = handles.discord;}
       
       // Merge metadata (prefer non-null, higher values for scores)
       if (item.metadata) {
@@ -250,26 +250,26 @@ export class EntityResolver {
     let score = 0;
     
     // Basic fields
-    if (item.title) score += 1;
-    if (item.description?.length > 100) score += 2;
-    if (item.url && !item.url.includes('reddit.com')) score += 2;
+    if (item.title) {score += 1;}
+    if (item.description?.length > 100) {score += 2;}
+    if (item.url && !item.url.includes('reddit.com')) {score += 2;}
     
     // Metadata fields
     const meta = item.metadata || {};
-    if (meta.funding_raised) score += 3;
-    if (meta.team_size) score += 2;
-    if (meta.yc_batch) score += 5; // YC data is high quality
-    if (meta.github_url) score += 2;
-    if (meta.twitter_url) score += 2;
-    if (meta.launch_date) score += 1;
-    if (meta.accelerate_score > 50) score += 2;
-    if (meta.ai_score) score += 3;
+    if (meta.funding_raised) {score += 3;}
+    if (meta.team_size) {score += 2;}
+    if (meta.yc_batch) {score += 5;} // YC data is high quality
+    if (meta.github_url) {score += 2;}
+    if (meta.twitter_url) {score += 2;}
+    if (meta.launch_date) {score += 1;}
+    if (meta.accelerate_score > 50) {score += 2;}
+    if (meta.ai_score) {score += 3;}
     
     // Source quality
-    if (item.source === 'YCombinator') score += 5;
-    if (item.source === 'Wellfound') score += 4;
-    if (item.source === 'ProductHunt') score += 3;
-    if (item.source === 'HackerNews') score += 2;
+    if (item.source === 'YCombinator') {score += 5;}
+    if (item.source === 'Wellfound') {score += 4;}
+    if (item.source === 'ProductHunt') {score += 3;}
+    if (item.source === 'HackerNews') {score += 2;}
     
     return score;
   }
@@ -289,7 +289,7 @@ export class EntityResolver {
    * Extract domain from URL
    */
   private extractDomain(url?: string): string | null {
-    if (!url) return null;
+    if (!url) {return null;}
     
     try {
       const u = new URL(url);
@@ -313,17 +313,17 @@ export class EntityResolver {
     // From metadata
     if (item.metadata?.twitter_url) {
       const match = item.metadata.twitter_url.match(/twitter\.com\/([^\/]+)/);
-      if (match) handles.twitter = match[1];
+      if (match) {handles.twitter = match[1];}
     }
     
     if (item.metadata?.github_url) {
       const match = item.metadata.github_url.match(/github\.com\/([^\/]+)/);
-      if (match) handles.github = match[1];
+      if (match) {handles.github = match[1];}
     }
     
     // From description
     const twitterMatch = item.description.match(/@([A-Za-z0-9_]+)/);
-    if (twitterMatch) handles.twitter = twitterMatch[1];
+    if (twitterMatch) {handles.twitter = twitterMatch[1];}
     
     return handles;
   }
@@ -355,7 +355,7 @@ export class EntityResolver {
     const longer = str1.length > str2.length ? str1 : str2;
     const shorter = str1.length > str2.length ? str2 : str1;
     
-    if (longer.length === 0) return 1.0;
+    if (longer.length === 0) {return 1.0;}
     
     const distance = this.levenshteinDistance(longer, shorter);
     return (longer.length - distance) / longer.length;
@@ -401,7 +401,7 @@ export class EntityResolver {
       // Prefer names without special characters
       const cleanA = a.match(/^[A-Za-z0-9\s]+$/) ? 0 : 1;
       const cleanB = b.match(/^[A-Za-z0-9\s]+$/) ? 0 : 1;
-      if (cleanA !== cleanB) return cleanA - cleanB;
+      if (cleanA !== cleanB) {return cleanA - cleanB;}
       
       // Prefer shorter names
       return a.length - b.length;
@@ -458,7 +458,7 @@ export class EntityResolver {
     // Use longest description, or combine if they're different
     const descriptions = items.map(i => i.description).filter(d => d?.length > 50);
     
-    if (descriptions.length === 0) return items[0].description;
+    if (descriptions.length === 0) {return items[0].description;}
     
     // Sort by length and richness
     descriptions.sort((a, b) => b.length - a.length);
