@@ -43,7 +43,10 @@
     "node_modules/",
     "*.config.js",
     "*.config.ts",
+    "jest.setup.ts",
     "scripts/testing/",
-    "src/archive/"
+    "src/archive/",
+    "**/*.test.ts",
+    "**/*.spec.ts"
   ]
 }

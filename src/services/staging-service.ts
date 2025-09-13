@@ -3,6 +3,8 @@
  * Routes content to appropriate staging table based on type
  */
 
+import { randomUUID } from 'crypto';
+
 import { supabase } from '../lib/supabase-client';
 
 export interface StagingItem {
@@ -150,7 +152,7 @@ export class StagingService {
     };
 
     // Generate unique URL if not provided
-    const uniqueId = `${item.source}_${item.title || item.name || 'untitled'}_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const uniqueId = `${item.source}_${item.title || item.name || 'untitled'}_${Date.now()}_${randomUUID().substring(0, 8)}`;
     const url = item.url || item.source_url || `https://accelerate.example.com/project/${uniqueId}`;
     
     return {
@@ -255,7 +257,7 @@ export class StagingService {
     };
 
     // Generate unique URL if not provided or to ensure uniqueness
-    const uniqueId = `${item.source}_${item.title || 'untitled'}_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const uniqueId = `${item.source}_${item.title || 'untitled'}_${Date.now()}_${randomUUID().substring(0, 8)}`;
     const url = item.url || `https://accelerate.example.com/resource/${uniqueId}`;
     
     return {

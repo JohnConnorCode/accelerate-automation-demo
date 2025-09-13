@@ -1,4 +1,5 @@
 // Jest Setup File - Complete Mocks and Configuration
+import 'openai/shims/node'
 import '@testing-library/jest-dom'
 
 // Add TextEncoder/TextDecoder polyfill for jsdom
