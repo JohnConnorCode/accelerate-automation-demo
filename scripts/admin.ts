@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 
 import { Command } from 'commander';
-import { orchestrator } from '../src/orchestrator';
+import { UnifiedOrchestrator } from '../src/core/unified-orchestrator';
 import { testConnection, getDatabaseStats } from '../src/lib/supabase-client';
 import { cache } from '../src/lib/cache-service';
 import chalk from 'chalk';

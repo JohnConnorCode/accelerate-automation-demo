@@ -2,8 +2,13 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = 'https://eqpfvmwmdtsgddpsodsr.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcGZ2bXdtZHRzZ2RkcHNvZHNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU4MjE4NzgsImV4cCI6MjA2MTM5Nzg3OH0.HAyBibHx0dqzXEAAr2MYxv1sfs13PLANLXLXM2NIWKI';
+const supabaseUrl = process.env.SUPABASE_URL || 'https://eqpfvmwmdtsgddpsodsr.supabase.co';
+const supabaseKey = process.env.SUPABASE_ANON_KEY || '';
+
+if (!supabaseKey) {
+  console.error('❌ Missing SUPABASE_ANON_KEY environment variable');
+  process.exit(1);
+}
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 

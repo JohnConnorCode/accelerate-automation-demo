@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { SimpleOrchestrator } from '../../src/core/simple-orchestrator';
+import { UnifiedOrchestrator } from '../../src/core/unified-orchestrator';
 import { approvalService } from '../../src/api/approve';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -22,13 +22,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.log('🚀 Starting scheduled content fetch...');
     
     // 1. Run the orchestrator
-    const orchestrator = new SimpleOrchestrator();
-    orchestrator.setBatchSize(50);
-    orchestrator.setScoreThreshold(30);
+    const orchestrator = new UnifiedOrchestrator();
     
     const result = await orchestrator.run();
     
-    console.log(`✅ Fetched ${result.fetched} items, stored ${result.stored}`);
+    console.log(`✅ Fetched ${result.fetched} items, inserted ${result.inserted}`);
     
     // 2. Auto-approve high-quality items (score >= 70)
     const approvalResult = await approvalService.autoApprove(70);
@@ -40,13 +38,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       timestamp: new Date().toISOString(),
       fetch: {
         fetched: result.fetched,
-        scored: result.scored,
-        stored: result.stored,
-        rejected: result.rejected,
+        validated: result.validated,
+        unique: result.unique,
+        inserted: result.inserted,
         duration: result.duration
       },
       approval: approvalResult,
-      message: `Fetched ${result.stored} new items, auto-approved high-quality content`
+      message: `Fetched ${result.inserted} new items, auto-approved high-quality content`
     });
 
   } catch (error: any) {

@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { orchestrator } from '../../src/core/simple-orchestrator';
+import { UnifiedOrchestrator } from '../../src/core/unified-orchestrator';
 
 export default async function handler(
   request: VercelRequest,
@@ -13,13 +13,14 @@ export default async function handler(
 
   try {
     console.log('Starting automated content fetch...');
+    const orchestrator = new UnifiedOrchestrator();
     const result = await orchestrator.run();
     
     console.log('Content fetch completed:', {
       fetched: result.fetched,
-      scored: result.scored,
-      stored: result.stored,
-      rejected: result.rejected,
+      validated: result.validated,
+      unique: result.unique,
+      inserted: result.inserted,
       duration: result.duration
     });
 

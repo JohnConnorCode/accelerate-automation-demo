@@ -16,7 +16,7 @@ const supabaseUrl = typeof window !== 'undefined'
 // In browser: use VITE_SUPABASE_ANON_KEY
 // In Node.js: prefer SERVICE_KEY for write operations, fallback to ANON_KEY
 const supabaseKey = typeof window !== 'undefined'
-  ? (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcGZ2bXdtZHRzZ2RkcHNvZHNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU4MjE4NzgsImV4cCI6MjA2MTM5Nzg3OH0.HAyBibHx0dqzXEAAr2MYxv1sfs13PLANLXLXM2NIWKI'
+  ? (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || ''
   : (() => {
       // Check if SERVICE_KEY is valid (should start with 'eyJ' like JWT tokens)
       const serviceKey = process.env.SUPABASE_SERVICE_KEY;
@@ -32,9 +32,9 @@ const supabaseKey = typeof window !== 'undefined'
         return anonKey;
       }
       
-      // Last resort: hardcoded anon key for the project
+      // No key found - return empty string
       console.log('⚠️ Using default Supabase anon key - configure .env for production!');
-      return 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcGZ2bXdtZHRzZ2RkcHNvZHNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU4MjE4NzgsImV4cCI6MjA2MTM5Nzg3OH0.HAyBibHx0dqzXEAAr2MYxv1sfs13PLANLXLXM2NIWKI';
+      return '';
     })();
 
 // Check if properly configured
