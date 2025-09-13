@@ -3,7 +3,18 @@
  * Routes content to appropriate staging table based on type
  */
 
-import { randomUUID } from 'crypto';
+// Use crypto.randomUUID if available (browser/Node 19+), otherwise fallback
+const generateUUID = (): string => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  // Fallback for older environments
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Date.now() + Math.random() * 16) % 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
 
 import { supabase } from '../lib/supabase-client';
 
@@ -152,7 +163,7 @@ export class StagingService {
     };
 
     // Generate unique URL if not provided
-    const uniqueId = `${item.source}_${item.title || item.name || 'untitled'}_${Date.now()}_${randomUUID().substring(0, 8)}`;
+    const uniqueId = `${item.source}_${item.title || item.name || 'untitled'}_${Date.now()}_${generateUUID().substring(0, 8)}`;
     const url = item.url || item.source_url || `https://accelerate.example.com/project/${uniqueId}`;
     
     return {
@@ -257,7 +268,7 @@ export class StagingService {
     };
 
     // Generate unique URL if not provided or to ensure uniqueness
-    const uniqueId = `${item.source}_${item.title || 'untitled'}_${Date.now()}_${randomUUID().substring(0, 8)}`;
+    const uniqueId = `${item.source}_${item.title || 'untitled'}_${Date.now()}_${generateUUID().substring(0, 8)}`;
     const url = item.url || `https://accelerate.example.com/resource/${uniqueId}`;
     
     return {
