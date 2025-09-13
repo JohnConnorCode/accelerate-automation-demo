@@ -227,8 +227,20 @@ export class SmartSearchService {
     
     if (!data) {return [];}
     
+    // Type assertion for approved_content table data
+    const typedData = data as Array<{
+      id: string;
+      title?: string;
+      name?: string;
+      description?: string;
+      content?: string;
+      type: string;
+      score?: number;
+      [key: string]: any;
+    }>;
+    
     // Score and rank results
-    for (const item of data) {
+    for (const item of typedData) {
       const relevance = this.calculateRelevance(item, searchTerms, filters);
       
       if (relevance > 0) {
@@ -498,7 +510,17 @@ export class SmartSearchService {
       .limit(10);
     
     if (data) {
-      for (const item of data) {
+      const typedData = data as Array<{
+        id: string;
+        title?: string;
+        name?: string;
+        description?: string;
+        type: string;
+        score?: number;
+        [key: string]: any;
+      }>;
+      
+      for (const item of typedData) {
         // Skip if already in results
         if (items.find(r => r.id === item.id)) {continue;}
         
@@ -627,7 +649,16 @@ export class SmartSearchService {
     
     if (!data) {return;}
     
-    for (const item of data) {
+    const typedData = data as Array<{
+      id: string;
+      title?: string;
+      description?: string;
+      tags?: string[];
+      type: string;
+      [key: string]: any;
+    }>;
+    
+    for (const item of typedData) {
       const terms = new Set<string>();
       
       // Index title terms

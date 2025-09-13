@@ -370,11 +370,12 @@ export class UnifiedOrchestrator {
           // Return the fetched data or empty array if failed
           return fetchedData || [];
         } catch (error) {
-          console.error(`   ✗ Failed to fetch from ${source.name}:`, error.message || error);
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          console.error(`   ✗ Failed to fetch from ${source.name}:`, errorMessage);
           monitoringService.trackSource(source.name, 0, false);
           monitoringService.trackError(
             `Failed to fetch from ${source.name}`,
-            { source: source.name, error: error.message },
+            { source: source.name, error: errorMessage },
             'medium'
           );
           return [];
