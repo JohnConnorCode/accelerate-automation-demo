@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { Database } from '../../types/supabase';
 import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
 

@@ -4,6 +4,7 @@
  */
 
 import { supabase } from '../lib/supabase-client';
+import type { Database } from '../types/supabase';
 import { logger } from './logger';
 
 export interface ApprovalRequest {

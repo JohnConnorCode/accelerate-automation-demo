@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase-client';
+import type { Database } from '../types/supabase';
 import { intelligentCache } from './intelligent-cache-service';
 
 /**

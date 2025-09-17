@@ -1,4 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '../types/supabase';
 import { intelligentCache } from './intelligent-cache-service';
 import { supabase } from '../lib/supabase-client';
 

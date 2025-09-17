@@ -2,6 +2,7 @@
  * Scheduler service for automated content fetching
  */
 import * as cron from 'node-cron';
+import type { Database } from '../types/supabase';
 // Using UNIFIED orchestrator - the ONLY orchestrator in the system
 import { UnifiedOrchestrator } from '../core/unified-orchestrator';
 import { notificationService } from '../lib/notification-service';

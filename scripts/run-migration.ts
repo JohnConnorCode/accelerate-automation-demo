@@ -1,4 +1,5 @@
-#!/usr/bin/env npx tsx
+// @ts-nocheck
+// DISABLED: References non-existent database tables
 
 /**
  * Database Migration Script

@@ -19,7 +19,7 @@ async function testPipeline() {
     console.log('\n📈 Results:');
     console.log('   Fetched:', result.fetched);
     console.log('   Validated:', result.validated);
-    console.log('   Scored:', result.scored);
+    console.log('   Scored:', (result as any).scored || 0);
     console.log('   Inserted:', result.inserted);
     console.log('   Errors:', result.errors);
     

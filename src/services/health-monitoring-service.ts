@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase-client';
+import type { Database } from '../types/supabase';
 import { ErrorRecoveryService } from './error-recovery-service';
 import { EnhancedAIService } from './enhanced-ai-service';
 import { SchedulingService } from './scheduling-service';

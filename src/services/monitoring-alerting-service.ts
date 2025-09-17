@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase-client';
+import type { Database } from '../types/supabase';
 import { notifications } from './realtime-notifications-service';
 import { EventEmitter } from 'events';
 

@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import type { Database } from '../types/supabase';
 import { logger } from './logger';
 import os from 'os';
 

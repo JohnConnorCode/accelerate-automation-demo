@@ -3,6 +3,7 @@
  * Gathers complete information to create validated, detailed entries
  */
 import { supabase } from '../lib/supabase';
+import type { Database } from '../types/supabase';
 import { scoreContent } from '../lib/openai';
 
 export interface EnrichedContent {

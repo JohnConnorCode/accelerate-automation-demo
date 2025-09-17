@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase-client';
+import type { Database } from '../types/supabase';
 import { EventEmitter } from 'events';
 import * as fs from 'fs/promises';
 import * as path from 'path';

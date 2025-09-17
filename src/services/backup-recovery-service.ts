@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase-client';
+import type { Database } from '../types/supabase';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { createWriteStream } from 'fs';

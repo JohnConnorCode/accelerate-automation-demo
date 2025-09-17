@@ -1,5 +1,6 @@
 // Frontend-safe criteria service
 import { supabase } from '../lib/supabase';
+import type { Database } from '../types/supabase';
 
 class CriteriaService {
   async testFetchers() {

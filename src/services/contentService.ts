@@ -1,4 +1,5 @@
 import { supabase, TABLES } from '../lib/supabase';
+import type { Database } from '../types/supabase';
 
 export type ContentCategory = 'projects' | 'funding' | 'resources'
 

@@ -1,4 +1,5 @@
 import { EventEmitter } from 'events';
+import type { Database } from '../types/supabase';
 import { intelligentCache } from './intelligent-cache-service';
 import { monitoring } from './monitoring-alerting-service';
 

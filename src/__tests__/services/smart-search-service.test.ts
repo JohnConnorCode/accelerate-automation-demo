@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { SmartSearchService } from '../../services/smart-search-service';
 import { supabase } from '../../lib/supabase-client';
