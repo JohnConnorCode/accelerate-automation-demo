@@ -285,6 +285,40 @@ export interface Database {
         Insert: any
         Update: any
       }
+      content_queue: {
+        Row: {
+          id: string
+          title: string
+          description: string | null
+          url: string
+          source: string
+          type: 'projects' | 'article' | 'tutorial' | 'job' | 'announcement' | 'event'
+          status: string
+          score: number | null
+          confidence: number | null
+          scoring_breakdown: Json | null
+          recommendation: string | null
+          metadata: Json
+          enrichment_data: Json
+          enrichment_status: string
+          ai_summary: string | null
+          reviewer_notes: string | null
+          approved_by: string | null
+          approved_at: string | null
+          created_at: string
+          updated_at: string
+          category: string | null
+          enriched: boolean
+          quality_score: number
+          auto_approved: boolean
+          reviewed_by: string | null
+          reviewed_at: string | null
+          rejection_reason: string | null
+          approval_notes: string | null
+        }
+        Insert: Partial<Database['public']['Tables']['content_queue']['Row']>
+        Update: Partial<Database['public']['Tables']['content_queue']['Row']>
+      }
       queue_projects: {
         Row: {
           id: string
