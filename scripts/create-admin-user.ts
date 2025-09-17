@@ -4,10 +4,13 @@
  * Usage: npm run admin:create-user
  */
 
-import { createClient } from '@supabase/supabase-js';
+
+import type { Database } from '../src/types/supabase';
 import * as readline from 'readline';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
+import { supabase } from '../src/lib/supabase-client';
+
 
 // Load environment variables from .env file
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
@@ -24,7 +27,7 @@ if (!supabaseUrl || !supabaseServiceKey) {
 }
 
 // Create Supabase client with service key for admin operations
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
 
 const rl = readline.createInterface({
   input: process.stdin,

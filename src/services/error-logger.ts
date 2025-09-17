@@ -3,6 +3,7 @@
  * Simple error tracking for internal tool
  */
 
+import type { Database } from '../types/supabase';
 import { supabase } from '../lib/supabase-client';
 
 export interface ErrorLog {

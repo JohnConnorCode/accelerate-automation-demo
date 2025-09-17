@@ -414,7 +414,7 @@ class ProductionReadyMatcher {
         if (newItems.length > 0) {
           const { data, error } = await supabase
             .from('content_queue')
-            .insert(newItems)
+            .insert(newItems as any)
             .select('id, title');
           
           if (error) {

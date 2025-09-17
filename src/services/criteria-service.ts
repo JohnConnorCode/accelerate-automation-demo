@@ -3,6 +3,7 @@
  * Allows admin-editable content criteria with database persistence
  */
 
+import type { Database } from '../types/supabase';
 import { supabase } from '../lib/supabase-client';
 
 export interface CriteriaConfig {
@@ -118,7 +119,7 @@ class CriteriaService {
     // Save to database
     const { data, error } = await supabase
       .from('content_criteria')
-      .insert(newCriteria)
+      .insert(newCriteria as any)
       .select()
       .single();
 

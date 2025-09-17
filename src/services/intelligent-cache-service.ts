@@ -1,3 +1,4 @@
+import type { Database } from '../types/supabase';
 import { supabase } from '../lib/supabase-client';
 import { createHash } from 'crypto';
 

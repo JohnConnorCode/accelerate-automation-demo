@@ -1,9 +1,11 @@
 #!/usr/bin/env tsx
 
-import { createClient } from '@supabase/supabase-js';
+
 import * as dotenv from 'dotenv';
 import { readFileSync } from 'fs';
 import path from 'path';
+import { supabase } from '../src/lib/supabase-client';
+
 
 // Load environment variables
 dotenv.config({ path: '.env.local' });
@@ -17,7 +19,7 @@ if (!supabaseUrl || !supabaseKey) {
   process.exit(1);
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+
 
 async function executeMigration() {
   console.log('🚀 Starting database migration...\n');

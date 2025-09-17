@@ -4,6 +4,7 @@
  * This bypasses the heavy aggregation and enrichment pipelines
  */
 
+import type { Database } from '../types/supabase';
 import { config } from 'dotenv';
 import { supabase } from '../lib/supabase-client';
 import { YCombinatorStartupsFetcher } from '../fetchers/real-sources/ycombinator-startups';
@@ -120,7 +121,7 @@ async function main() {
       try {
         const { data, error } = await supabase
           .from('content_queue')
-          .insert(batch)
+          .insert(batch as any)
           .select('id, title');
         
         if (error) {

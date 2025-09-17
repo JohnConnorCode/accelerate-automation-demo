@@ -1,5 +1,6 @@
 #!/usr/bin/env tsx
 
+import type { Database } from '../../src/types/supabase';
 import { SimpleOrchestrator } from './src/core/simple-orchestrator';
 import { ChainSpecificFetcher } from './src/fetchers/funding/chain-specific';
 import { UnifiedScorer } from './src/lib/unified-scorer';

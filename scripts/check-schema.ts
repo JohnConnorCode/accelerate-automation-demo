@@ -43,7 +43,7 @@ async function checkSchema() {
         
         const { error: insertError } = await (supabase
           .from(table) as any)
-          .insert(testData)
+          .insert(testData as any)
           .select();
         
         if (insertError) {

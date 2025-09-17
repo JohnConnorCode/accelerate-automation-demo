@@ -14,7 +14,7 @@ export const database: DatabaseOperations = {
   async insert(table: string, data: any): Promise<void> {
     const { error } = await supabase
       .from(table)
-      .insert(data);
+      .insert(data as any);
     
     if (error) {
       throw new Error(`Database insert error: ${error.message}`);
@@ -24,7 +24,7 @@ export const database: DatabaseOperations = {
   async update(table: string, id: string, data: any): Promise<void> {
     const { error } = await supabase
       .from(table)
-      .update(data)
+      .update(data as any)
       .eq('id', id);
     
     if (error) {
@@ -74,11 +74,11 @@ export const database: DatabaseOperations = {
 
 // Export helper functions for specific tables
 export async function saveContent(content: any): Promise<void> {
-  return database.insert('content_queue', content);
+  return database.insert('content_queue', content as any);
 }
 
 export async function updateContent(id: string, updates: any): Promise<void> {
-  return database.update('content_queue', id, updates);
+  return database.update('content_queue', id, updates as any);
 }
 
 export async function getContent(query?: any): Promise<any[]> {
@@ -86,11 +86,11 @@ export async function getContent(query?: any): Promise<any[]> {
 }
 
 export async function saveFetchHistory(history: any): Promise<void> {
-  return database.insert('fetch_history', history);
+  return database.insert('fetch_history', history as any);
 }
 
 export async function saveProcessingHistory(history: any): Promise<void> {
-  return database.insert('processing_history', history);
+  return database.insert('processing_history', history as any);
 }
 
 export async function getSystemConfig(key?: string): Promise<any> {

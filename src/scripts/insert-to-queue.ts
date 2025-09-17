@@ -2,6 +2,7 @@
  * Script to insert YC companies into content_queue for approval
  */
 
+import type { Database } from '../types/supabase';
 import { supabase } from '../lib/supabase-client';
 import { YCombinatorStartupsFetcher } from '../fetchers/real-sources/ycombinator-startups';
 import { RSSAggregatorFetcher } from '../fetchers/real-sources/rss-aggregator';
@@ -85,7 +86,7 @@ async function insertToQueue() {
       
       const { data, error } = await supabase
         .from('content_queue')
-        .insert(batch)
+        .insert(batch as any)
         .select();
       
       if (error) {

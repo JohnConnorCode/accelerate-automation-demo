@@ -4,8 +4,11 @@
  * Run with: npx tsx scripts/create-admin.ts
  */
 
-import { createClient } from '@supabase/supabase-js';
+
+import type { Database } from '../src/types/supabase';
 import readline from 'readline';
+import { supabase } from '../src/lib/supabase-client';
+
 
 const SUPABASE_URL = 'https://eqpfvmwmdtsgddpsodsr.supabase.co';
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || '';
@@ -16,12 +19,7 @@ if (!SUPABASE_SERVICE_KEY) {
   process.exit(1);
 }
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  }
-});
+
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -71,7 +69,7 @@ async function createAdmin() {
         is_admin: true,
         name: fullName,
         email: email
-      })
+      } as any)
       .eq('id', authData.user.id);
     
     if (profileError) {

@@ -304,8 +304,8 @@ export class ErrorLoggingService extends EventEmitter {
     }
     
     // Check error properties
-    if ((error as any).code) {
-      tags.push(`code:${(error as any).code}`);
+    if ((error).code) {
+      tags.push(`code:${(error).code}`);
     }
     
     return {
@@ -492,7 +492,7 @@ export class ErrorLoggingService extends EventEmitter {
           created_at: log.context.timestamp.toISOString()
         }));
         
-        await supabase.from('error_logs').insert(records);
+        await supabase.from('error_logs').insert(records as any);
       } catch (error) {
 
       }

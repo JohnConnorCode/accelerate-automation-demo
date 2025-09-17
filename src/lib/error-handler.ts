@@ -1,3 +1,4 @@
+import type { Database } from '../types/supabase';
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { ZodError } from 'zod';
 import { supabase } from './supabase';

@@ -1,6 +1,7 @@
 /**
  * Simple orchestrator - coordinates fetching, scoring, and storing
  */
+import type { Database } from '../../types/supabase';
 import { fetcher } from './simple-fetcher';
 import { scorer } from './simple-scorer';
 import { supabase } from '../lib/supabase-client';
@@ -741,7 +742,7 @@ export class SimpleOrchestrator {
       }
 
       return {
-        lastRun: (lastRunData as any)?.[0]?.created_at ? new Date((lastRunData as any)[0].created_at) : undefined,
+        lastRun: (lastRunData as any)?.[0]?.created_at ? new Date((lastRunData)[0].created_at) : undefined,
         totalContent: totalContent || 0,
         breakdown
       };

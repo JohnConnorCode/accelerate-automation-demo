@@ -1,3 +1,4 @@
+import type { Database } from '../types/supabase';
 import { EventEmitter } from 'events';
 import { Octokit } from '@octokit/rest';
 import { ethers } from 'ethers';

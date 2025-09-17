@@ -1,6 +1,7 @@
 /**
  * Analytics and reporting service
  */
+import type { Database } from '../types/supabase';
 import { supabase } from '../lib/supabase';
 import { logger } from './logger';
 

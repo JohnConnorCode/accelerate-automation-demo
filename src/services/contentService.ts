@@ -93,7 +93,7 @@ class ContentService {
           status: 'active',
           categories: item.metadata?.tags || [],
           technologies: item.metadata?.technologies || []
-        });
+        } as any);
         break;
 
       case 'funding':
@@ -102,7 +102,7 @@ class ContentService {
           amount: item.metadata?.amount,
           deadline: item.metadata?.deadline,
           requirements: item.metadata?.requirements || []
-        });
+        } as any);
         break;
 
       case 'resources':
@@ -110,7 +110,7 @@ class ContentService {
           ...baseData,
           type: item.metadata?.type || 'article',
           tags: item.metadata?.tags || []
-        });
+        } as any);
         break;
     }
   }

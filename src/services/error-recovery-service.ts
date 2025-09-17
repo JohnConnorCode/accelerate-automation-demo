@@ -414,7 +414,7 @@ export class ErrorRecoveryService {
     if (this.errorLogs.length === 0) {return;}
 
     try {
-      await supabase.from('error_logs').insert(this.errorLogs);
+      await supabase.from('error_logs').insert(this.errorLogs as any);
       this.errorLogs = [];
     } catch (error) {
 

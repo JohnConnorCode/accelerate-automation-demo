@@ -3,6 +3,7 @@
  * MINIMAL insertion - only use columns we know exist
  */
 
+import type { Database } from '../types/supabase';
 import { config } from 'dotenv';
 import { supabase } from '../lib/supabase-client';
 import { YCombinatorStartupsFetcher } from '../fetchers/real-sources/ycombinator-startups';
@@ -53,7 +54,7 @@ async function minimalInsert() {
   
   const { data, error } = await supabase
     .from('content_queue')
-    .insert(records)
+    .insert(records as any)
     .select('id, title');
   
   if (error) {

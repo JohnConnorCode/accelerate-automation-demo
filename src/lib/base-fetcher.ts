@@ -1,3 +1,4 @@
+import type { Database } from '../types/supabase';
 import { z } from 'zod';
 import { supabase } from './database';
 import { v4 as uuidv4 } from 'uuid';

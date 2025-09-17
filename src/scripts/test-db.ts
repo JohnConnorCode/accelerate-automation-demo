@@ -69,7 +69,7 @@ async function testDB() {
   try {
     const { data, error } = await supabase
       .from('content_queue')
-      .insert([testItem])
+      .insert([testItem] as any)
       .select('id, title');
     
     if (error) {

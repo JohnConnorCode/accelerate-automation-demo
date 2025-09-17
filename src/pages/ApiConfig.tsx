@@ -118,7 +118,7 @@ export default function ApiConfig() {
           encrypted_key: newKey.key, // In production, this should be encrypted
           is_active: true,
           usage_count: 0
-        })
+        } as any)
         .select()
         .single();
 

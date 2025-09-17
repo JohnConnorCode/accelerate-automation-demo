@@ -82,7 +82,7 @@ async function checkAndFixConstraints() {
   
   const { error } = await supabase
     .from('content_queue')
-    .insert(testItem);
+    .insert(testItem as any);
   
   if (error?.code === '23514') {
     console.log('❌ Database has constraint preventing empty descriptions');

@@ -4,9 +4,11 @@
  * Automatically creates test admin users and sample data for development
  */
 
-import { createClient } from '@supabase/supabase-js';
+
 import * as dotenv from 'dotenv';
 import * as path from 'path';
+import { supabase } from '../src/lib/supabase-client';
+
 
 // Load environment variables
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
@@ -19,7 +21,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   process.exit(1);
 }
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
 
 // Development admin users
 const DEV_ADMINS = [

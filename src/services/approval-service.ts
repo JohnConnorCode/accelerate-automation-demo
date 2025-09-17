@@ -125,7 +125,7 @@ export class ApprovalService {
       // Insert into production table
       const { data: insertedItem, error: insertError } = await supabase
         .from(productionTable)
-        .insert(productionItem)
+        .insert(productionItem as any)
         .select()
         .single();
       

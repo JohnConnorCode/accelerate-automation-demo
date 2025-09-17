@@ -360,7 +360,7 @@ export class FailSafeWrapper {
         operation,
         status,
         duration,
-        error: error ? this.serializeError(error) : null,
+        error: error ? this.serializeError(error as any) : null,
         timestamp: new Date().toISOString()
       });
     } catch (metricError) {

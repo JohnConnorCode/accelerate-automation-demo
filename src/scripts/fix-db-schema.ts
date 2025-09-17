@@ -86,7 +86,7 @@ async function fixSchema() {
     console.log('🧪 Testing insert with all expected columns...');
     const { error: insertError } = await supabase
       .from('content_queue')
-      .insert(testItem);
+      .insert(testItem as any);
     
     if (insertError) {
       console.log('❌ Insert error:', insertError.message);

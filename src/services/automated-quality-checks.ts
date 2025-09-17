@@ -1,3 +1,4 @@
+import type { Database } from '../types/supabase';
 import { supabase } from '../lib/supabase-client';
 import { AIQualityService } from './ai-quality-service';
 import { DuplicateDetector } from '../lib/duplicate-detector';
@@ -592,7 +593,7 @@ export class AutomatedQualityChecks {
 
           await supabase
             .from(table)
-            .update(updateData)
+            .update(updateData as any)
             .eq('id', item.id);
 
           stats.processed++;

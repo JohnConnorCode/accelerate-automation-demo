@@ -1,9 +1,12 @@
 #!/usr/bin/env npx tsx
 
-import { createClient } from '@supabase/supabase-js';
+
+import type { Database } from '../src/types/supabase';
 import { readFileSync } from 'fs';
 import path from 'path';
 import * as dotenv from 'dotenv';
+import { supabase } from '../src/lib/supabase-client';
+
 
 // Load environment variables
 dotenv.config({ path: '.env.local' });
@@ -14,7 +17,7 @@ const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANO
 
 console.log('🔧 Attempting to create queue tables via Supabase client...\n');
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+
 
 async function createTables() {
   // Since we can't execute raw DDL with anon key, let's verify what we have

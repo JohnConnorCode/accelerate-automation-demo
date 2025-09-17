@@ -1,3 +1,4 @@
+import type { Database } from '../types/supabase';
 import { createHmac } from 'crypto';
 import { supabase } from './supabase';
 import { z } from 'zod';
@@ -245,7 +246,7 @@ export class WebhookManager {
   private generateSignature(payload: WebhookPayload, secret: string): string {
     const data = JSON.stringify(payload);
     return createHmac('sha256', secret)
-      .update(data)
+      .update(data as any)
       .digest('hex');
   }
 
@@ -253,7 +254,7 @@ export class WebhookManager {
   private generateSecret(): string {
     const timestamp = Date.now().toString(36);
     const hash = createHmac('sha256', timestamp)
-      .update(process.env.NODE_ENV || 'production')
+      .update(process.env.NODE_ENV || 'production' as any)
       .digest('hex')
       .substring(0, 32);
     return `whsec_${hash}`;
@@ -297,7 +298,7 @@ export class WebhookManager {
   // Verify webhook signature (for incoming webhooks)
   static verifySignature(payload: string, signature: string, secret: string): boolean {
     const expected = createHmac('sha256', secret)
-      .update(payload)
+      .update(payload as any)
       .digest('hex');
     
     return signature === expected;

@@ -553,7 +553,7 @@ export class AccelerateDBPipeline {
             description: item.description,
             accelerate_score: item.metadata?.accelerate_score,
             last_investment_date: item.metadata?.last_investment_date,
-          })
+          } as any)
           .eq('application_url', item.url);
         break;
         

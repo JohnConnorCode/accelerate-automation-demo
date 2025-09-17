@@ -1,14 +1,13 @@
+import type { Database } from '../types/supabase';
+import { supabase } from '../lib/supabase-client';
 /**
  * API Key Service
  * Manages API keys from database and provides them to fetchers
  */
 
-import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '',
-  process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || ''
-);
+
+
 
 interface ApiKey {
   service_name: string;

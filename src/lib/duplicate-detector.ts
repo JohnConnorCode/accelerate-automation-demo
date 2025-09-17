@@ -291,7 +291,7 @@ export class DuplicateDetector {
     // Update the existing record
     await supabase
       .from(table)
-      .update(merged)
+      .update(merged as any)
       .eq('id', existingId);
   }
 }

@@ -5,9 +5,11 @@
  * Creates missing tables and constraints
  */
 
-import { createClient } from '@supabase/supabase-js';
+
 import * as dotenv from 'dotenv';
 import * as path from 'path';
+import { supabase } from '../src/lib/supabase-client';
+
 
 // Load environment from .env.local first, then .env
 dotenv.config({ path: path.join(__dirname, '..', '.env.local') });
@@ -24,7 +26,7 @@ if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('your-')) {
   process.exit(1);
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+
 
 async function fixSchema() {
   console.log('🔧 Checking and fixing database schema...\n');

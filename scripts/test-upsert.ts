@@ -21,7 +21,7 @@ async function testUpsert() {
   console.log('1️⃣ First insert attempt...');
   const { data: firstInsert, error: firstError } = await supabase
     .from('queue_projects')
-    .insert(testProject)
+    .insert(testProject as any)
     .select()
     .single();
   
@@ -55,7 +55,7 @@ async function testUpsert() {
     console.log('\n2️⃣ Testing duplicate handling...');
     const { data: dupInsert, error: dupError } = await supabase
       .from('queue_projects')
-      .insert(testProject)
+      .insert(testProject as any)
       .select()
       .single();
     

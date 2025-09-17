@@ -1,6 +1,7 @@
 #!/usr/bin/env npx tsx
+import { supabase } from '../src/lib/supabase-client';
 
-import { createClient } from '@supabase/supabase-js';
+
 
 const supabaseUrl = process.env.SUPABASE_URL || 'https://eqpfvmwmdtsgddpsodsr.supabase.co';
 const supabaseKey = process.env.SUPABASE_ANON_KEY || '';
@@ -10,7 +11,7 @@ if (!supabaseKey) {
   process.exit(1);
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+
 
 async function testTables() {
   console.log('🔍 Testing what tables actually exist...\n');
@@ -51,7 +52,7 @@ async function testTables() {
         // Try insert to see what columns are needed
         const { error: insertError } = await supabase
           .from(table)
-          .insert(testData)
+          .insert(testData as any)
           .select();
         
         if (!insertError) {

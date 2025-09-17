@@ -1,3 +1,4 @@
+import type { Database } from '../types/supabase';
 import { z } from 'zod';
 import DOMPurify from 'isomorphic-dompurify';
 import { supabase } from '../lib/supabase-client';

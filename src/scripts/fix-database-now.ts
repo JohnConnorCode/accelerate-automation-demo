@@ -1,9 +1,11 @@
 #!/usr/bin/env tsx
 
-import { createClient } from '@supabase/supabase-js';
+
 
 // Load env vars
 import * as dotenv from 'dotenv';
+import { supabase } from '../lib/supabase-client';
+
 dotenv.config({ path: '.env.local' });
 
 const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://eqpfvmwmdtsgddpsodsr.supabase.co';
@@ -14,7 +16,7 @@ if (!supabaseKey) {
   process.exit(1);
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+
 
 async function fixDatabase() {
   console.log('🔨 FIXING DATABASE ISSUES...\n');
@@ -39,7 +41,7 @@ async function fixDatabase() {
         source: 'test',
         type: 'funding',
         status: 'pending_review'
-      });
+      } as any);
     
     if (!testError) {
       console.log('   ✅ Constraint already removed or not blocking');
@@ -120,7 +122,7 @@ CREATE TABLE IF NOT EXISTS public.accelerate_startups (
   
   const { error: insertError } = await supabase
     .from('content_queue')
-    .insert(testFunding);
+    .insert(testFunding as any);
   
   if (!insertError) {
     console.log('   ✅ Funding items can be stored');

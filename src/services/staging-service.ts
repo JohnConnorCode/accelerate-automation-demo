@@ -16,6 +16,7 @@ const generateUUID = (): string => {
   });
 };
 
+import type { Database } from '../types/supabase';
 import { supabase } from '../lib/supabase-client';
 
 export interface StagingItem {
@@ -383,7 +384,7 @@ export class StagingService {
           // Try to insert, if it fails due to duplicate, try updating
           const { data: insertData, error: insertError } = await supabase
             .from('queue_projects')
-            .insert(item)
+            .insert(item as any)
             .select();
           
           if (!insertError) {
@@ -471,7 +472,7 @@ export class StagingService {
           // Try to insert, if it fails due to duplicate, try updating
           const { data: insertData, error: insertError } = await supabase
             .from('queue_investors')
-            .insert(item)
+            .insert(item as any)
             .select();
           
           if (!insertError) {

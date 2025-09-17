@@ -1,3 +1,4 @@
+import type { Database } from '../types/supabase';
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase-client';
 import { AlertCircle, CheckCircle, XCircle, RefreshCw, Sparkles, Search, Package, DollarSign, BookOpen } from 'lucide-react';
@@ -167,7 +168,7 @@ export default function ContentQueueV2() {
       // Move to live table
       const { error: insertError } = await supabase
         .from(targetTable)
-        .insert(insertData);
+        .insert(insertData as any);
       
       if (insertError) {throw insertError;}
       

@@ -1,12 +1,12 @@
+import type { Database } from '../../types/supabase';
 import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
-import { createClient } from '@supabase/supabase-js';
+
 import { AutomatedContentPipeline } from '../../services/automated-pipeline';
+import { supabase } from '../../lib/supabase-client';
+
 
 // Initialize Supabase client
-const supabase = createClient(
-  process.env.SUPABASE_URL || 'https://eqpfvmwmdtsgddpsodsr.supabase.co',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || ''
-);
+
 
 describe('Content Automation Integration Tests', () => {
   let testProjectId: string;
@@ -26,7 +26,7 @@ describe('Content Automation Integration Tests', () => {
         github: 'https://github.com/test/project',
         categories: ['DeFi', 'Testing'],
         status: 'active'
-      })
+      } as any)
       .select()
       .single();
 
@@ -41,7 +41,7 @@ describe('Content Automation Integration Tests', () => {
         description: 'Test funding opportunity for integration testing',
         website: 'https://test-grants.com',
         status: 'active'
-      })
+      } as any)
       .select()
       .single();
 
@@ -57,7 +57,7 @@ describe('Content Automation Integration Tests', () => {
         category: 'Documentation',
         url: 'https://test-resources.com/guide',
         tags: ['web3', 'development', 'testing']
-      })
+      } as any)
       .select()
       .single();
 

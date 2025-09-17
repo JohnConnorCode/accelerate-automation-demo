@@ -3,6 +3,7 @@
  * Moves content from staging (queued_*) to production tables
  */
 
+import type { Database } from '../types/supabase';
 import { supabase, QueueProjectRow, QueueInvestorRow, QueueNewsRow } from '../lib/typed-supabase';
 
 export interface ApprovalRequest {
@@ -89,7 +90,7 @@ export class ApprovalServiceV2 {
           const { data: updatedItem, error: updateError } = await supabase
             .from(productionTable)
             .update(productionData as any)
-            .eq('url', (productionData as any).url)
+            .eq('url', (productionData).url)
             .select()
             .single();
 
@@ -293,7 +294,7 @@ export class ApprovalServiceV2 {
           contentType: item.type,
           action: 'approve',
           reviewedBy
-        } as any)
+        })
       )
     );
 

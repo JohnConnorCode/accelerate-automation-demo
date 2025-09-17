@@ -163,7 +163,7 @@ class ContentServiceV2 {
     }
 
     const { error } = await this.retryOperation(async () => 
-      supabase.from(TABLES.CONTENT_QUEUE).insert(validItems)
+      supabase.from(TABLES.CONTENT_QUEUE).insert(validItems as any)
     );
 
     if (error) {
@@ -264,7 +264,7 @@ class ContentServiceV2 {
           status: 'active',
           categories: item.metadata?.tags || [],
           technologies: item.metadata?.technologies || []
-        });
+        } as any);
         break;
 
       case 'funding':
@@ -273,7 +273,7 @@ class ContentServiceV2 {
           amount: item.metadata?.amount,
           deadline: item.metadata?.deadline,
           requirements: item.metadata?.requirements || []
-        });
+        } as any);
         break;
 
       case 'resources':
@@ -281,7 +281,7 @@ class ContentServiceV2 {
           ...baseData,
           type: item.metadata?.type || 'article',
           tags: item.metadata?.tags || []
-        });
+        } as any);
         break;
     }
   }
@@ -804,7 +804,7 @@ class ContentServiceV2 {
       // Insert into queue
       const { data, error } = await supabase
         .from(TABLES.CONTENT_QUEUE)
-        .insert(queueItem)
+        .insert(queueItem as any)
         .select()
         .single();
 

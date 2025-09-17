@@ -2,6 +2,7 @@
  * Simple, robust content fetcher with built-in rate limiting
  * Now enhanced with retry logic and circuit breakers
  */
+import type { Database } from '../types/supabase';
 import { supabase } from '../lib/supabase-client';
 import { retryFetcher } from '../lib/retry-fetcher';
 

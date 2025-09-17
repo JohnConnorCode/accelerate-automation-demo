@@ -1,3 +1,4 @@
+import type { Database } from '../types/supabase';
 import { supabase } from '../lib/supabase-client';
 import { AccelerateOrchestrator } from '../orchestrator';
 import { AutomatedQualityChecks } from './automated-quality-checks';

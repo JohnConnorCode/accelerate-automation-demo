@@ -446,7 +446,7 @@ export class BackupRecoveryService {
     };
     
     // Store in database
-    await supabase.from('recovery_points').insert(recoveryPoint);
+    await supabase.from('recovery_points').insert(recoveryPoint as any);
 
     return recoveryPoint;
   }
@@ -623,7 +623,7 @@ export class BackupRecoveryService {
   private generateBackupId(): string {
     const timestamp = Date.now();
     const hash = require('crypto').createHash('sha256')
-      .update(`${timestamp}_${process.pid}`)
+      .update(`${timestamp}_${process.pid}` as any)
       .digest('hex')
       .substring(0, 9);
     return `backup_${timestamp}_${hash}`;
@@ -665,6 +665,6 @@ export class BackupRecoveryService {
   }
   
   private async storeBackupMetadata(metadata: BackupMetadata): Promise<void> {
-    await supabase.from('backup_metadata').insert(metadata);
+    await supabase.from('backup_metadata').insert(metadata as any);
   }
 }

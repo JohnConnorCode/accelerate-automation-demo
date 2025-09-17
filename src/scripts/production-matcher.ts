@@ -4,6 +4,7 @@
  * This version actually finds real matches between sources
  */
 
+import type { Database } from '../types/supabase';
 import { config } from 'dotenv';
 import { supabase } from '../lib/supabase-client';
 import { YCombinatorStartupsFetcher } from '../fetchers/real-sources/ycombinator-startups';
@@ -350,7 +351,7 @@ async function runProductionMatcher() {
     if (newItems.length > 0) {
       const { data, error } = await supabase
         .from('content_queue')
-        .insert(newItems)
+        .insert(newItems as any)
         .select('id, title');
       
       if (error) {

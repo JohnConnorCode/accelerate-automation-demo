@@ -4,6 +4,7 @@
  * Enrich existing database entries with additional information
  */
 
+import type { Database } from '../types/supabase';
 import { supabase } from '../lib/supabase-client';
 import { EnrichmentService } from '../services/enrichment';
 
@@ -80,7 +81,7 @@ class ExistingEntryEnricher {
             ...item.metadata,
             ...enrichmentData
           }
-        })
+        } as any)
         .eq('id', item.id);
       
       if (updateError) {

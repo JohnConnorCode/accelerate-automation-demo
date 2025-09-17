@@ -3,6 +3,7 @@
  * Tracks key performance indicators for the content pipeline
  */
 
+import type { Database } from '../types/supabase';
 import { supabase } from '../lib/supabase';
 
 interface PipelineMetrics {

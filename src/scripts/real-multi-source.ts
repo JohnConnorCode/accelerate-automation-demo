@@ -4,6 +4,7 @@
  * Actually matches and combines YC, RSS, and Reddit data
  */
 
+import type { Database } from '../types/supabase';
 import { config } from 'dotenv';
 import { supabase } from '../lib/supabase-client';
 import { YCombinatorStartupsFetcher } from '../fetchers/real-sources/ycombinator-startups';
@@ -368,7 +369,7 @@ async function runRealMultiSource() {
       
       const { data, error } = await supabase
         .from('content_queue')
-        .insert(batch)
+        .insert(batch as any)
         .select('id, title');
       
       if (error) {

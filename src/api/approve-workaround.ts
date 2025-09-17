@@ -3,6 +3,7 @@
  * This version works without the accelerate_startups table
  */
 
+import type { Database } from '../types/supabase';
 import { supabase } from '../lib/typed-supabase';
 
 export interface ApprovalRequest {
@@ -110,7 +111,7 @@ export class ApprovalServiceWorkaround {
         // Attempt insertion but don't fail if table doesn't exist
         const { error: insertError } = await supabase
           .from(targetTable)
-          .insert(productionData)
+          .insert(productionData as any)
           .select()
           .single();
 

@@ -1,6 +1,7 @@
 // Frontend-safe version of contentServiceV2
 // This version doesn't use any Node.js specific features or process.env
 
+import type { Database } from '../types/supabase';
 import { supabase } from '../lib/supabase';
 
 export type ContentCategory = 'projects' | 'funding' | 'resources' | 'builders';

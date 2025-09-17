@@ -1,15 +1,17 @@
 #!/usr/bin/env tsx
+import type { Database } from '../src/types/supabase';
+import { supabase } from '../src/lib/supabase-client';
 /**
  * Quick script to create an admin user
  * Run with: npx tsx scripts/quick-admin-setup.ts
  */
 
-import { createClient } from '@supabase/supabase-js';
+
 
 const SUPABASE_URL = 'https://eqpfvmwmdtsgddpsodsr.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcGZ2bXdtZHRzZ2RkcHNvZHNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU4MjE4NzgsImV4cCI6MjA2MTM5Nzg3OH0.HAyBibHx0dqzXEAAr2MYxv1sfs13PLANLXLXM2NIWKI';
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 
 async function createAdminUser() {
   console.log('🔐 Creating Admin User for Content Automation System\n');

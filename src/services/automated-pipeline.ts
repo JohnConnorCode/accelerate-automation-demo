@@ -1,13 +1,13 @@
-import { createClient } from '@supabase/supabase-js';
+
+import type { Database } from '../types/supabase';
 import * as cron from 'node-cron';
 import { config } from 'dotenv';
+import { supabase } from '../lib/supabase-client';
+
 
 config();
 
-const supabase = createClient(
-  process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || ''
-);
+
 
 interface PipelineConfig {
   schedule: string; // Cron expression
@@ -102,7 +102,7 @@ class AutomatedContentPipeline {
         // Update status to approved for high-scoring content
         const { error } = await supabase
           .from('content_queue')
-          .update({ status: 'approved' })
+          .update({ status: 'approved' } as any)
           .match({ 
             content: piece.content,
             platform: piece.platform 
@@ -128,7 +128,7 @@ class AutomatedContentPipeline {
     // Store statistics in database
     await supabase
       .from('pipeline_stats')
-      .insert(stats);
+      .insert(stats as any);
 
     console.log(`   📈 Stats: ${stats.items_fetched} items → ${stats.content_generated} content pieces`);
   }

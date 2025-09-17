@@ -2,9 +2,12 @@
  * Script to insert YC companies directly, bypassing RLS
  */
 
-import { createClient } from '@supabase/supabase-js';
+
+import type { Database } from '../types/supabase';
 import { YCombinatorStartupsFetcher } from '../fetchers/real-sources/ycombinator-startups';
 import { config } from 'dotenv';
+import { supabase } from '../lib/supabase-client';
+
 
 config();
 
@@ -17,12 +20,7 @@ if (!supabaseUrl || !supabaseKey) {
   process.exit(1);
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  }
-});
+
 
 async function insertYCCompanies() {
   console.log('🚀 Starting YC companies insertion...');
@@ -85,7 +83,7 @@ async function insertYCCompanies() {
       
       const { data, error } = await supabase
         .from('resources')
-        .insert(batch);
+        .insert(batch as any);
       
       if (error) {
         console.error(`❌ Batch ${i/batchSize + 1} failed:`, error);

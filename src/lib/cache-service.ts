@@ -1,3 +1,4 @@
+import type { Database } from '../types/supabase';
 import { supabase, ApiCacheRow } from './typed-supabase';
 import * as crypto from 'crypto';
 

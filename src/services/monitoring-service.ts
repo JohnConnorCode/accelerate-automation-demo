@@ -3,6 +3,7 @@
  * Tracks system health, performance, errors, and provides alerting
  */
 
+import type { Database } from '../types/supabase';
 import { logger } from './logger';
 import { supabase } from '../lib/supabase';
 import { performance } from 'perf_hooks';

@@ -416,7 +416,7 @@ export class HealthMonitoringService {
       // Check last run
       if (schedulerStatus.lastRun) {
         const timeSinceLastRun = Date.now() - new Date(schedulerStatus.lastRun).getTime();
-        const expectedInterval = ((config as any)?.intervalHours || 24) * 3600000;
+        const expectedInterval = ((config)?.intervalHours || 24) * 3600000;
         
         if (timeSinceLastRun > expectedInterval * 1.5) {
           status = 'warning';
@@ -717,7 +717,7 @@ export class HealthMonitoringService {
         metrics: metrics.metrics,
         alerts: metrics.alerts,
         recommendations: metrics.recommendations
-      });
+      } as any);
     } catch (error) {
 
     }
@@ -742,7 +742,7 @@ export class HealthMonitoringService {
           message: alert.message,
           timestamp: alert.timestamp,
           active: true
-        });
+        } as any);
         
         // Send notification for critical alerts
         if (alert.level === 'critical') {
@@ -809,7 +809,7 @@ export class HealthMonitoringService {
             // Switch to fallback AI model
 
             // Check if enableFallbackMode exists before calling
-            if (typeof (this.aiService as any).enableFallbackMode === 'function') {
+            if (typeof (this.aiService).enableFallbackMode === 'function') {
               await (this.aiService as any).enableFallbackMode();
             }
             break;
@@ -824,7 +824,7 @@ export class HealthMonitoringService {
             // Restart scheduler
 
             // Check if restart exists before calling
-            if (typeof (this.schedulingService as any).restart === 'function') {
+            if (typeof (this.schedulingService).restart === 'function') {
               await (this.schedulingService as any).restart();
             }
             break;

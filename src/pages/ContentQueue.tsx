@@ -1,3 +1,4 @@
+import type { Database } from '../types/supabase';
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase-client';
 import { AlertCircle, CheckCircle, XCircle, RefreshCw, Sparkles, Search, Package, DollarSign, BookOpen } from 'lucide-react';
@@ -75,7 +76,7 @@ export default function ContentQueue() {
           const score = await QualityScorer.scoreContent(item);
           await supabase
             .from('content_queue')
-            .update({ quality_score: score.total })
+            .update({ quality_score: score.total } as any)
             .eq('id', item.id);
           item.quality_score = score.total;
         }

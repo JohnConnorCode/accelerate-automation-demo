@@ -277,7 +277,7 @@ describe('Comprehensive System Tests', () => {
       const crypto = require('crypto');
       const signature = crypto
         .createHmac('sha256', secret)
-        .update(payload)
+        .update(payload as any)
         .digest('hex');
 
       // Test webhook signature verification directly

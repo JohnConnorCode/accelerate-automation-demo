@@ -52,7 +52,7 @@ export class DeduplicationService {
     };
     
     const data = JSON.stringify(normalized);
-    return crypto.createHash('sha256').update(data).digest('hex');
+    return crypto.createHash('sha256').update(data as any).digest('hex');
   }
 
   // Calculate Jaccard similarity between two texts
@@ -258,7 +258,7 @@ export class DeduplicationService {
         // Mark duplicates
         const { error: updateError } = await supabase
           .from('content_queue')
-          .update({ status: 'duplicate' })
+          .update({ status: 'duplicate' } as any)
           .in('id', duplicates);
         
         if (updateError) {

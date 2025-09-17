@@ -4,6 +4,7 @@
  * This table will store the enriched, multi-source data
  */
 
+import type { Database } from '../types/supabase';
 import { config } from 'dotenv';
 import { supabase } from '../lib/supabase-client';
 

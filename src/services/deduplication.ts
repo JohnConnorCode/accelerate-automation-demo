@@ -1,6 +1,7 @@
 /**
  * Deduplication service for content
  */
+import type { Database } from '../types/supabase';
 import crypto from 'crypto';
 import { supabase } from '../lib/supabase';
 import { logger } from './logger';
@@ -21,7 +22,7 @@ export class DeduplicationService {
     };
     
     const str = `${normalized.title}|${normalized.url}|${normalized.description}`;
-    return crypto.createHash('sha256').update(str).digest('hex');
+    return crypto.createHash('sha256').update(str as any).digest('hex');
   }
 
   /**

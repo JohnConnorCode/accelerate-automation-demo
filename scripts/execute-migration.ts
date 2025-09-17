@@ -7,8 +7,10 @@
 
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { createClient } from '@supabase/supabase-js';
+
 import dotenv from 'dotenv';
+import { supabase } from '../src/lib/supabase-client';
+
 
 // Load environment variables
 dotenv.config();
@@ -23,11 +25,7 @@ async function executeMigration() {
   console.log(`📡 Connecting to: ${supabaseUrl}`);
   
   // Create Supabase client
-  const supabase = createClient(supabaseUrl, supabaseKey, {
-    auth: {
-      persistSession: false,
-    },
-  });
+  
   
   try {
     // Read the migration file

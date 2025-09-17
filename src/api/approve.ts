@@ -2,6 +2,7 @@
  * Approval API - Moves content from queue to production tables
  */
 
+import type { Database } from '../types/supabase';
 import { supabase, ContentQueueRow } from '../lib/typed-supabase';
 import type { ContentQueueItem, ProjectItem, FundingItem, ResourceItem } from '../types/database';
 
@@ -47,7 +48,7 @@ export class ApprovalService {
             reviewed_by: request.reviewedBy || 'admin',
             reviewed_at: new Date().toISOString(),
             metadata: {
-                ...(queueItem.metadata || {}),
+                ...(typeof (queueItem.metadata || {}) === "object" && (queueItem.metadata || {}) !== null ? (queueItem.metadata || {}) : {}),
                 reviewer_notes: request.reviewerNotes,
                 rejection_reason: request.reviewerNotes
             }
@@ -55,7 +56,7 @@ export class ApprovalService {
         
         const { error: rejectError } = await supabase
           .from('content_queue')
-          .update(updateData)
+          .update(updateData as any)
           .eq('id', request.itemId);
 
         if (rejectError) {
@@ -90,7 +91,7 @@ export class ApprovalService {
           const { data: updatedItem, error: updateError } = await supabase
             .from(targetTable)
             .update(productionData as any)
-            .eq('url', (productionData as any).url)
+            .eq('url', (productionData).url)
             .select()
             .single();
 

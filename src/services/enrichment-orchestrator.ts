@@ -4,17 +4,20 @@
  * Validates, cross-references, and improves data quality
  */
 
-import { createClient } from '@supabase/supabase-js';
+
+import type { Database } from '../types/supabase';
 import { Octokit } from '@octokit/rest';
 import axios from 'axios';
 import OpenAI from 'openai';
 import { z } from 'zod';
+import { supabase } from '../lib/supabase-client';
+
 
 // Initialize clients - use environment variables
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+
 
 const octokit = new Octokit({
   auth: process.env.GITHUB_TOKEN
@@ -445,7 +448,7 @@ export class EnrichmentOrchestrator {
     if (Object.keys(updateData).length > 0) {
       const { error } = await supabase
         .from('projects')
-        .update(updateData)
+        .update(updateData as any)
         .eq('id', projectId);
       
       if (error) {

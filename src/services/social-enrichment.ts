@@ -1,3 +1,4 @@
+import type { Database } from '../types/supabase';
 import { ContentItem } from '../lib/base-fetcher';
 import { supabase } from '../lib/supabase-client';
 

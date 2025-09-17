@@ -1,5 +1,7 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { intelligentCache } from './intelligent-cache-service';
+import { supabase } from '../lib/supabase-client';
+
 
 /**
  * Optimized Database Service with Connection Pooling and Query Optimization
@@ -204,7 +206,7 @@ export class OptimizedDatabaseService {
       try {
         const { data: inserted, error } = options?.onConflict
           ? await connection.from(table).upsert(chunk, { onConflict: options.onConflict })
-          : await connection.from(table).insert(chunk);
+          : await connection.from(table).insert(chunk as any);
         
         if (error) {
           errors.push({ chunk: index, error });
@@ -320,10 +322,10 @@ export class OptimizedDatabaseService {
           
           switch (op.operation) {
             case 'insert':
-              result = await connection.from(table).insert(op.data);
+              result = await connection.from(table).insert(op.data as any);
               break;
             case 'update':
-              result = await connection.from(table).update(op.data).match(op.options?.match || {});
+              result = await connection.from(table).update(op.data as any).match(op.options?.match || {});
               break;
             case 'upsert':
               result = await connection.from(table).upsert(op.data, op.options);

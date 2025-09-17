@@ -606,7 +606,7 @@ export class MonitoringAlertingService extends EventEmitter {
       
       await supabase
         .from('alerts')
-        .update({ acknowledged: true })
+        .update({ acknowledged: true } as any)
         .eq('id', alertId);
       
       this.emit('alert-acknowledged', alert);
