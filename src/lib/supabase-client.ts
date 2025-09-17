@@ -9,7 +9,9 @@ import type { Database } from '../types/supabase';
 // Load dotenv if we're in Node.js
 if (typeof window === 'undefined' && typeof process !== 'undefined') {
   try {
-    require('dotenv').config();
+    // Load .env.local first (takes precedence), then .env as fallback
+    require('dotenv').config({ path: '.env.local' });
+    require('dotenv').config(); // Load .env as fallback for any missing values
   } catch (e) {
     // dotenv might not be available in some environments
   }
