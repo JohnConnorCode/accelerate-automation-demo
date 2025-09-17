@@ -7,6 +7,14 @@ import { TextEncoder, TextDecoder } from 'util'
 global.TextEncoder = TextEncoder as any
 global.TextDecoder = TextDecoder as any
 
+// Add setImmediate polyfill for jest
+if (typeof global.setImmediate === 'undefined') {
+  global.setImmediate = ((fn: Function, ...args: any[]) => setTimeout(fn, 0, ...args)) as any;
+}
+if (typeof global.clearImmediate === 'undefined') {
+  global.clearImmediate = clearTimeout as any;
+}
+
 // Mock environment variables
 process.env.VITE_SUPABASE_URL = 'https://test.supabase.co';
 process.env.VITE_SUPABASE_ANON_KEY = 'test-anon-key';

@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { Database } from '../types/supabase';
 
 // Get Supabase credentials - handle both Node.js and browser environments
 const supabaseUrl = typeof window !== 'undefined' 
@@ -20,7 +21,7 @@ if (!supabaseAnonKey) {
   }
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey || 'placeholder');
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey || 'placeholder');
 
 // Content automation specific tables
 export const TABLES = {

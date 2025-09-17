@@ -526,10 +526,23 @@ export class StagingService {
     try {
       console.log(`🔧 Inserting ${items.length} resources...`);
       
+      // Deduplicate resources by URL before insertion
+      const uniqueResources = new Map<string, any>();
+      items.forEach(item => {
+        if (!uniqueResources.has(item.url)) {
+          uniqueResources.set(item.url, item);
+        }
+      });
+      const dedupedItems = Array.from(uniqueResources.values());
+      
+      if (dedupedItems.length < items.length) {
+        console.log(`   Deduped ${items.length - dedupedItems.length} duplicate URLs in batch`);
+      }
+      
       // Use upsert with onConflict to handle duplicates gracefully
       const { data: batchData, error: batchError } = await supabase
         .from('queue_news')
-        .upsert(items as any, { 
+        .upsert(dedupedItems as any, { 
           onConflict: 'url',
           ignoreDuplicates: false 
         })

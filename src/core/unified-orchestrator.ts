@@ -84,7 +84,7 @@ export class UnifiedOrchestrator {
         validated: validated.length,
         unique: 0,
         inserted: 0,
-        accelerateStats: validationResult.stats.byCategory
+        accelerateStats: validationResult.stats.byCategory as { perfect: number; good: number; maybe: number; rejected: number }
       });
 
       if (validated.length === 0) {

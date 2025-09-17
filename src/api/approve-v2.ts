@@ -3,7 +3,7 @@
  * Moves content from staging (queued_*) to production tables
  */
 
-import { supabase } from '../lib/supabase-client';
+import { supabase, QueueProjectRow, QueueInvestorRow, QueueNewsRow } from '../lib/typed-supabase';
 
 export interface ApprovalRequest {
   itemId: string;

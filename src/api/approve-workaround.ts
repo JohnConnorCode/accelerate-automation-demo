@@ -3,7 +3,7 @@
  * This version works without the accelerate_startups table
  */
 
-import { supabase } from '../lib/supabase-client';
+import { supabase } from '../lib/typed-supabase';
 
 export interface ApprovalRequest {
   itemId: string;

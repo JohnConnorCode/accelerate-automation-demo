@@ -67,9 +67,13 @@ async function executeMigration() {
     
     try {
       // Use rpc to execute raw SQL
-      const { error } = await supabase.rpc('exec_sql', { 
-        sql: statement 
-      }).catch(async (err) => {
+      let error;
+      try {
+        const result = await supabase.rpc('exec_sql', { 
+          sql: statement 
+        });
+        error = result.error;
+      } catch (err: any) {
         // If exec_sql doesn't exist, try a different approach
         // We'll check if the constraint already exists first
         if (statement.includes('ADD CONSTRAINT')) {
@@ -86,14 +90,18 @@ async function executeMigration() {
               .single();
             
             if (existing) {
-              return { error: null, alreadyExists: true };
+              error = null;
+            } else {
+              throw err;
             }
+          } else {
+            throw err;
           }
+        } else {
+          // For other statements, we need to handle them differently
+          throw err;
         }
-        
-        // For other statements, we need to handle them differently
-        throw err;
-      });
+      }
       
       if (error) {
         // Check if it's because constraint already exists

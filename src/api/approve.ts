@@ -2,7 +2,7 @@
  * Approval API - Moves content from queue to production tables
  */
 
-import { supabase } from '../lib/supabase-client';
+import { supabase, ContentQueueRow } from '../lib/typed-supabase';
 import type { ContentQueueItem, ProjectItem, FundingItem, ResourceItem } from '../types/database';
 
 export interface ApprovalRequest {
@@ -30,7 +30,7 @@ export class ApprovalService {
         .from('content_queue')
         .select('*')
         .eq('id', request.itemId)
-        .single();
+        .single() as { data: ContentQueueRow | null; error: any };
 
       if (fetchError || !queueItem) {
         return {
@@ -42,15 +42,20 @@ export class ApprovalService {
 
       // 2. Handle rejection
       if (request.action === 'reject') {
-        const { error: rejectError } = await supabase
-          .from('content_queue')
-          .update({
+        const updateData: any = {
             status: 'rejected',
-            reviewer_notes: request.reviewerNotes,
             reviewed_by: request.reviewedBy || 'admin',
             reviewed_at: new Date().toISOString(),
-            rejection_reason: request.reviewerNotes
-          } as any)
+            metadata: {
+                ...(queueItem.metadata || {}),
+                reviewer_notes: request.reviewerNotes,
+                rejection_reason: request.reviewerNotes
+            }
+        };
+        
+        const { error: rejectError } = await supabase
+          .from('content_queue')
+          .update(updateData)
           .eq('id', request.itemId);
 
         if (rejectError) {

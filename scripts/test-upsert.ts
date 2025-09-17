@@ -13,7 +13,9 @@ async function testUpsert() {
     source: 'test',
     score: 0.85,
     status: 'pending',
-    created_at: new Date().toISOString()
+    metadata: {},
+    accelerate_fit: true,
+    accelerate_reason: 'Test project'
   };
   
   console.log('1️⃣ First insert attempt...');
@@ -115,9 +117,15 @@ async function testUpsert() {
     console.log('   ✅ Table accessible');
     
     // Try to get constraint info (this won't work with anon key but worth trying)
-    const { data: constraints, error: constraintError } = await supabase
-      .rpc('get_table_constraints', { table_name: 'queue_projects' })
-      .catch(() => ({ data: null, error: 'Function not available' }));
+    let constraints, constraintError;
+    try {
+      const result = await supabase.rpc('get_table_constraints', { table_name: 'queue_projects' });
+      constraints = result.data;
+      constraintError = result.error;
+    } catch {
+      constraints = null;
+      constraintError = 'Function not available';
+    }
     
     if (constraints) {
       console.log('   Constraints:', constraints);

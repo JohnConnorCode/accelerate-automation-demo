@@ -3,15 +3,10 @@
  * Provides system status for monitoring
  */
 
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { createClient } from '@supabase/supabase-js';
+import { Request, Response } from 'express';
+import { supabase } from '../lib/typed-supabase';
 
-const supabase = createClient(
-  process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '',
-  process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || ''
-);
-
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(req: Request, res: Response) {
   const startTime = Date.now();
   
   const health = {

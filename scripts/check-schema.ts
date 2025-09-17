@@ -31,14 +31,18 @@ async function checkSchema() {
         console.log('   Columns:', Object.keys(data[0]).join(', '));
       } else {
         // Try inserting a test record to see what columns are required
-        const testData = {
+        const testData: any = {
           url: 'https://test.example.com/' + Date.now(),
           title: 'Test',
-          description: 'Test'
+          description: 'Test',
+          source: 'test',
+          score: 0,
+          status: 'pending',
+          metadata: {}
         };
         
-        const { error: insertError } = await supabase
-          .from(table)
+        const { error: insertError } = await (supabase
+          .from(table) as any)
           .insert(testData)
           .select();
         

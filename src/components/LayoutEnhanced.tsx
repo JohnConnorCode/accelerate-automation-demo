@@ -15,7 +15,7 @@ export default function LayoutEnhanced() {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [autoRefresh, setAutoRefresh] = useState(false);
-  const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timer | null>(null);
+  const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timeout | null>(null);
   const [notifications, setNotifications] = useState(0);
   const [lastFetch, setLastFetch] = useState<Date | null>(null);
 

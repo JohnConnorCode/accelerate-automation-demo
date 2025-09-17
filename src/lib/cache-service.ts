@@ -1,4 +1,4 @@
-import { supabase } from './supabase-client';
+import { supabase, ApiCacheRow } from './typed-supabase';
 import * as crypto from 'crypto';
 
 /**
@@ -53,7 +53,7 @@ export class CacheService {
         .from('api_cache')
         .select('cache_value, expires_at')
         .eq('cache_key', key)
-        .single();
+        .single() as { data: Pick<ApiCacheRow, 'cache_value' | 'expires_at'> | null; error: any };
 
       if (!error && data && new Date(data.expires_at) > new Date()) {
 
