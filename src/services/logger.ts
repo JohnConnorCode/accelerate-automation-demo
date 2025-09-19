@@ -1,124 +1,89 @@
-import winston from 'winston';
-import path from 'path';
+// Browser-compatible logger that doesn't use Node.js modules
 
-const logLevel = process.env.LOG_LEVEL || 'info';
-const logFilePath = process.env.LOG_FILE_PATH || './logs/app.log';
-const auditLogPath = process.env.AUDIT_LOG_PATH || './logs/audit.log';
-
-// Create logs directory if it doesn't exist
-import fs from 'fs';
-const logDir = path.dirname(logFilePath);
-if (!fs.existsSync(logDir)) {
-  fs.mkdirSync(logDir, { recursive: true });
+interface LogLevel {
+  error: 0;
+  warn: 1;
+  info: 2;
+  debug: 3;
 }
 
-// Main application logger
-export const logger = winston.createLogger({
-  level: logLevel,
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.errors({ stack: true }),
-    winston.format.json()
-  ),
-  defaultMeta: { service: 'accelerate-content' },
-  transports: [
-    // Write all logs to file
-    new winston.transports.File({ 
-      filename: logFilePath,
-      maxsize: 10485760, // 10MB
-      maxFiles: 5
-    }),
-    // Write errors to separate file
-    new winston.transports.File({ 
-      filename: path.join(logDir, 'error.log'),
-      level: 'error',
-      maxsize: 10485760,
-      maxFiles: 5
-    })
-  ]
-});
+class BrowserLogger {
+  private level: keyof LogLevel = 'info';
+  private service = 'accelerate-content';
 
-// Audit logger for tracking admin actions
-export const auditLogger = winston.createLogger({
-  level: 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.json()
-  ),
-  transports: [
-    new winston.transports.File({ 
-      filename: auditLogPath,
-      maxsize: 10485760,
-      maxFiles: 10
-    })
-  ]
-});
-
-// Add console output in development
-if (process.env.NODE_ENV !== 'production') {
-  logger.add(new winston.transports.Console({
-    format: winston.format.combine(
-      winston.format.colorize(),
-      winston.format.simple()
-    )
-  }));
-}
-
-// Audit logging helper
-export const logAuditEvent = (
-  userId: string,
-  action: string,
-  resource: string,
-  details?: any,
-  result?: 'success' | 'failure'
-) => {
-  auditLogger.info({
-    userId,
-    action,
-    resource,
-    details,
-    result: result || 'success',
-    timestamp: new Date().toISOString(),
-    ip: details?.ip,
-    userAgent: details?.userAgent
-  });
-};
-
-// Error tracking helper
-export const logError = (
-  error: Error,
-  context?: {
-    userId?: string
-    action?: string
-    metadata?: any
+  constructor() {
+    // Use environment variable if available
+    if (typeof process !== 'undefined' && process.env?.LOG_LEVEL) {
+      this.level = process.env.LOG_LEVEL as keyof LogLevel;
+    }
   }
-) => {
-  logger.error({
+
+  private shouldLog(level: keyof LogLevel): boolean {
+    const levels: LogLevel = { error: 0, warn: 1, info: 2, debug: 3 };
+    return levels[level] <= levels[this.level];
+  }
+
+  private formatMessage(level: string, message: string, meta?: any): string {
+    const timestamp = new Date().toISOString();
+    const formatted = {
+      timestamp,
+      level,
+      service: this.service,
+      message,
+      ...meta
+    };
+    return JSON.stringify(formatted);
+  }
+
+  error(message: string, meta?: any): void {
+    if (this.shouldLog('error')) {
+      console.error(this.formatMessage('error', message, meta));
+    }
+  }
+
+  warn(message: string, meta?: any): void {
+    if (this.shouldLog('warn')) {
+      console.warn(this.formatMessage('warn', message, meta));
+    }
+  }
+
+  info(message: string, meta?: any): void {
+    if (this.shouldLog('info')) {
+      console.info(this.formatMessage('info', message, meta));
+    }
+  }
+
+  debug(message: string, meta?: any): void {
+    if (this.shouldLog('debug')) {
+      console.debug(this.formatMessage('debug', message, meta));
+    }
+  }
+
+  log(level: keyof LogLevel, message: string, meta?: any): void {
+    this[level](message, meta);
+  }
+}
+
+// Export singleton instances
+export const logger = new BrowserLogger();
+export const auditLogger = new BrowserLogger();
+
+// Helper function for performance logging
+export function logPerformance(operation: string, startTime: number): void {
+  const duration = Date.now() - startTime;
+  logger.info(`Performance: ${operation}`, { duration: `${duration}ms` });
+}
+
+// Helper for error logging with stack traces
+export function logError(error: Error | unknown, context?: string): void {
+  const errorDetails = error instanceof Error ? {
     message: error.message,
     stack: error.stack,
-    ...context,
-    timestamp: new Date().toISOString()
-  });
-  
-  // Send to error tracking service in production
-  if (process.env.NODE_ENV === 'production' && process.env.SENTRY_DSN) {
-    // Sentry integration would go here
-  }
-};
+    name: error.name
+  } : { message: String(error) };
 
-// Performance logging
-export const logPerformance = (
-  operation: string,
-  duration: number,
-  metadata?: any
-) => {
-  logger.info({
-    type: 'performance',
-    operation,
-    duration,
-    ...metadata,
-    timestamp: new Date().toISOString()
-  });
-};
+  logger.error(context || 'An error occurred', errorDetails);
+}
 
+// Export default logger
 export default logger;
