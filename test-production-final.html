@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Production Test</title>
+</head>
+<body>
+    <h1>Testing Production Site</h1>
+    <div id="status"></div>
+    <div id="console"></div>
+
+    <script>
+        const statusDiv = document.getElementById('status');
+        const consoleDiv = document.getElementById('console');
+
+        // Override console.error to capture errors
+        const originalError = console.error;
+        const errors = [];
+        console.error = function(...args) {
+            errors.push(args.join(' '));
+            originalError.apply(console, args);
+        };
+
+        // Test production site in iframe
+        const iframe = document.createElement('iframe');
+        iframe.src = 'https://accelerate-content-automation-b22svbd0h.vercel.app/';
+        iframe.style.width = '100%';
+        iframe.style.height = '600px';
+        iframe.style.border = '1px solid #ccc';
+
+        iframe.onload = function() {
+            statusDiv.innerHTML = '<h2 style="color: green;">✅ Site Loaded Successfully!</h2>';
+
+            // Check for React
+            try {
+                const hasReact = iframe.contentDocument.getElementById('root');
+                if (hasReact) {
+                    statusDiv.innerHTML += '<p style="color: green;">✅ React root element found</p>';
+                } else {
+                    statusDiv.innerHTML += '<p style="color: red;">❌ React root element NOT found</p>';
+                }
+            } catch(e) {
+                statusDiv.innerHTML += '<p>Cannot access iframe content (CORS)</p>';
+            }
+
+            // Show any errors
+            if (errors.length > 0) {
+                consoleDiv.innerHTML = '<h3 style="color: red;">Errors detected:</h3>';
+                errors.forEach(err => {
+                    consoleDiv.innerHTML += '<pre style="color: red;">' + err + '</pre>';
+                });
+            } else {
+                consoleDiv.innerHTML = '<h3 style="color: green;">✅ No console errors!</h3>';
+            }
+        };
+
+        iframe.onerror = function() {
+            statusDiv.innerHTML = '<h2 style="color: red;">❌ Failed to load site</h2>';
+        };
+
+        document.body.appendChild(iframe);
+
+        // Direct test
+        fetch('https://accelerate-content-automation-b22svbd0h.vercel.app/')
+            .then(res => res.text())
+            .then(html => {
+                if (html.includes('<div id="root">')) {
+                    console.log('✅ HTML contains React root');
+                }
+                if (html.includes('error') || html.includes('Error')) {
+                    console.log('⚠️ HTML contains error text');
+                }
+            });
+    </script>
+</body>
+</html>
