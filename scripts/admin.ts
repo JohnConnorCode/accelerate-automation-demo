@@ -168,13 +168,14 @@ program
           spinner.succeed('Cache cleared');
           break;
         
-        case 'stats':
+        case 'stats': {
           const stats = await cache.getStats();
           spinner.succeed('Cache statistics');
           console.log('\nCache Stats:');
           console.log(`  In-Memory: ${stats.inMemoryCount} entries`);
           console.log(`  Database: ${stats.databaseCount} entries`);
           break;
+        }
         
         default:
           spinner.fail(`Unknown action: ${action}`);

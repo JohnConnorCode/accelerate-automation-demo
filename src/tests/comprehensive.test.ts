@@ -17,6 +17,34 @@ process.env.SUPABASE_SERVICE_KEY = 'test-service-key';
 process.env.ADMIN_EMAIL = 'admin@test.com';
 process.env.CRON_SECRET = 'test-cron-secret';
 
+// Mock AIScorer to avoid OpenAI calls in tests
+jest.mock('../lib/ai-scorer', () => ({
+  AIScorer: jest.fn().mockImplementation(() => ({
+    scoreContent: jest.fn().mockResolvedValue({
+      overall: 0.85,
+      relevance: 0.9,
+      quality: 0.8,
+      timeliness: 0.85,
+      recommendation: 'approve'
+    }),
+    scoreBatch: jest.fn().mockImplementation((items) => {
+      const results = new Map();
+      items.forEach((item: any) => {
+        results.set(item, {
+          overall: 0.75,
+          relevance: 0.8,
+          quality: 0.7,
+          timeliness: 0.75,
+          recommendation: 'review'
+        });
+      });
+      return Promise.resolve(results);
+    }),
+    shouldAutoApprove: jest.fn().mockImplementation((score) => score.overall >= 0.8),
+    shouldAutoReject: jest.fn().mockImplementation((score) => score.overall <= 0.3)
+  }))
+}));
+
 describe('Comprehensive System Tests', () => {
   
   describe('Content Validation and Sanitization', () => {

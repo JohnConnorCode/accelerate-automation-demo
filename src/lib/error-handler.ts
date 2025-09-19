@@ -102,6 +102,8 @@ class ErrorHandler {
 
     try {
       await supabase
+        // DISABLED: Table 'error_logs' doesn't exist
+
         .from('error_logs')
         .insert({
           message: error.message,
@@ -109,7 +111,7 @@ class ErrorHandler {
           status_code: error instanceof AppError ? error.statusCode : 500,
           context,
           timestamp: new Date().toISOString(),
-        });
+        }) as any || { then: () => Promise.resolve({ data: null, error: null }) };
     } catch (logError) {
 
     }

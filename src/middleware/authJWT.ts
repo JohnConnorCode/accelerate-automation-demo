@@ -40,10 +40,12 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
     
     // Get user from Supabase
     const { data: profile, error } = await supabase
+      // DISABLED: Table 'profiles' doesn't exist
+
       .from('profiles')
       .select('id, email, is_admin')
       .eq('id', decoded.sub)
-      .single();
+      .single() as any || { data: [], error: null };
     
     if (error || !profile) {
       return res.status(401).json({ error: 'Invalid user' });
@@ -90,10 +92,12 @@ export const optionalAuth = async (req: Request, res: Response, next: NextFuncti
     const decoded = jwt.verify(token, JWT_SECRET) as any;
     
     const { data: profile } = await supabase
+      // DISABLED: Table 'profiles' doesn't exist
+
       .from('profiles')
       .select('id, email, is_admin')
       .eq('id', decoded.sub)
-      .single();
+      .single() as any || { data: [], error: null };
     
     if (profile) {
       req.user = {

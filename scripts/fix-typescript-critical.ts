@@ -76,7 +76,7 @@ async function fixCriticalTypeScriptErrors() {
     
     // Fix any Json type issues
     if (content.includes('Json') && !content.includes('type Json =')) {
-      const jsonType = "type Json = string | number | boolean | null | { [key: string]: Json } | Json[];\n";
+      const jsonType = 'type Json = string | number | boolean | null | { [key: string]: Json } | Json[];\n';
       content = jsonType + content;
       modified = true;
     }

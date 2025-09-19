@@ -76,9 +76,12 @@ describe('Content Quality Tests', () => {
         url: 'https://earlystage.io',
         tags: [],
         metadata: {
-          amount_funded: 100000,
+          funding_raised: 50000,
           team_size: 3,
-          launched_date: '2024-06-01'
+          launch_date: '2024-06-01',
+          project_needs: ['funding', 'co-founder'],
+          grant_participation: ['YC'],
+          last_activity: new Date().toISOString()
         }
       };
       
@@ -96,7 +99,7 @@ describe('Content Quality Tests', () => {
         url: 'https://corporate.io',
         tags: [],
         metadata: {
-          amount_funded: 10000000,
+          funding_raised: 10000000,
           team_size: 50,
           corporate_backing: true
         }
@@ -116,10 +119,17 @@ describe('Content Quality Tests', () => {
         url: 'https://popular.io',
         tags: [],
         metadata: {
-          twitter_followers: 10000,
-          discord_members: 5000,
-          github_stars: 500,
-          social_score: 85
+          team_size: 5,
+          funding_raised: 200000,
+          launch_date: '2024-03-01',
+          traction_metrics: {
+            users: 5000,
+            github_stars: 500
+          },
+          grant_participation: ['Techstars'],
+          incubator_participation: ['YC'],
+          project_needs: ['developers'],
+          last_activity: new Date().toISOString()
         }
       };
       

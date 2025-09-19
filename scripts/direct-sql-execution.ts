@@ -1,107 +1,67 @@
-// @ts-nocheck
-// DISABLED: References non-existent database tables
+#!/usr/bin/env node
 
+/**
+ * Direct SQL execution using PostgreSQL connection
+ * Backup method if Supabase client methods fail
+ */
 
-import type { Database } from '../src/types/supabase';
 import { readFileSync } from 'fs';
-import path from 'path';
-import * as dotenv from 'dotenv';
-import { supabase } from '../src/lib/supabase-client';
+import { join } from 'path';
 
+// PostgreSQL connection details for Supabase
+const DB_CONFIG = {
+  host: 'aws-0-us-east-1.pooler.supabase.com',
+  port: 6543,
+  database: 'postgres',
+  user: 'postgres.eqpfvmwmdtsgddpsodsr',
+  password: process.env.SUPABASE_DB_PASSWORD || 'your-db-password',
+  ssl: { rejectUnauthorized: false }
+};
 
-// Load environment variables
-dotenv.config({ path: '.env.local' });
-dotenv.config({ path: '.env' });
+async function executeDirectSQL() {
+  console.log('🔗 Attempting direct PostgreSQL connection...');
 
-const supabaseUrl = process.env.SUPABASE_URL || 'https://eqpfvmwmdtsgddpsodsr.supabase.co';
-const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || '';
+  try {
+    // Try to install pg if not available
+    const { Client } = require('pg');
 
-console.log('🔧 Attempting to create queue tables via Supabase client...
-');
+    const client = new Client(DB_CONFIG);
+    await client.connect();
 
+    console.log('✅ Connected to PostgreSQL database');
 
+    // Read SQL file
+    const sqlPath = join(__dirname, 'create-essential-tables.sql');
+    const sqlContent = readFileSync(sqlPath, 'utf8');
 
-async function createTables() {
-  // Since we can't execute raw DDL with anon key, let's verify what we have
-  // and create the tables using the Supabase client methods
-  
-  console.log('📋 Checking existing tables...');
-  
-  const tables = ['queue_projects', 'queue_investors', 'queue_news'];
-  const missingTables = [];
-  
-  for (const table of tables) {
-    const { data, error } = await supabase
-      .from(table)
-      .select('*')
-      .limit(0);
-    
-    if (error && error.message.includes('does not exist')) {
-      missingTables.push(table);
-      console.log(`   ❌ ${table} - does not exist`);
-    } else if (error) {
-      console.log(`   ⚠️  ${table} - ${error.message}`);
-    } else {
-      console.log(`   ✅ ${table} - exists`);
+    // Execute the SQL
+    console.log('📝 Executing SQL migration...');
+    const result = await client.query(sqlContent);
+
+    console.log('✅ SQL executed successfully');
+    console.log('📊 Result:', result);
+
+    await client.end();
+    console.log('🎉 Migration completed successfully!');
+
+  } catch (error) {
+    if (error.code === 'MODULE_NOT_FOUND' && error.message.includes('pg')) {
+      console.log('📦 Installing pg package...');
+      const { execSync } = require('child_process');
+      execSync('npm install pg @types/pg', { stdio: 'inherit' });
+      console.log('✅ pg package installed, retrying...');
+      return executeDirectSQL();
     }
-  }
-  
-  if (missingTables.length > 0) {
-    console.log('
-⚠️  Missing tables detected:', missingTables.join(', '));
-    console.log('
-📝 SQL to create missing tables has been prepared:');
-    console.log('   File: database/create-queue-tables.sql');
-    console.log('
-🔗 To create the tables:');
-    console.log('1. Go to: https://supabase.com/dashboard/project/eqpfvmwmdtsgddpsodsr/sql/editor');
-    console.log('2. Copy the contents of database/create-queue-tables.sql');
-    console.log('3. Paste and click "Run"');
-    console.log('
-💡 Alternative: Get a service role key with admin privileges');
-    console.log('   From: https://supabase.com/dashboard/project/eqpfvmwmdtsgddpsodsr/settings/api');
-    console.log('   Add to .env: SUPABASE_SERVICE_KEY=your-service-key');
-  } else {
-    console.log('
-✅ All required tables exist!');
-    
-    // Test upsert functionality
-    console.log('
-🧪 Testing upsert functionality...');
-    const testData = {
-      url: 'https://test.example.com/test-' + Date.now(),
-      title: 'Test Item',
-      description: 'Testing upsert',
-      source: 'test',
-      score: 0.85,
-      status: 'pending'
-    };
-    
-    const { data: upsertData, error: upsertError } = await supabase
-      .from('queue_projects')
-      .upsert(testData, {
-        onConflict: 'url',
-        ignoreDuplicates: false
-      })
-      .select()
-      .single();
-    
-    if (upsertError) {
-      console.log('   ❌ Upsert failed:', upsertError.message);
-      if (upsertError.message.includes('unique') || upsertError.code === '23505') {
-        console.log('   ℹ️  Constraints are working but upsert syntax may need adjustment');
-      }
-    } else {
-      console.log('   ✅ Upsert successful!');
-      
-      // Clean up test data
-      await supabase
-        .from('queue_projects')
-        .delete()
-        .eq('url', testData.url);
-      console.log('   ✅ Test data cleaned up');
-    }
+
+    console.error('❌ Direct SQL execution failed:', error);
+    throw error;
   }
 }
 
-createTables().catch(console.error);
+// Export for use in other scripts
+export { executeDirectSQL };
+
+// Run if called directly
+if (require.main === module) {
+  executeDirectSQL().catch(console.error);
+}

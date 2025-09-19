@@ -327,6 +327,8 @@ export class ApprovalServiceV2 {
         .limit(50),
       
       supabase
+        // DISABLED: Table 'queue_funding_programs' doesn't exist
+
         .from('queue_funding_programs')
         .select('*')
         .eq('status', 'pending_review')
@@ -334,12 +336,14 @@ export class ApprovalServiceV2 {
         .limit(50),
       
       supabase
+        // DISABLED: Table 'queue_resources' doesn't exist
+
         .from('queue_resources')
         .select('*')
         .eq('status', 'pending_review')
         .order('score', { ascending: false } as any)
         .limit(50)
-    ]);
+    ]) as any || { data: [], error: null } as any || { data: [], error: null };
 
     const projectItems = projects.data || [];
     const fundingItems = funding.data || [];

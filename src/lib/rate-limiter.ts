@@ -44,6 +44,16 @@ class RateLimiter {
     remaining: number;
     resetTime: number;
   }> {
+    // Bypass rate limiting for authenticated cron jobs
+    if (req.headers.authorization?.startsWith('Bearer ') && 
+        req.headers.authorization === `Bearer ${process.env.CRON_SECRET}`) {
+      return {
+        allowed: true,
+        remaining: this.maxRequests,
+        resetTime: Date.now() + this.windowMs,
+      };
+    }
+
     const key = this.getKey(req);
     const now = Date.now();
 

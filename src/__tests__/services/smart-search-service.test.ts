@@ -3,22 +3,11 @@ import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { SmartSearchService } from '../../services/smart-search-service';
 import { supabase } from '../../lib/supabase-client';
 
-// Mock Supabase
+// Mock Supabase with comprehensive mock
+const { supabaseMock } = require('../__mocks__/supabase-mock');
+
 jest.mock('../../lib/supabase-client', () => ({
-  supabase: {
-    from: jest.fn(() => ({
-      select: jest.fn().mockReturnThis(),
-      insert: jest.fn().mockReturnThis(),
-      in: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      gte: jest.fn().mockReturnThis(),
-      lte: jest.fn().mockReturnThis(),
-      ilike: jest.fn().mockReturnThis(),
-      contains: jest.fn().mockReturnThis(),
-      order: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockReturnThis()
-    }))
-  }
+  supabase: supabaseMock
 }));
 
 describe('SmartSearchService', () => {

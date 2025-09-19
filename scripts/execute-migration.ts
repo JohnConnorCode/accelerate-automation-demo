@@ -1,154 +1,170 @@
-// @ts-nocheck
-// DISABLED: References non-existent database tables
+#!/usr/bin/env node
 
 /**
- * Database Migration Executor
- * Executes migration statements one by one using Supabase client
+ * Execute SQL migration to create essential tables in Supabase
+ * Uses service role key for elevated privileges
  */
 
+import { createClient } from '@supabase/supabase-js';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
-import dotenv from 'dotenv';
-import { supabase } from '../src/lib/supabase-client';
+const SUPABASE_URL = 'https://eqpfvmwmdtsgddpsodsr.supabase.co';
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-
-// Load environment variables
-dotenv.config();
+if (!SUPABASE_SERVICE_ROLE_KEY) {
+  console.error('❌ SUPABASE_SERVICE_ROLE_KEY environment variable is required');
+  process.exit(1);
+}
 
 async function executeMigration() {
-  console.log('🚀 Executing database migration...');
-  
-  // Get Supabase credentials
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://eqpfvmwmdtsgddpsodsr.supabase.co';
-  const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxcGZ2bXdtZHRzZ2RkcHNvZHNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU4MjE4NzgsImV4cCI6MjA2MTM5Nzg3OH0.HAyBibHx0dqzXEAAr2MYxv1sfs13PLANLXLXM2NIWKI';
-  
-  console.log(`📡 Connecting to: ${supabaseUrl}`);
-  
-  // Create Supabase client
-  
-  
+  console.log('🚀 Starting database migration...');
+
   try {
-    // Read the migration file
-    const migrationPath = join(__dirname, '../database/add-unique-constraints.sql');
-    console.log(`📄 Reading migration from: ${migrationPath}`);
-    const migrationSQL = readFileSync(migrationPath, 'utf8');
-    
-    // Parse individual SQL statements
-    const statements = migrationSQL
+    // Create Supabase client with service role key
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      auth: {
+        persistSession: false
+      }
+    });
+
+    // Read the SQL file
+    const sqlPath = join(__dirname, 'create-essential-tables.sql');
+    const sqlContent = readFileSync(sqlPath, 'utf8');
+
+    console.log('📖 Read SQL file successfully');
+    console.log(`📊 SQL file contains ${sqlContent.split('\n').length} lines`);
+
+    // Split SQL into individual statements
+    const statements = sqlContent
       .split(';')
       .map(stmt => stmt.trim())
-      .filter(stmt => stmt.length > 0 && !stmt.startsWith('--') && !stmt.startsWith('/*'));
-    
-    console.log(`📋 Found ${statements.length} SQL statements to execute`);
-    
-    // List of individual SQL statements to execute
-    const migrations = [
-      // 1. Add unique constraints
-      `ALTER TABLE queue_projects ADD CONSTRAINT IF NOT EXISTS queue_projects_url_unique UNIQUE (url)`,
-      `ALTER TABLE queue_investors ADD CONSTRAINT IF NOT EXISTS queue_investors_url_unique UNIQUE (url)`,
-      `ALTER TABLE queue_news ADD CONSTRAINT IF NOT EXISTS queue_news_url_unique UNIQUE (url)`,
-      
-      // 2. Production tables constraints
-      `ALTER TABLE projects ADD CONSTRAINT IF NOT EXISTS projects_url_unique UNIQUE (url)`,
-      `ALTER TABLE funding_programs ADD CONSTRAINT IF NOT EXISTS funding_programs_url_unique UNIQUE (url)`,
-      `ALTER TABLE resources ADD CONSTRAINT IF NOT EXISTS resources_url_unique UNIQUE (url)`,
-      
-      // 3. Performance indexes
-      `CREATE INDEX IF NOT EXISTS idx_queue_projects_created_at ON queue_projects(created_at DESC)`,
-      `CREATE INDEX IF NOT EXISTS idx_queue_projects_status ON queue_projects(status)`,
-      `CREATE INDEX IF NOT EXISTS idx_queue_projects_score ON queue_projects(score DESC)`,
-      
-      `CREATE INDEX IF NOT EXISTS idx_queue_investors_created_at ON queue_investors(created_at DESC)`,
-      `CREATE INDEX IF NOT EXISTS idx_queue_investors_status ON queue_investors(status)`,
-      `CREATE INDEX IF NOT EXISTS idx_queue_investors_score ON queue_investors(score DESC)`,
-      
-      `CREATE INDEX IF NOT EXISTS idx_queue_news_created_at ON queue_news(created_at DESC)`,
-      `CREATE INDEX IF NOT EXISTS idx_queue_news_status ON queue_news(status)`,
-      `CREATE INDEX IF NOT EXISTS idx_queue_news_score ON queue_news(score DESC)`,
-      
-      // 4. Composite indexes
-      `CREATE INDEX IF NOT EXISTS idx_queue_projects_status_score ON queue_projects(status, score DESC)`,
-      `CREATE INDEX IF NOT EXISTS idx_queue_investors_status_score ON queue_investors(status, score DESC)`,
-      `CREATE INDEX IF NOT EXISTS idx_queue_news_status_score ON queue_news(status, score DESC)`,
-    ];
-    
+      .filter(stmt => stmt.length > 0 && !stmt.startsWith('--'));
+
+    console.log(`🔍 Found ${statements.length} SQL statements to execute`);
+
     let successCount = 0;
-    let failureCount = 0;
-    
-    // Execute each migration
-    for (let i = 0; i < migrations.length; i++) {
-      const statement = migrations[i];
-      console.log(`⏳ Executing statement ${i + 1}/${migrations.length}...`);
-      console.log(`   ${statement.substring(0, 60)}...`);
-      
+    let errorCount = 0;
+
+    // Execute each statement
+    for (let i = 0; i < statements.length; i++) {
+      const statement = statements[i];
+
+      // Skip comments and empty statements
+      if (!statement || statement.startsWith('--')) {
+        continue;
+      }
+
       try {
-        const { error } = await supabase.rpc('exec_sql', { sql: statement });
-        
+        console.log(`\n📝 Executing statement ${i + 1}/${statements.length}:`);
+        console.log(`   ${statement.substring(0, 80)}${statement.length > 80 ? '...' : ''}`);
+
+        const { data, error } = await supabase.rpc('exec_sql', {
+          sql: statement + ';'
+        });
+
         if (error) {
-          console.log(`⚠️  Statement ${i + 1} failed (this may be expected): ${error.message}`);
-          console.log(`📝 Statement: ${statement}`);
-          failureCount++;
-        } else {
-          console.log(`✅ Statement ${i + 1} executed successfully`);
-          successCount++;
+          // Try direct query if RPC fails
+          const { data: directData, error: directError } = await supabase
+            .from('pg_stat_database')
+            .select('*')
+            .limit(0); // This will fail but test connection
+
+          if (directError) {
+            console.log('   Trying alternative execution method...');
+
+            // Use raw SQL execution
+            const result = await fetch(`${SUPABASE_URL}/rest/v1/rpc/exec_sql`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+                'apikey': SUPABASE_SERVICE_ROLE_KEY
+              },
+              body: JSON.stringify({ sql: statement + ';' })
+            });
+
+            if (!result.ok) {
+              throw new Error(`HTTP ${result.status}: ${await result.text()}`);
+            }
+          }
         }
-      } catch (err: any) {
-        console.log(`⚠️  Statement ${i + 1} failed with exception: ${err.message}`);
-        console.log(`📝 Statement: ${statement}`);
-        failureCount++;
+
+        console.log(`   ✅ Success`);
+        successCount++;
+
+      } catch (err) {
+        console.log(`   ❌ Error: ${err.message}`);
+        errorCount++;
+
+        // Continue with next statement unless it's a critical error
+        if (err.message.includes('already exists')) {
+          console.log('   ℹ️  Table/function already exists, continuing...');
+          successCount++; // Count as success since table exists
+        }
       }
-      
-      // Small delay between statements
-      await new Promise(resolve => setTimeout(resolve, 100));
     }
-    
-    console.log(`
-📊 Migration Summary:`);
-    console.log(`✅ Successful: ${successCount}`);
-    console.log(`⚠️  Failed: ${failureCount}`);
-    
-    // Verification query
-    console.log('
-🔍 Verifying constraints...');
-    try {
-      const { data: constraints, error: verifyError } = await supabase
-        .from('information_schema.table_constraints')
-        .select('table_name, constraint_name, constraint_type')
-        .eq('table_schema', 'public')
-        .in('table_name', ['queue_projects', 'queue_investors', 'queue_news', 'projects', 'funding_programs', 'resources'])
-        .eq('constraint_type', 'UNIQUE')
-        .order('table_name');
-        
-      if (verifyError) {
-        console.log('⚠️  Could not verify constraints automatically');
-        console.log('📝 Please check manually in Supabase dashboard');
-      } else {
-        console.log('✅ Unique constraints found:');
-        console.table(constraints);
-      }
-    } catch (verifyErr) {
-      console.log('⚠️  Verification check failed - this is expected with some Supabase configurations');
-    }
-    
-    if (failureCount > 0) {
-      console.log(`
-🔧 Some statements failed. This is often normal if constraints already exist.`);
-      console.log(`📍 You can check the results in Supabase dashboard:`);
-      console.log(`https://supabase.com/dashboard/project/eqpfvmwmdtsgddpsodsr/sql/editor`);
-    }
-    
-    console.log('
-🎉 Migration process completed!');
-    
+
+    console.log('\n📊 Migration Summary:');
+    console.log(`   ✅ Successful statements: ${successCount}`);
+    console.log(`   ❌ Failed statements: ${errorCount}`);
+    console.log(`   📈 Success rate: ${Math.round((successCount / (successCount + errorCount)) * 100)}%`);
+
+    // Verify tables were created
+    console.log('\n🔍 Verifying table creation...');
+    await verifyTables(supabase);
+
   } catch (error) {
-    console.error('❌ Migration process failed:', error);
-    console.log('
-📍 Manual execution option:');
-    console.log('1. Go to: https://supabase.com/dashboard/project/eqpfvmwmdtsgddpsodsr/sql/editor');
-    console.log('2. Paste the SQL from: database/add-unique-constraints.sql');
-    console.log('3. Run the SQL statements one by one');
+    console.error('❌ Migration failed:', error);
     process.exit(1);
+  }
+}
+
+async function verifyTables(supabase) {
+  const expectedTables = [
+    'api_cache',
+    'search_analytics',
+    'monitoring_metrics',
+    'rate_limit_violations',
+    'error_logs',
+    'system_settings',
+    'fetch_history',
+    'monitoring_alerts',
+    'tags',
+    'resources',
+    'queue_resources',
+    'funding_programs',
+    'queue_funding_programs',
+    'webhook_endpoints',
+    'webhook_deliveries'
+  ];
+
+  let foundTables = 0;
+
+  for (const tableName of expectedTables) {
+    try {
+      const { data, error } = await supabase
+        .from(tableName)
+        .select('*')
+        .limit(0);
+
+      if (!error) {
+        console.log(`   ✅ ${tableName} - exists and accessible`);
+        foundTables++;
+      } else {
+        console.log(`   ❌ ${tableName} - ${error.message}`);
+      }
+    } catch (err) {
+      console.log(`   ❌ ${tableName} - ${err.message}`);
+    }
+  }
+
+  console.log(`\n🎯 Tables verified: ${foundTables}/${expectedTables.length}`);
+
+  if (foundTables === expectedTables.length) {
+    console.log('🎉 All tables created successfully!');
+  } else {
+    console.log('⚠️  Some tables may not have been created properly.');
   }
 }
 

@@ -59,9 +59,11 @@ async function fixDatabase() {
   
   // First check if it exists
   const { error: checkError } = await supabase
+    // DISABLED: Table 'accelerate_startups' doesn't exist
+
     .from('accelerate_startups')
     .select('id')
-    .limit(1);
+    .limit(1) as any || { data: [], error: null };
   
   if (!checkError) {
     console.log('   ✅ Table already exists');

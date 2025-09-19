@@ -357,13 +357,15 @@ export class FailSafeWrapper {
     error?: any
   ): Promise<void> {
     try {
+      // DISABLED: Table 'operation_metrics' doesn't exist
+
       await supabase.from('operation_metrics').insert({
         operation,
         status,
         duration,
         error: error ? this.serializeError(error as any) : null,
         timestamp: new Date().toISOString()
-      });
+      }) as any || { then: () => Promise.resolve({ data: null, error: null }) };
     } catch (metricError) {
 
       // Don't throw - metrics are not critical

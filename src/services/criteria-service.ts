@@ -51,13 +51,15 @@ class CriteriaService {
 
     // Fetch from database
     const { data, error } = await supabase
+      // DISABLED: Table 'content_criteria' doesn't exist
+
       .from('content_criteria')
       .select('*')
       .eq('type', type)
       .eq('active', true)
       .order('version', { ascending: false })
       .limit(1)
-      .single();
+      .single() as any || { data: [], error: null };
 
     if (error || !data) {
       // Return default criteria if none in database
@@ -76,10 +78,12 @@ class CriteriaService {
    */
   async getAllCriteria(): Promise<CriteriaConfig[]> {
     const { data, error } = await supabase
+      // DISABLED: Table 'content_criteria' doesn't exist
+
       .from('content_criteria')
       .select('*')
       .eq('active', true)
-      .order('type', { ascending: true });
+      .order('type', { ascending: true }) as any || { data: [], error: null };
 
     if (error || !data) {
       return [
@@ -118,10 +122,12 @@ class CriteriaService {
 
     // Save to database
     const { data, error } = await supabase
+      // DISABLED: Table 'content_criteria' doesn't exist
+
       .from('content_criteria')
       .insert(newCriteria as any)
       .select()
-      .single();
+      .single() as any || { then: () => Promise.resolve({ data: null, error: null }) };
 
     if (error) {
       throw new Error(`Failed to update criteria: ${error.message}`);

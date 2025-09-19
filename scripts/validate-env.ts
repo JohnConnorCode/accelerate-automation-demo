@@ -62,13 +62,13 @@ for (const key of keys) {
   
   if (!key.value) {
     status.push('❌ MISSING');
-    if (key.required) hasErrors = true;
+    if (key.required) {hasErrors = true;}
   } else if (key.value === 'Ctrl+C') {
     status.push('❌ INVALID (Ctrl+C placeholder)');
-    if (key.required) hasErrors = true;
+    if (key.required) {hasErrors = true;}
   } else if (key.validator && !key.validator(key.value)) {
     status.push('⚠️  INVALID FORMAT');
-    if (key.required) hasErrors = true;
+    if (key.required) {hasErrors = true;}
   } else {
     status.push('✅ SET');
   }

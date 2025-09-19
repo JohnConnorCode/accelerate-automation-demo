@@ -48,7 +48,7 @@ export class ApprovalService {
             reviewed_by: request.reviewedBy || 'admin',
             reviewed_at: new Date().toISOString(),
             metadata: {
-                ...(typeof (queueItem.metadata || {}) === "object" && (queueItem.metadata || {}) !== null ? (queueItem.metadata || {}) : {}),
+                ...(typeof (queueItem.metadata || {}) === 'object' && (queueItem.metadata || {}) !== null ? (queueItem.metadata || {}) : {}),
                 reviewer_notes: request.reviewerNotes,
                 rejection_reason: request.reviewerNotes
             }
