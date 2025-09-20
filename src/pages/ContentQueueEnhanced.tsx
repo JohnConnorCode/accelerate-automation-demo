@@ -186,14 +186,18 @@ export default function ContentQueueEnhanced() {
 
     for (const id of selectedItems) {
       try {
-        const response = await fetch('/api/approve', {
+        const apiUrl = process.env.NODE_ENV === 'production'
+          ? '/api/approve'
+          : 'http://localhost:3002/api/approve';
+
+        const response = await fetch(apiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            id,
-            type: activeTab,
+            itemId: id,
             action: 'approve',
-            reviewerNotes: 'Batch approved'
+            reviewerNotes: 'Batch approved',
+            reviewedBy: 'Admin'
           })
         });
 
@@ -238,7 +242,11 @@ export default function ContentQueueEnhanced() {
     let succeeded = 0;
     for (const id of selectedItems) {
       try {
-        const response = await fetch('/api/approve', {
+        const apiUrl = process.env.NODE_ENV === 'production'
+          ? '/api/approve'
+          : 'http://localhost:3002/api/approve';
+
+        const response = await fetch(apiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -263,7 +271,11 @@ export default function ContentQueueEnhanced() {
   // Handle single item action
   const handleItemAction = async (id: string, action: 'approve' | 'reject') => {
     try {
-      const response = await fetch('/api/approve', {
+      const apiUrl = process.env.NODE_ENV === 'production'
+        ? '/api/approve'
+        : 'http://localhost:3002/api/approve';
+
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

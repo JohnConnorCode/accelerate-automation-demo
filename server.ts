@@ -1,6 +1,7 @@
 import dotenv from 'dotenv'
 // Load environment variables FIRST before any other imports
-dotenv.config({ path: process.env.NODE_ENV === 'production' ? '.env.production' : '.env' })
+dotenv.config({ path: '.env' })
+dotenv.config({ path: '.env.local' }) // Also load .env.local which might have additional keys
 
 import express from 'express'
 import cors from 'cors'

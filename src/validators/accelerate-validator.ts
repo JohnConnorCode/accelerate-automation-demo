@@ -158,11 +158,24 @@ export class AccelerateValidator {
       score += 10;
     }
 
-    // 6. Check for Web3/blockchain focus (bonus)
-    const web3Keywords = ['blockchain', 'crypto', 'defi', 'web3', 'nft', 'dao', 'ethereum', 'bitcoin'];
+    // 6. REQUIRED: Must be Web3/blockchain/crypto focused
+    const web3Keywords = ['blockchain', 'crypto', 'defi', 'web3', 'nft', 'dao', 'ethereum', 'bitcoin',
+                         'solana', 'polygon', 'avalanche', 'arbitrum', 'optimism', 'layer2', 'l2',
+                         'smart contract', 'dapp', 'decentralized', 'tokenization', 'staking',
+                         'liquidity', 'amm', 'dex', 'cefi', 'gamefi', 'metaverse', 'wallet'];
     const content = `${item.title} ${item.description}`.toLowerCase();
-    if (web3Keywords.some(keyword => content.includes(keyword))) {
-      score += 5;
+    const hasWeb3Focus = web3Keywords.some(keyword => content.includes(keyword));
+
+    if (!hasWeb3Focus) {
+      reasons.push('Not Web3/blockchain/crypto focused');
+      return {
+        isValid: false,
+        score: 0,
+        reasons,
+        category: 'rejected'
+      };
+    } else {
+      score += 25; // Significant bonus for Web3 focus
     }
 
     // Determine category
@@ -188,6 +201,23 @@ export class AccelerateValidator {
     let score = 80; // Funding opportunities start with good score
     const metadata = item.metadata || {};
 
+    // REQUIRED: Must be Web3/blockchain/crypto focused
+    const web3Keywords = ['blockchain', 'crypto', 'defi', 'web3', 'nft', 'dao', 'ethereum', 'bitcoin',
+                         'solana', 'polygon', 'avalanche', 'arbitrum', 'optimism', 'layer2', 'l2',
+                         'smart contract', 'dapp', 'decentralized', 'tokenization', 'staking'];
+    const content = `${item.title} ${item.description}`.toLowerCase();
+    const hasWeb3Focus = web3Keywords.some(keyword => content.includes(keyword));
+
+    if (!hasWeb3Focus) {
+      reasons.push('Not Web3/blockchain/crypto focused');
+      return {
+        isValid: false,
+        score: 0,
+        reasons,
+        category: 'rejected'
+      };
+    }
+
     // Check max amount
     if (metadata.max_amount && metadata.max_amount > 1000000) {
       reasons.push('Funding amount too large for early-stage');
@@ -196,7 +226,6 @@ export class AccelerateValidator {
 
     // Check if it's for early stage
     const earlyStageKeywords = ['seed', 'pre-seed', 'early', 'mvp', 'prototype', 'angel'];
-    const content = `${item.title} ${item.description}`.toLowerCase();
     if (earlyStageKeywords.some(keyword => content.includes(keyword))) {
       score += 20;
     }
@@ -239,6 +268,24 @@ export class AccelerateValidator {
     const reasons: string[] = [];
     let score = 60; // Resources start with moderate score
 
+    // REQUIRED: Must be Web3/blockchain/crypto focused
+    const web3Keywords = ['blockchain', 'crypto', 'defi', 'web3', 'nft', 'dao', 'ethereum', 'bitcoin',
+                         'solana', 'polygon', 'avalanche', 'arbitrum', 'optimism', 'layer2', 'l2',
+                         'smart contract', 'dapp', 'decentralized', 'tokenization', 'staking',
+                         'liquidity', 'amm', 'dex', 'cefi', 'gamefi', 'metaverse', 'wallet'];
+    const content = `${item.title} ${item.description || item.content}`.toLowerCase();
+    const hasWeb3Focus = web3Keywords.some(keyword => content.includes(keyword));
+
+    if (!hasWeb3Focus) {
+      reasons.push('Not Web3/blockchain/crypto focused');
+      return {
+        isValid: false,
+        score: 0,
+        reasons,
+        category: 'rejected'
+      };
+    }
+
     // Check content quality
     if (!item.content && !item.description) {
       reasons.push('No content available');
@@ -258,7 +305,7 @@ export class AccelerateValidator {
 
     // Check relevance to startups
     const relevantKeywords = ['startup', 'founder', 'launch', 'mvp', 'funding', 'investor', 'accelerator'];
-    const content = `${item.title} ${item.description || item.content}`.toLowerCase();
+    // Using already declared content variable from line 276
     const keywordMatches = relevantKeywords.filter(keyword => content.includes(keyword)).length;
     score += keywordMatches * 5;
 

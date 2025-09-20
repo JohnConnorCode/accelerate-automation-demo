@@ -3,6 +3,7 @@ import { useAuth } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import LayoutEnhanced from './components/LayoutEnhanced';
+import Navigation from './components/Navigation';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import ContentQueueV2 from './pages/ContentQueueV2';
@@ -15,6 +16,8 @@ import ApiConfig from './pages/ApiConfig';
 import { SystemDiagnostics } from './pages/SystemDiagnostics';
 import { DataSources } from './pages/DataSources';
 
+import { Link } from 'react-router-dom';
+
 // Landing page component
 function LandingPage() {
   return (
@@ -26,12 +29,7 @@ function LandingPage() {
             <div className="flex items-center">
               <h1 className="text-2xl font-bold text-indigo-600">🚀 Accelerate Content Automation</h1>
             </div>
-            <div className="flex items-center space-x-4">
-              <a href="/dashboard" className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Dashboard</a>
-              <a href="/content-queue" className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Content Queue</a>
-              <a href="/analytics" className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Analytics</a>
-              <a href="/settings" className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Settings</a>
-            </div>
+            <Navigation className="flex items-center space-x-4" />
           </div>
         </div>
       </nav>
@@ -183,9 +181,9 @@ function LandingPage() {
 
         {/* CTA Section */}
         <div className="mt-16 text-center">
-          <a href="/dashboard" className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
+          <Link to="/dashboard" className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
             Go to Dashboard →
-          </a>
+          </Link>
         </div>
       </div>
     </div>

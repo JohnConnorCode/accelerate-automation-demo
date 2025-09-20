@@ -40,10 +40,11 @@ export class DeduplicationService {
    */
   async checkDuplicate(hash: string, table: string = 'content_queue'): Promise<boolean> {
     try {
+      // Check by URL since that's a reliable unique identifier
       const { data, error } = await supabase
         .from(table)
         .select('id')
-        .eq('content_hash', hash)
+        .eq('url', hash)
         .single();
 
       if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
@@ -105,6 +106,36 @@ export class DeduplicationService {
   }
 
   /**
+   * Filter out duplicates from an array of items
+   */
+  async filterDuplicates(items: Array<{
+    title?: string;
+    url?: string;
+    description?: string;
+    [key: string]: any;
+  }>, table: string = 'content_queue'): Promise<{ unique: Array<any>, duplicates: Array<any> }> {
+    if (!items || items.length === 0) {
+      return { unique: [], duplicates: [] };
+    }
+
+    const duplicateMap = await this.batchCheckDuplicates(items, table);
+
+    const unique: Array<any> = [];
+    const duplicates: Array<any> = [];
+
+    items.forEach(item => {
+      const hash = this.generateHash(item);
+      if (duplicateMap.get(hash)) {
+        duplicates.push(item);
+      } else {
+        unique.push(item);
+      }
+    });
+
+    return { unique, duplicates };
+  }
+
+  /**
    * Batch check for duplicates
    */
   async batchCheckDuplicates(items: Array<{
@@ -117,22 +148,44 @@ export class DeduplicationService {
     // Generate hashes for all items
     const hashes = items.map(item => this.generateHash(item));
 
+    // Check by URL and title for better deduplication
     try {
-      const { data, error } = await supabase
-        .from(table)
-        .select('content_hash')
-        .in('content_hash', hashes);
+      const urls = items.map(item => item.url).filter(url => url);
+      const titles = items.map(item => item.title || item.description?.substring(0, 100)).filter(title => title);
 
-      if (error) {
-        logger.error('Error batch checking duplicates', { error });
-        // Return all as non-duplicates on error
-        hashes.forEach(hash => results.set(hash, false));
-        return results;
+      // Check both URLs and titles
+      let existingUrls = new Set<string>();
+      let existingTitles = new Set<string>();
+
+      if (urls.length > 0) {
+        const { data: urlData, error: urlError } = await supabase
+          .from(table)
+          .select('url')
+          .in('url', urls);
+
+        if (!urlError && urlData) {
+          existingUrls = new Set(urlData.map(d => d.url));
+        }
       }
 
-      const existingHashes = new Set((data || []).map(d => d.content_hash));
-      hashes.forEach(hash => {
-        results.set(hash, existingHashes.has(hash));
+      if (titles.length > 0) {
+        const { data: titleData, error: titleError } = await supabase
+          .from(table)
+          .select('title')
+          .in('title', titles);
+
+        if (!titleError && titleData) {
+          existingTitles = new Set(titleData.map(d => d.title));
+        }
+      }
+
+      // Mark as duplicate if URL or title matches
+      items.forEach((item, index) => {
+        const hash = hashes[index];
+        const urlExists = item.url ? existingUrls.has(item.url) : false;
+        const titleExists = item.title ? existingTitles.has(item.title) : false;
+        const isDuplicate = urlExists || titleExists;
+        results.set(hash, isDuplicate);
       });
 
       return results;

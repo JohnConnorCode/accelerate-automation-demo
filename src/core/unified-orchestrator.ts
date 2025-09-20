@@ -134,7 +134,7 @@ export class UnifiedOrchestrator {
         return {
           ...item,
           accelerate_fit: scoring.accelerate_fit,
-          accelerate_score: scoring.score,
+          accelerate_score: Math.round(scoring.score),
           accelerate_reason: scoring.reasoning,
           confidence_score: scoring.confidence,
           criteria_met: scoring.criteria_met
@@ -238,64 +238,64 @@ export class UnifiedOrchestrator {
     const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     
     return [
-      // === PROJECTS (Startups, GitHub repos, launches) ===
+      // === WEB3 PROJECTS (Blockchain, Crypto, DeFi) ===
       {
-        name: 'HackerNews Show HN',
-        url: `https://hn.algolia.com/api/v1/search?tags=show_hn&numericFilters=created_at_i>${yesterday}&hitsPerPage=20`,
+        name: 'HackerNews Web3',
+        url: `https://hn.algolia.com/api/v1/search?query=blockchain+OR+crypto+OR+web3+OR+defi+OR+ethereum+OR+solana&numericFilters=created_at_i>${yesterday}&hitsPerPage=25`,
         parser: (data: any) => data.hits || []
       },
       {
-        name: 'GitHub Trending',
-        url: `https://api.github.com/search/repositories?q=created:>${weekAgo}&sort=stars&order=desc&per_page=10`,
+        name: 'GitHub Web3 Projects',
+        url: `https://api.github.com/search/repositories?q=(blockchain+OR+crypto+OR+web3+OR+defi+OR+smart-contract)+created:>${weekAgo}&sort=stars&order=desc&per_page=15`,
         parser: (data: any) => data.items || []
       },
       {
-        name: 'Reddit Startups',
-        url: 'https://www.reddit.com/r/startups/new.json?limit=10&t=day',
+        name: 'Reddit Cryptocurrency',
+        url: 'https://www.reddit.com/r/cryptocurrency/hot.json?limit=15&t=day',
         parser: (data: any) => data?.data?.children?.map((p: any) => p.data) || []
       },
       {
-        name: 'Reddit SideProject',
-        url: 'https://www.reddit.com/r/SideProject/new.json?limit=10&t=day',
+        name: 'Reddit Ethereum',
+        url: 'https://www.reddit.com/r/ethereum/hot.json?limit=10&t=day',
+        parser: (data: any) => data?.data?.children?.map((p: any) => p.data) || []
+      },
+      {
+        name: 'Reddit DeFi',
+        url: 'https://www.reddit.com/r/defi/hot.json?limit=10&t=day',
         parser: (data: any) => data?.data?.children?.map((p: any) => p.data) || []
       },
       
-      // === FUNDING (Grants, VCs, Accelerators) ===
+      // === WEB3 FUNDING (Crypto Grants, Web3 VCs) ===
       {
-        name: 'HackerNews Jobs',
-        url: `https://hn.algolia.com/api/v1/search?tags=job&query=startup+OR+founding+OR+YC&numericFilters=created_at_i>${yesterday}&hitsPerPage=15`,
-        parser: (data: any) => data.hits || []
-      },
-      {
-        name: 'HackerNews Funding',
-        url: `https://hn.algolia.com/api/v1/search?query=grant+OR+accelerator+OR+incubator&numericFilters=created_at_i>${yesterday}&hitsPerPage=10`,
+        name: 'HackerNews Web3 Funding',
+        url: `https://hn.algolia.com/api/v1/search?query=(grant+OR+funding+OR+investment)+AND+(crypto+OR+blockchain+OR+web3)&numericFilters=created_at_i>${yesterday}&hitsPerPage=20`,
         parser: (data: any) => data.hits || []
       },
       
-      // === RESOURCES (Tools, Tutorials, Courses) ===
-      {
-        name: 'DevTo Startups',
-        url: 'https://dev.to/api/articles?tag=startup&per_page=10',
-        parser: (data: any) => data || []
-      },
+      // === WEB3 RESOURCES (Blockchain Tutorials, Crypto Guides) ===
       {
         name: 'DevTo Web3',
-        url: 'https://dev.to/api/articles?tag=web3&per_page=10',
+        url: 'https://dev.to/api/articles?tag=web3&per_page=15',
         parser: (data: any) => data || []
       },
       {
-        name: 'DevTo Tutorial',
-        url: 'https://dev.to/api/articles?tag=tutorial&per_page=10',
+        name: 'DevTo Blockchain',
+        url: 'https://dev.to/api/articles?tag=blockchain&per_page=15',
         parser: (data: any) => data || []
       },
       {
-        name: 'HackerNews Ask HN',
-        url: 'https://hn.algolia.com/api/v1/search?tags=ask_hn&query=how+to+OR+tutorial+OR+guide&hitsPerPage=10',
+        name: 'DevTo Solidity',
+        url: 'https://dev.to/api/articles?tag=solidity&per_page=10',
+        parser: (data: any) => data || []
+      },
+      {
+        name: 'HackerNews Web3 Tutorials',
+        url: `https://hn.algolia.com/api/v1/search?query=(tutorial+OR+guide+OR+learn)+AND+(blockchain+OR+crypto+OR+web3+OR+solidity)&hitsPerPage=15`,
         parser: (data: any) => data.hits || []
       },
       {
-        name: 'Reddit Learn Programming',
-        url: 'https://www.reddit.com/r/learnprogramming/hot.json?limit=5',
+        name: 'Reddit Solidity',
+        url: 'https://www.reddit.com/r/solidity/hot.json?limit=10',
         parser: (data: any) => data?.data?.children?.map((p: any) => p.data) || []
       }
     ];
