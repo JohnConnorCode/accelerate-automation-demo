@@ -1,11 +1,11 @@
 
 import type { Database } from '../types/supabase';
 import * as cron from 'node-cron';
-import { config } from 'dotenv';
+// Removed dotenv - uses environment variables directly
 import { supabase } from '../lib/supabase-client';
 
 
-config();
+// config(); - removed
 
 
 

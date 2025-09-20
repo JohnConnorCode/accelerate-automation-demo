@@ -5,11 +5,11 @@
 
 import OpenAI from 'openai';
 import { logger } from './logger';
-import { config } from 'dotenv';
+// Removed dotenv - uses environment variables directly
 import { monitoringService } from './monitoring-service';
 
 // Ensure env vars are loaded
-config();
+// config(); - removed
 
 interface ScoringResult {
   score: number;           // 0-10

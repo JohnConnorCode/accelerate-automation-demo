@@ -5,11 +5,10 @@
 
 import OpenAI from 'openai';
 import { logger } from './logger';
-import { config } from 'dotenv';
+// Removed dotenv - uses environment variables directly
 import { monitoringService } from './monitoring-service';
 
-// Load environment variables
-config();
+// Environment variables loaded by runtime
 
 interface ExtractedData {
   // Project fields
