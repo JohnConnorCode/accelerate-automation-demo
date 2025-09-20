@@ -3,16 +3,29 @@
   "buildCommand": "npm run build:frontend",
   "outputDirectory": "dist",
   "installCommand": "npm install",
-  "public": true,
-  "github": {
-    "enabled": true
+  "functions": {
+    "api/*.ts": {
+      "maxDuration": 30
+    }
   },
   "rewrites": [
     {
-      "source": "/((?!assets/).*)",
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
+      "source": "/((?!assets|api/).*)",
       "destination": "/index.html"
     }
   ],
+  "env": {
+    "SUPABASE_URL": "@supabase-url",
+    "SUPABASE_ANON_KEY": "@supabase-anon-key",
+    "SUPABASE_SERVICE_ROLE_KEY": "@supabase-service-role-key",
+    "VITE_SUPABASE_URL": "@vite-supabase-url",
+    "VITE_SUPABASE_ANON_KEY": "@vite-supabase-anon-key",
+    "OPENAI_API_KEY": "@openai-api-key"
+  },
   "crons": [
     {
       "path": "/api/cron/fetch-content",
