@@ -163,8 +163,9 @@ export class AccelerateValidator {
                          'solana', 'polygon', 'avalanche', 'arbitrum', 'optimism', 'layer2', 'l2',
                          'smart contract', 'dapp', 'decentralized', 'tokenization', 'staking',
                          'liquidity', 'amm', 'dex', 'cefi', 'gamefi', 'metaverse', 'wallet'];
-    const content = `${item.title} ${item.description}`.toLowerCase();
-    const hasWeb3Focus = web3Keywords.some(keyword => content.includes(keyword));
+    // ONLY check title and description, NOT URLs which might contain "web3" in source paths
+    const titleDesc = `${item.title || ''} ${item.description || ''}`.toLowerCase();
+    const hasWeb3Focus = web3Keywords.some(keyword => titleDesc.includes(keyword));
 
     if (!hasWeb3Focus) {
       reasons.push('Not Web3/blockchain/crypto focused');
