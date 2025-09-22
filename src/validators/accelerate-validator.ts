@@ -158,14 +158,39 @@ export class AccelerateValidator {
       score += 10;
     }
 
-    // 6. REQUIRED: Must be Web3/blockchain/crypto focused
-    const web3Keywords = ['blockchain', 'crypto', 'defi', 'web3', 'nft', 'dao', 'ethereum', 'bitcoin',
-                         'solana', 'polygon', 'avalanche', 'arbitrum', 'optimism', 'layer2', 'l2',
-                         'smart contract', 'dapp', 'decentralized', 'tokenization', 'staking',
-                         'liquidity', 'amm', 'dex', 'cefi', 'gamefi', 'metaverse', 'wallet'];
-    // ONLY check title and description, NOT URLs which might contain "web3" in source paths
+    // 6. REQUIRED: Must be Web3/blockchain/crypto focused - STRICT VALIDATION
+    const primaryWeb3Keywords = ['blockchain', 'cryptocurrency', 'bitcoin', 'ethereum', 'solana',
+                                 'defi', 'decentralized finance', 'smart contract', 'web3', 'crypto'];
+
+    const secondaryWeb3Keywords = ['nft', 'dao', 'dapp', 'metamask', 'wallet', 'token', 'mint',
+                                   'staking', 'liquidity', 'yield', 'airdrop', 'gas', 'layer2',
+                                   'polygon', 'avalanche', 'binance', 'coinbase', 'uniswap',
+                                   'opensea', 'chainlink', 'proof of stake', 'proof of work'];
+
+    // Exclude obvious non-Web3 content
+    const exclusionKeywords = ['apple watch', 'iphone', 'android phone', 'netflix', 'spotify'];
+
+    // ONLY check title and description, NOT URLs
     const titleDesc = `${item.title || ''} ${item.description || ''}`.toLowerCase();
-    const hasWeb3Focus = web3Keywords.some(keyword => titleDesc.includes(keyword));
+
+    // Check for exclusions first - instant rejection
+    if (exclusionKeywords.some(keyword => titleDesc.includes(keyword))) {
+      reasons.push('Contains non-Web3 consumer tech keywords');
+      return {
+        isValid: false,
+        score: 0,
+        reasons,
+        category: 'rejected'
+      };
+    }
+
+    // Count keyword matches - need MULTIPLE matches for validation
+    const primaryMatches = primaryWeb3Keywords.filter(kw => titleDesc.includes(kw));
+    const secondaryMatches = secondaryWeb3Keywords.filter(kw => titleDesc.includes(kw));
+
+    // STRICT: Need 2+ primary OR 1 primary + 2 secondary keywords
+    const hasWeb3Focus = primaryMatches.length >= 2 ||
+                         (primaryMatches.length >= 1 && secondaryMatches.length >= 2);
 
     if (!hasWeb3Focus) {
       reasons.push('Not Web3/blockchain/crypto focused');
@@ -202,15 +227,20 @@ export class AccelerateValidator {
     let score = 80; // Funding opportunities start with good score
     const metadata = item.metadata || {};
 
-    // REQUIRED: Must be Web3/blockchain/crypto focused
-    const web3Keywords = ['blockchain', 'crypto', 'defi', 'web3', 'nft', 'dao', 'ethereum', 'bitcoin',
-                         'solana', 'polygon', 'avalanche', 'arbitrum', 'optimism', 'layer2', 'l2',
-                         'smart contract', 'dapp', 'decentralized', 'tokenization', 'staking'];
-    const content = `${item.title} ${item.description}`.toLowerCase();
-    const hasWeb3Focus = web3Keywords.some(keyword => content.includes(keyword));
+    // REQUIRED: Must be Web3/blockchain/crypto focused - STRICT
+    const primaryWeb3Keywords = ['blockchain', 'cryptocurrency', 'bitcoin', 'ethereum', 'solana',
+                                 'defi', 'smart contract', 'web3', 'crypto'];
+    const secondaryWeb3Keywords = ['nft', 'dao', 'dapp', 'token', 'polygon', 'avalanche'];
+
+    const content = `${item.title || ''} ${item.description || ''}`.toLowerCase();
+    const primaryMatches = primaryWeb3Keywords.filter(kw => content.includes(kw));
+    const secondaryMatches = secondaryWeb3Keywords.filter(kw => content.includes(kw));
+
+    // Need strong Web3 focus for funding
+    const hasWeb3Focus = primaryMatches.length >= 1 && (primaryMatches.length + secondaryMatches.length) >= 2;
 
     if (!hasWeb3Focus) {
-      reasons.push('Not Web3/blockchain/crypto focused');
+      reasons.push('Not Web3/blockchain/crypto focused - funding must be Web3-specific');
       return {
         isValid: false,
         score: 0,
@@ -269,16 +299,21 @@ export class AccelerateValidator {
     const reasons: string[] = [];
     let score = 60; // Resources start with moderate score
 
-    // REQUIRED: Must be Web3/blockchain/crypto focused
-    const web3Keywords = ['blockchain', 'crypto', 'defi', 'web3', 'nft', 'dao', 'ethereum', 'bitcoin',
-                         'solana', 'polygon', 'avalanche', 'arbitrum', 'optimism', 'layer2', 'l2',
-                         'smart contract', 'dapp', 'decentralized', 'tokenization', 'staking',
-                         'liquidity', 'amm', 'dex', 'cefi', 'gamefi', 'metaverse', 'wallet'];
-    const content = `${item.title} ${item.description || item.content}`.toLowerCase();
-    const hasWeb3Focus = web3Keywords.some(keyword => content.includes(keyword));
+    // REQUIRED: Must be Web3/blockchain/crypto focused - STRICT
+    const primaryWeb3Keywords = ['blockchain', 'cryptocurrency', 'bitcoin', 'ethereum', 'solana',
+                                 'defi', 'smart contract', 'web3', 'crypto'];
+    const secondaryWeb3Keywords = ['nft', 'dao', 'dapp', 'metamask', 'wallet', 'token',
+                                   'staking', 'liquidity', 'polygon', 'avalanche'];
+
+    const content = `${item.title || ''} ${item.description || item.content || ''}`.toLowerCase();
+    const primaryMatches = primaryWeb3Keywords.filter(kw => content.includes(kw));
+    const secondaryMatches = secondaryWeb3Keywords.filter(kw => content.includes(kw));
+
+    // Resources need clear Web3 focus
+    const hasWeb3Focus = primaryMatches.length >= 1 && (primaryMatches.length + secondaryMatches.length) >= 2;
 
     if (!hasWeb3Focus) {
-      reasons.push('Not Web3/blockchain/crypto focused');
+      reasons.push('Not Web3/blockchain/crypto focused - resources must be Web3-specific');
       return {
         isValid: false,
         score: 0,

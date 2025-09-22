@@ -63,12 +63,13 @@ async function purgeNonWeb3() {
       // Only check actual content, not URLs
       const searchText = `${item.title || ''} ${item.description || ''} ${item.content || ''}`.toLowerCase();
 
-      // Must have at least ONE Web3 keyword
+      // Must have at least TWO Web3 keywords for stronger validation
       const matchedKeywords = REQUIRED_WEB3_KEYWORDS.filter(keyword =>
         searchText.includes(keyword.toLowerCase())
       );
 
-      if (matchedKeywords.length === 0) {
+      // STRICT: Need at least 2 Web3 keywords
+      if (matchedKeywords.length < 2) {
         toDelete.push(item);
         console.log(`❌ REMOVING: "${item.title || item.url || 'Untitled'}"`);
         console.log(`   Reason: NO Web3/blockchain keywords found\n`);
