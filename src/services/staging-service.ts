@@ -129,16 +129,16 @@ export class StagingService {
     // Ensure description meets minimum length (50 chars)
     let description = item.description || item.content || item.tagline || item.title || '';
     
-    // If still too short, add context
+    // If still too short, add context WITHOUT fake Web3 keywords
     if (description.length < 50) {
       const title = item.title || item.name || '';
-      const source = item.source || 'Web3';
+      const source = item.source || 'Unknown';
       const type = item.type || 'content';
-      
+
       if (title) {
-        description = `${title} - ${source} ${type} being evaluated for the ACCELERATE platform. High-quality content for Web3 builders and innovators.`;
+        description = `${title} - ${source} ${type} being evaluated for the ACCELERATE platform.`;
       } else {
-        description = `High-quality ${source} ${type} being evaluated for the ACCELERATE platform. Curated content for Web3 builders and innovators.`;
+        description = `${source} ${type} being evaluated for the ACCELERATE platform.`;
       }
     }
     
